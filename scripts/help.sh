@@ -12,15 +12,17 @@
 #
 ############################################################################
 
-echo Usage: lint.sh COMMAND
-echo
-echo A CI/CD automation wrapper for linting a Camunda 8 Web Modeler project.
-echo
-echo Available Commands:
-echo "  lint               Apply lint to BPMN + DMN files"
-echo "  bpmnlint           Apply lint to just the BPMN files"
-echo "  dmnlint            Apply lint to just the DMN files"
-echo
-echo The configuration options for the commands are defined in environment variables as this is
-echo intended to run as part of a CI/CD pipeline.
-echo See https://github.com/BP3/camunda-lint for more details.
+cat <<_EOF
+A CI/CD automation wrapper for linting a Camunda 8 Web Modeler project.
+
+Usage: [COMMAND]
+
+Available Commands:
+  lint               Apply lint to BPMN + DMN file
+  bpmnlint           Apply lint to just the BPMN files
+  dmnlint            Apply lint to just the DMN files
+
+The configuration options for the commands are defined in environment variables
+as this is intended to run as part of a CI/CD pipeline.
+See https://github.com/BP3/camunda-lint for more details.
+_EOF

@@ -10,33 +10,31 @@
 #
 ############################################################################
 
-FROM node:22.14-alpine
-
-# Upgrade the underlying OS for the alpine distro
-RUN set -eux; \
-	apk update; \
-	apk upgrade --no-interactive; \
-	apk add jq
+FROM node:22.14.0-alpine3.21
 
 # Install the Camunda lint packages
-RUN npm install -g bpmnlint dmnlint
+RUN npm install -g bpmnlint@11.4.2 dmnlint@0.2.0
 
 # Add the bp3 user and group. Note: using 1001 because node's is already using 1000
 RUN addgroup --gid 1001 bp3 && \
     adduser --uid 1001 --ingroup bp3 --home /home/bp3user --shell /bin/bash --disabled-password bp3user
 
-ENV SCRIPT_DIR=/app/acripts
+RUN chown -R bp3user:bp3 /usr/local/lib/node_modules
 
 WORKDIR /app
-#COPY --chmod=755 docker-entrypoint.sh .
+COPY --chmod=755 docker-entrypoint.sh .
 COPY --chown=bp3user:bp3 --chmod=755 scripts/*.sh scripts/
-
-RUN chown -R bp3user:bp3 /usr/local/lib/node_modules
+COPY --chown=bp3user:bp3 --chmod=755 scripts/*.js scripts/
+# Added these because kaniko does not support the --chmod syntax yet and ignores it
+RUN chmod 755 ./docker-entrypoint.sh && \
+    chmod 755 ./scripts/*.sh && \
+    chmod 755 ./scripts/*.js
 
 USER bp3user
 
 VOLUME /local
 WORKDIR /local
 
-ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
-CMD [ "help" ]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["help"]
+

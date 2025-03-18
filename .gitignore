@@ -6,6 +6,7 @@ feature/
 config.json
 config.yml
 .DS_Store
+1
 
 # Distribution / packaging
 build/
@@ -23,9 +24,10 @@ ENV/
 env.bak/
 venv.bak/
 
-#Jetbrains
+# Jetbrains
 .idea/
 .Idea/
+*.iml
 
 # bpmn files
 *.bpmn
@@ -35,3 +37,9 @@ venv.bak/
 # dmn files
 *.dmn
 .dmnlintrc
+
+/node_modules/
+/package.json
+/package-lock.json
+packages.txt
+
