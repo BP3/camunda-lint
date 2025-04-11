@@ -16,8 +16,19 @@ const outputFilepath = 'package.json';
 // FROM __bp3global__bpmn-rules
 //   TO npm:@bp3global/bpmn-rules
 //
-function getNpmPackagename(packageName) {
-	return packageName == null ? "" : packageName.replace('__', '@').replace('__', '/').replace('__~', '@~').replace(/__\^?/im, '@^');
+function getNpmPackageName(packageName) {
+	let result = '';
+	if (packageName != null) {
+		result = packageName;
+		if (result.indexOf('__') == 0) {
+			result = result.replace('__', '@').replace('__', '/');
+		} else {
+			//WARNING: this is exclusive to the camunda plugin naming scheme
+			result = 'bpmnlint-plugin-' + result;
+		}
+
+	}
+	return result.replace('__~', '@~').replace(/__\^?/im, '@^');
 }
 
 // Convert a possible plugin in the lintrc file into a project dependency
@@ -33,7 +44,7 @@ function addPluginDependency(packageName) {
 		// transform the package name provided to be used as a dependency
 		let currPackageName = packageName.substring(0, packageName.lastIndexOf('/')).replace('plugin:', '');
 		// get the reference name
-		let npmReference = getNpmPackagename(currPackageName);
+		let npmReference = getNpmPackageName(currPackageName);
 		// record this for later use
 		currentPluginList.push(npmReference);
 		packageJson.dependencies["bpmnlint-plugin-" + currPackageName] = 'npm:' + npmReference;
@@ -111,4 +122,3 @@ if (process.argv.length > 2
 	// if there wasn't an error, but just a help request
 	showHelp();
 }
-
