@@ -1,17 +1,23 @@
 # Camunda Lint
 
-This project packages the [bpmnlint](https://github.com/bpmn-io/bpmnlint) and
-[dmnlint](https://github.com/bpmn-io/dmnlint) tools into a docker image that can be
-easily leveraged in a CI/CD pipeline.
+This project packages the base [bpmnlint](https://github.com/bpmn-io/bpmnlint) and
+[dmnlint](https://github.com/bpmn-io/dmnlint) rulesets into a docker image that can 
+easily leveraged in a CI/CD pipeline. It also then extends this base by adding the 
+[bpmn-plugin-camunda-compat](https://github.com/camunda/bpmnlint-plugin-camunda-compat)
+rules which can provide compatibility with the rules for a specified version of 
+Web Modeler as found in Camunda Cloud. See the documentation for 
+[bpmnlint-plugin-camunda-compat](https://github.com/camunda/bpmnlint-plugin-camunda-compat)
+to configure for either a fixed version or dynamic version.
 
 First we describe how to use the OOTB rules from Camunda. But, obviously, the real power of the linter
 comes from being able to develop your own rules and we will describe those below
 
 ## Using Camunda Lint
 Mount your project files into the `camunda-lint` container.
-There is no particular restriction on where you mount your project - in the examples below you will see us using `/project`.
+There is no particular restriction on where you mount your project - in the examples below you will see us using 
+`/project`.
 
-`camunda-lint` will the recurse through all the directories looking for files that it can apply linting to.
+`camunda-lint` will then recurse through all the directories looking for files that it can apply linting to.
 You may provide a `.bpmnlintrc` or `.dmnlintrc` file, to control rules as described in the
 [bpmnlint](https://github.com/bpmn-io/bpmnlint?tab=readme-ov-file#configuration) and 
 [dmnlint](https://github.com/bpmn-io/dmnlint?tab=readme-ov-file#configuration) documentation.
@@ -69,7 +75,6 @@ npm init --scope=@bp3global bpmnlint-plugin my-plugin
 cd my-plugin
 ```
 ### Publish your rule project
-[Joe] Can we give an example of `.npmrc`? What should it contain that is important
 ```shell
 # requires .npmrc
 npm publish --access public
@@ -91,7 +96,8 @@ The minimal custom rule package specification is thus
 # .bpmnlintrc
 {
   "extends": [
-    "bpmnlint:recommended", 
+    "bpmnlint:recommended",
+    "plugin:camunda-compat__2.34.2/camunda-cloud-8-7",
     "plugin:__bp3global__my_plugin/recommended"
   ],
   "rules": {}
@@ -103,6 +109,7 @@ or if you want to specify a specific version
 {
   "extends": [
     "bpmnlint:recommended", 
+    "plugin:camunda-compat__2.34.2/camunda-cloud-8-7",
     "plugin:__bp3global__my_plugin__0.0.1/recommended"
   ],
   "rules": {}
@@ -115,6 +122,7 @@ You must also use the "alias" in the `rules` section if you have one
 {
   "extends": [
     "bpmnlint:recommended", 
+    "plugin:camunda-compat__2.34.2/camunda-cloud-8-7",
     "plugin:__bp3global__my_plugin/recommended"
   ],
   "rules": {
@@ -129,6 +137,7 @@ or with a verion
 {
   "extends": [
     "bpmnlint:recommended", 
+    "plugin:camunda-compat__2.34.2/camunda-cloud-8-7",
     "plugin:__bp3global__my_plugin__0.0.1/recommended"
   ],
   "rules": {
