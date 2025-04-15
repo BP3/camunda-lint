@@ -1,6 +1,7 @@
 # Camunda Lint
 
-This project packages the [bpmnlint](https://github.com/bpmn-io/bpmnlint) and
+This project packages the [bpmnlint](https://github.com/bpmn-io/bpmnlint), 
+the [camunda-compat](https://github.com/camunda/bpmnlint-plugin-camunda-compat) bpmnlint plugin and
 [dmnlint](https://github.com/bpmn-io/dmnlint) tools into a docker image that can be
 easily leveraged in a CI/CD pipeline.
 
@@ -16,18 +17,17 @@ You may provide a `.bpmnlintrc` or `.dmnlintrc` file, to control rules as descri
 [bpmnlint](https://github.com/bpmn-io/bpmnlint?tab=readme-ov-file#configuration) and 
 [dmnlint](https://github.com/bpmn-io/dmnlint?tab=readme-ov-file#configuration) documentation.
 
-A typical project will have the following layout
+### NOTE
+To include the full list of rules present in the Desktop/Web Modeler, you **must** provide a `.bpmnlintrc` file with the camunda-compat and the intended ruleset.<br/>See Examples below in the [*Add rules package(s) to lintrc file*](#addingRulesSection) section.
 
+A typical project will have the following layout
 ```
 + my-process-project
   + .bpmnlintrc
   + .dmnlintrc
   + model
-    + process.bpmn
-    + rules.dmn
-  + spec
-    + bpmn.feature
-    + dmn.feature
+  | + process.bpmn
+  | + rules.dmn
 ```
 
 To run the linter on the files in this project then use the following commands
@@ -52,7 +52,6 @@ The configuration options for the commands are defined in environment variables
 as this is intended to run as part of a CI/CD pipeline.
 See https://github.com/BP3/camunda-lint for more details.
 ```
-
 ## Customising the linter with your own linting rules
 We recommend that you build your rules into an `npm` package and that you publish it to a suitable registry
 (e.g. [npmjs.org](npmjs.org))
@@ -76,8 +75,8 @@ npm publish --access public
 # pushed into npmjs.org
 ```
 
-### Add rules package(s) to lintrc file
-**NOTE:** Unfortunately the Camaunda linter doesn't support the "standard" package naming formats you might expect in the lintrc file.
+### <a name="addingRulesSection"></a>Add rules package(s) to lintrc file
+**NOTE:** Unfortunately the Camunda linter doesn't support the "standard" package naming formats you might expect in the lintrc file.
 But it will still find your package if you use the following rules to reference it from the lintrc file.
 
 In our case the full name for our package is `@bp3global/my-plugin` (or `@bp3global/my-plugin@^0.0.1` if we include the version), 
@@ -92,6 +91,7 @@ The minimal custom rule package specification is thus
 {
   "extends": [
     "bpmnlint:recommended", 
+    "plugin:camunda-compat__2.34.2/camunda-cloud-8-7", 
     "plugin:__bp3global__my_plugin/recommended"
   ],
   "rules": {}
@@ -103,6 +103,7 @@ or if you want to specify a specific version
 {
   "extends": [
     "bpmnlint:recommended", 
+    "plugin:camunda-compat__2.34.2/camunda-cloud-8-7", 
     "plugin:__bp3global__my_plugin__0.0.1/recommended"
   ],
   "rules": {}
@@ -115,6 +116,7 @@ You must also use the "alias" in the `rules` section if you have one
 {
   "extends": [
     "bpmnlint:recommended", 
+    "plugin:camunda-compat__2.34.2/camunda-cloud-8-7", 
     "plugin:__bp3global__my_plugin/recommended"
   ],
   "rules": {
@@ -128,7 +130,8 @@ or with a verion
 # .bpmnlintrc
 {
   "extends": [
-    "bpmnlint:recommended", 
+    "bpmnlint:recommended",
+    "plugin:camunda-compat__2.34.2/camunda-cloud-8-7", 
     "plugin:__bp3global__my_plugin__0.0.1/recommended"
   ],
   "rules": {
@@ -178,21 +181,18 @@ The working directory on the docker image is:
 - /linter
 
 For that purpose you need to set the working directory to that separate directory with the plugin and set the PROJECT_DIR to where the project files are kept<br/><br/>
-### Running the container locally
+### On Linux
 ```shell
 docker run -it --rm \
-    --mount type=bind,src=${PWD}/project,dst=/local \
-    --mount type=bind,src=${PWD}/plugin,dst=/linter -w /linter \
-    -e PROJECT_DIR=/local \
-        bp3global/camunda-lint lint
+    --mount type=bind,src=./project,dst=/local --mount type=bind,src=./plugin,dst=/linter -e PROJECT_DIR=/local -w /linter bp3global/camunda-lint lint
+```
+
+### On Windows PowerShell
+```shell
+docker run -it --rm --mount type=bind,src=${PWD}\project,dst=/local --mount type=bind,src=${PWD}\plugin,dst=/linter -e PROJECT_DIR=/local -w /linter bp3global/camunda-lint lint
 ```
 
 ### On Windows Command Line
 ```shell
-docker run -it --rm \
-    --mount type=bind,src=%cd%\project,dst=/local \
-    --mount type=bind,src=%cd%\plugin,dst=/linter -w /linter \
-    -e PROJECT_DIR=/local \
-        bp3global/camunda-lint lint
+docker run -it --rm --mount type=bind,src=%cd%\project,dst=/local --mount type=bind,src=%cd%\plugin,dst=/linter -e PROJECT_DIR=/local -w /linter bp3global/camunda-lint lint
 ```
-
