@@ -99,7 +99,7 @@ function prepareDynamicPlugin(customRulesPath, installDeps) {
     const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
     const pluginRulesPath = path.join(pluginPath, 'rules');
     const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
-    const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
+    //const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
     const sourceRulesPath = path.resolve(process.cwd(), customRulesPath);
     const sourcePackageJsonPath = path.join(sourceRulesPath, 'package.json');
     //prepare a couple of baseline dependencies
@@ -447,8 +447,12 @@ async function main() {
         dynamicPluginWasPrepared = true;
     }
 
-    // Load Configuration
-    let linterConfig;
+    // Load Configuration: default to load the bpmnlinter rules and the dynamic rules plugin
+    let linterConfig = {
+        "extends": ["bpmnlint:recommended", "plugin:bp3-dynamic-rules/all"],
+        "rules": {
+      }
+    };
     try {
       const configFilePath = path.resolve(process.cwd(), configPath);
       logger.log(`Loading configuration from: ${configFilePath}`);
@@ -460,9 +464,16 @@ async function main() {
 
     // Override severities for custom rules if specified
     if (customRulesPath) {
-      for (const rule in linterConfig.rules) {
-        if (rule.startsWith('dynamic-rules/')) {
-          linterConfig.rules[rule] = customRulesSeverity;
+      //make sure that the dynamic plugin is added to the config when loading the linter
+      if (linterConfig?.extends?.indexOf('plugin:bp3-dynamic-rules') < 0) {
+        linterConfig.extends.push("plugin:bp3-dynamic-rules/all");
+      }
+      //make sure that each rule has a default severity if one was provided
+      if (customRulesSeverity) {
+        for (const rule in linterConfig.rules) {
+          if (rule.startsWith('dynamic-rules/')) {
+            linterConfig.rules[rule] = customRulesSeverity;
+          }
         }
       }
     }
@@ -475,7 +486,7 @@ async function main() {
     // Enumerate Files
     const files = await findFiles(pattern);
     if (files.length === 0) {
-      //throw new Error('No files found to lint.'); //exitWithError
+      //throw new Error('No files found to lint.');
       logger.warn('No files found to lint.');
       return;
     }
@@ -488,7 +499,7 @@ async function main() {
 
     // Final decision on exit code
     if (lintResults.totalErrors > 0) {
-      throw new Error(`Found ${lintResults.totalErrors} error(s).`); //exitWithError
+      throw new Error(`Found ${lintResults.totalErrors} error(s).`);
     } else {
       logger.info('Linting complete. No errors found.');
     }
