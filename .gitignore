@@ -7,6 +7,14 @@ config.json
 config.yml
 .DS_Store
 1
+.trash
+
+# Local dev files
+custom-bpmn-rules
+bpmnlint-runner/node_modules/
+bpmnlint-runner/bp3-dynamic-rules/node_modules/
+bpmnlint-runner/bp3-dynamic-rules/rules/*.js
+bpmnlint-runner/lint-report.*
 
 # Distribution / packaging
 build/
@@ -42,4 +50,3 @@ venv.bak/
 /package.json
 /package-lock.json
 packages.txt
-
