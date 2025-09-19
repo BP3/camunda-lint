@@ -1,45 +1,46 @@
 {
-  "name": "bpmnlint-runner",
-  "version": "0.0.1",
-  "description": "A simple runner for bpmnlint in order to better integrate with CI/CD pipelines and have custom reporting beyond the console",
-  "license": "MIT",
-  "author": "Filipe Pereira",
-  "type": "commonjs",
-  "main": "bpmnlint-runner.js",
-  "bin": {
-    "bpmn-linter": "./bpmnlint-runner.js"
-  },
-  "scripts": {
-    "start": "node ./bpmnlint-runner.js",
-    "format": "prettier --write .",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
-    "bp3-dynamic-rules": "file:bp3-dynamic-rules",
-    "bpmn-moddle": "^9.0.3",
-    "bpmnlint": "^11.6.0",
-    "bpmnlint-utils": "^1.1.1",
-    "chalk": "^4.1.2",
-    "cli-table3": "^0.6.5",
-    "junit-report-builder": "^5.1.1",
-    "tiny-glob": "^0.2.9",
-    "yargs": "^18.0.0"
-  },
-  "devDependencies": {
-    "prettier": "^2.7.1"
-  },
-  "keywords": [
-    "bpmn",
-    "lint",
-    "cli",
-    "linter",
-    "bpmnlint"
-  ],
-  "files": [
-    "bpmnlint-runner.js"
-  ],
-  "engines": {
-    "node": ">=20"
-  }
+	"name": "bpmnlint-runner",
+	"version": "0.0.1",
+	"description": "A simple runner for bpmnlint in order to better integrate with CI/CD pipelines and have custom reporting beyond the console",
+	"license": "MIT",
+	"author": "Filipe Pereira",
+	"type": "commonjs",
+	"main": "bpmnlint-runner.js",
+	"bin": {
+		"bpmn-linter": "./bpmnlint-runner.js"
+	},
+	"scripts": {
+		"start": "node ./bpmnlint-runner.js",
+		"format": "prettier --write .",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"dependencies": {
+		"bp3-dynamic-rules": "file:bp3-dynamic-rules",
+		"bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
+		"bpmn-moddle": "^9.0.3",
+		"bpmnlint": "^11.6.0",
+		"bpmnlint-utils": "^1.1.1",
+		"chalk": "^4.1.2",
+		"cli-table3": "^0.6.5",
+		"junit-report-builder": "^5.1.1",
+		"tiny-glob": "^0.2.9",
+		"yargs": "^18.0.0",
+		"bpmnlint-plugin-bp3global-bpmn-rules": "npm:@bp3global/bpmn-rules"
+	},
+	"devDependencies": {
+		"prettier": "^2.7.1"
+	},
+	"keywords": [
+		"bpmn",
+		"lint",
+		"cli",
+		"linter",
+		"bpmnlint"
+	],
+	"files": [
+		"bpmnlint-runner.js"
+	],
+	"engines": {
+		"node": ">=20"
+	}
 }

@@ -1,6 +1,6 @@
-const { Linter } = require('bpmnlint');
-const NodeResolver = require('bpmnlint/lib/resolver/node-resolver');
-const BpmnModdle = require('bpmn-moddle');
+const { Linter } = require('dmnlint');
+const NodeResolver = require('dmnlint/lib/resolver/node-resolver');
+const DmnModdle = require('dmn-moddle');
 const tinyglob = require('tiny-glob');
 const fs = require('fs');
 const path = require('path');
@@ -14,17 +14,17 @@ const Table = require('cli-table3');
 // --- Define and parse command-line arguments using yargs ---
 const argv = yargs(hideBin(process.argv))
   .usage('Usage: $0 <path-with-wildcards> [options]')
-  .command('$0 <pattern>', 'Lint BPMN files matching the pattern', (yargs) => {
+  .command('$0 <pattern>', 'Lint DMN files matching the pattern', (yargs) => {
     yargs.positional('pattern', {
-      describe: 'Pattern to match BPMN files (e.g., "/diagrams/*.bpmn")',
+      describe: 'Pattern to match DMN files (e.g., "/diagrams/*.dmn")',
       type: 'string',
     });
   })
   .option('config', {
     alias: 'c',
-    describe: 'Path to the .bpmnlintrc configuration file.\r\n(ex.: /project/config/.bpmnlintrc)',
+    describe: 'Path to the .dmnlintrc configuration file.\r\n(ex.: /project/config/.dmnlintrc)',
     type: 'string',
-    default: '.bpmnlintrc',
+    default: '.dmnlintrc',
   })
   .option('output', {
     alias: 'o',
@@ -89,7 +89,7 @@ function exitWithError(message) {
   process.exit(1);
 }
 
-// --- Prepare the dynamic bpmnlint plugin by copying custom rules and installing their dependencies ---
+// --- Prepare the dynamic dmnlint plugin by copying custom rules and installing their dependencies ---
 function prepareDynamicPlugin(customRulesPath, installDeps) {
     if (!customRulesPath) {
         logger.log('Custom rules path not provided. Skipping dynamic plugin generation.');
@@ -104,8 +104,8 @@ function prepareDynamicPlugin(customRulesPath, installDeps) {
     const sourcePackageJsonPath = path.join(sourceRulesPath, 'package.json');
     //prepare a couple of baseline dependencies
     let finalDeps = {
-      "bpmnlint": "^11.6.0",
-      "bpmnlint-utils": "^1.1.1"
+      "dmnlint": "^11.6.0",
+      "dmnlint-utils": "^1.1.1"
     };
     
     // Remove older/existing artifacts
@@ -136,18 +136,18 @@ function prepareDynamicPlugin(customRulesPath, installDeps) {
     // Install dependencies if needed
     if (Object.keys(finalDeps).length > 0) {
         if (installDeps) {
-          logger.info('Installing dependencies for dynamic plugin...');
-          try {
-            execSync('npm install', { cwd: pluginPath, stdio: 'pipe' });
-            logger.info('Dependencies installed successfully.');
-          } catch (error) {
-            throw new Error(`Failed to run 'npm install' in dynamic rules plugin directory: ${error.stderr.toString()}`);
-          }
-      } else {
-          throw new Error(
-            `Custom rules require dependencies, but they are not installed. ` +
-            `Please use the '-i' or '--install-custom-deps' flag.`
-          );
+            logger.info('Installing dependencies for dynamic plugin...');
+            try {
+                execSync('npm install', { cwd: pluginPath, stdio: 'pipe' });
+                logger.info('Dependencies installed successfully.');
+            } catch (error) {
+                throw new Error(`Failed to run 'npm install' in dynamic rules plugin directory: ${error.stderr.toString()}`);
+            }
+        } else {
+             throw new Error(
+                `Custom rules require dependencies, but they are not installed. ` +
+                `Please use the '-i' or '--install-custom-deps' flag.`
+            );
         }
     }
 }
@@ -172,8 +172,8 @@ function cleanupDynamicPlugin(doResetPackageJson = false) {
       const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
       const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
       const defaultDeps = {
-        "bpmnlint": "^11.6.0",
-        "bpmnlint-utils": "^1.1.1"
+        "dmnlint": "^11.6.0",
+        "dmnlint-utils": "^1.1.1"
       };
       pluginPackageJson.dependencies = finalDeps;
       fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
@@ -198,27 +198,27 @@ async function lintFiles(files, linter) {
   let totalErrors = 0;
   let totalWarnings = 0;
 
-  const moddle = new BpmnModdle();
+  const moddle = new DmnModdle();
 
   for (const file of files) {
     logger.log(`Linting ${file}...`);
-    const bpmnXML = fs.readFileSync(file, 'utf-8');
+    const dmnXML = fs.readFileSync(file, 'utf-8');
     try {
       logger.log('  - Parsing diagram...');
       const {
         rootElement,
         warnings: parseWarnings
-      } = await moddle.fromXML(bpmnXML);
+      } = await moddle.fromXML(dmnXML);
 
       if (parseWarnings && parseWarnings.length) {
         parseWarnings.forEach(warning => {
-          logger.log(`    - [import-warning] (bpmn-moddle) ${warning.element ? warning.element.id : 'FileLevel'}: ${warning.message}`);
+          logger.log(`    - [import-warning] (dmn-moddle) ${warning.element ? warning.element.id : 'FileLevel'}: ${warning.message}`);
           allIssues.push({
             file,
             id: warning.element?.id || 'FileLevel', 
             message: warning.message,
             category: 'import-warning',
-            rule: 'bpmn-moddle'
+            rule: 'dmn-moddle'
           });
           totalWarnings++;
         });
@@ -340,7 +340,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
         reportContent = `
           <html>
             <head>
-              <title>BPMN Lint Report</title>
+              <title>DMN Lint Report</title>
               <style>
                 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 2em; background-color: #f9f9f9; color: #333; }
                 h1, h2 { color: #111; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
@@ -357,7 +357,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
               </style>
             </head>
             <body>
-              <h1>BPMN Lint Report</h1>
+              <h1>DMN Lint Report</h1>
               <div class="summary">
                 <h2>Summary</h2>
                 <p><strong>Total Files Linted:</strong> ${lintedFiles.length}</p>
@@ -411,11 +411,11 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
 
       case 'junit':
         const builder = junitReportBuilder.newBuilder();
-        const suite = builder.testSuite().name('bpmnlint-report').time(0);
+        const suite = builder.testSuite().name('dmnlint-report').time(0);
         
         lintedFiles.forEach(file => {
             const issuesForFile = allIssues.filter(issue => issue.file === file);
-            const testCase = suite.testCase().className(file).name('BPMN Linting');
+            const testCase = suite.testCase().className(file).name('DMN Linting');
 
             if (issuesForFile.length > 0) {
                 const failureMessages = issuesForFile.map(issue => 
@@ -448,9 +448,9 @@ async function main() {
         dynamicPluginWasPrepared = true;
     }
 
-    // Load Configuration: default to load the bpmnlinter rules and the dynamic rules plugin
+    // Load Configuration: default to load the dmnlinter rules and the dynamic rules plugin
     let linterConfig = {
-        "extends": ["bpmnlint:recommended", "plugin:bp3-dynamic-rules/all"],
+        "extends": ["dmnlint:recommended", "plugin:bp3-dynamic-rules/all"],
         "rules": {
       }
     };
