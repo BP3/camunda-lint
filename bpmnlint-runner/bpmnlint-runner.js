@@ -91,93 +91,93 @@ function exitWithError(message) {
 
 // --- Prepare the dynamic bpmnlint plugin by copying custom rules and installing their dependencies ---
 function prepareDynamicPlugin(customRulesPath, installDeps) {
-    if (!customRulesPath) {
-        logger.log('Custom rules path not provided. Skipping dynamic plugin generation.');
-        return;
-    }
+  if (!customRulesPath) {
+      logger.log('Custom rules path not provided. Skipping dynamic plugin generation.');
+      return;
+  }
 
-    const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
-    const pluginRulesPath = path.join(pluginPath, 'rules');
-    const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
-    //const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
-    const sourceRulesPath = path.resolve(process.cwd(), customRulesPath);
-    const sourcePackageJsonPath = path.join(sourceRulesPath, 'package.json');
-    //prepare a couple of baseline dependencies
-    let finalDeps = {
-      "bpmnlint": "^11.6.0",
-      "bpmnlint-utils": "^1.1.1"
-    };
-    
-    // Remove older/existing artifacts
-    cleanupDynamicPlugin(false);
+  const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
+  const pluginRulesPath = path.join(pluginPath, 'rules');
+  const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
+  //const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
+  const sourceRulesPath = path.resolve(process.cwd(), customRulesPath);
+  const sourcePackageJsonPath = path.join(sourceRulesPath, 'package.json');
+  //prepare a couple of baseline dependencies
+  let finalDeps = {
+    "bpmnlint": "^11.6.0",
+    "bpmnlint-utils": "^1.1.1"
+  };
+  
+  // Remove older/existing artifacts
+  cleanupDynamicPlugin(false);
 
-    // Move any dependencies from the rules source to the plugin
-    const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
-    if (fs.existsSync(sourcePackageJsonPath)) {
-        const sourcePackageJson = JSON.parse(fs.readFileSync(sourcePackageJsonPath, 'utf-8'));
-        finalDeps = sourcePackageJson.dependencies || finalDeps;
-    }
-    pluginPackageJson.dependencies = finalDeps;
-    fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
+  // Move any dependencies from the rules source to the plugin
+  const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
+  if (fs.existsSync(sourcePackageJsonPath)) {
+      const sourcePackageJson = JSON.parse(fs.readFileSync(sourcePackageJsonPath, 'utf-8'));
+      finalDeps = sourcePackageJson.dependencies || finalDeps;
+  }
+  pluginPackageJson.dependencies = finalDeps;
+  fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
 
-    // Copy rule files from source to the plugin
-    logger.log(`Copying rules from ${sourceRulesPath} to ${pluginRulesPath}`);
-    const sourceAllFiles = fs.readdirSync(sourceRulesPath, { recursive: true });
-    const sourceRuleFiles = sourceAllFiles.filter(file => file.endsWith('.js') && !file.split(path.sep).includes('node_modules') && !file.split(path.sep).includes('.git'));
+  // Copy rule files from source to the plugin
+  logger.log(`Copying rules from ${sourceRulesPath} to ${pluginRulesPath}`);
+  const sourceAllFiles = fs.readdirSync(sourceRulesPath, { recursive: true });
+  const sourceRuleFiles = sourceAllFiles.filter(file => file.endsWith('.js') && !file.split(path.sep).includes('node_modules') && !file.split(path.sep).includes('.git'));
 
-    sourceRuleFiles.forEach(file => {
-        const sourceFile = path.join(sourceRulesPath, file);
-        const destFile = path.join(pluginRulesPath, file);
-        fs.mkdirSync(path.dirname(destFile), { recursive: true });
-        fs.copyFileSync(sourceFile, destFile);
-    });
-    logger.log(`Copied ${sourceRuleFiles.length} rule file(s).`);
+  sourceRuleFiles.forEach(file => {
+      const sourceFile = path.join(sourceRulesPath, file);
+      const destFile = path.join(pluginRulesPath, file);
+      fs.mkdirSync(path.dirname(destFile), { recursive: true });
+      fs.copyFileSync(sourceFile, destFile);
+  });
+  logger.log(`Copied ${sourceRuleFiles.length} rule file(s).`);
 
-    // Install dependencies if needed
-    if (Object.keys(finalDeps).length > 0) {
-        if (installDeps) {
-          logger.info('Installing dependencies for dynamic plugin...');
-          try {
-            execSync('npm install', { cwd: pluginPath, stdio: 'pipe' });
-            logger.info('Dependencies installed successfully.');
-          } catch (error) {
-            throw new Error(`Failed to run 'npm install' in dynamic rules plugin directory: ${error.stderr.toString()}`);
-          }
-      } else {
-          throw new Error(
-            `Custom rules require dependencies, but they are not installed. ` +
-            `Please use the '-i' or '--install-custom-deps' flag.`
-          );
+  // Install dependencies if needed
+  if (Object.keys(finalDeps).length > 0) {
+      if (installDeps) {
+        logger.info('Installing dependencies for dynamic plugin...');
+        try {
+          execSync('npm install', { cwd: pluginPath, stdio: 'pipe' });
+          logger.info('Dependencies installed successfully.');
+        } catch (error) {
+          throw new Error(`Failed to run 'npm install' in dynamic rules plugin directory: ${error.stderr.toString()}`);
         }
-    }
+    } else {
+        throw new Error(
+          `Custom rules require dependencies, but they are not installed. ` +
+          `Please use the '-i' or '--install-custom-deps' flag.`
+        );
+      }
+  }
 }
 
 // --- Cleans up the artifacts created by prepareDynamicPlugin ---
 function cleanupDynamicPlugin(doResetPackageJson = false) {
-    logger.log('Cleaning up dynamic plugin environment...');
-    const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
-    const pluginRulesPath = path.join(pluginPath, 'rules');
-    const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
-    
-    if (fs.existsSync(pluginRulesPath)) {
-      fs.rmSync(pluginRulesPath, { recursive: true, force: true });
-    }
-    if (fs.existsSync(pluginNodeModulesPath)) {
-        fs.rmSync(pluginNodeModulesPath, { recursive: true, force: true });
-    }
-    fs.mkdirSync(pluginRulesPath);
-    
-    if (doResetPackageJson) {
-      // Restore original package.json
-      const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
-      const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
-      const defaultDeps = {
-        "bpmnlint": "^11.6.0",
-        "bpmnlint-utils": "^1.1.1"
-      };
-      pluginPackageJson.dependencies = finalDeps;
-      fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
-    }
+  logger.log('Cleaning up dynamic plugin environment...');
+  const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
+  const pluginRulesPath = path.join(pluginPath, 'rules');
+  const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
+  
+  if (fs.existsSync(pluginRulesPath)) {
+    fs.rmSync(pluginRulesPath, { recursive: true, force: true });
+  }
+  if (fs.existsSync(pluginNodeModulesPath)) {
+      fs.rmSync(pluginNodeModulesPath, { recursive: true, force: true });
+  }
+  fs.mkdirSync(pluginRulesPath);
+  
+  if (doResetPackageJson) {
+    // Restore original package.json
+    const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
+    const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
+    const defaultDeps = {
+      "bpmnlint": "^11.6.0",
+      "bpmnlint-utils": "^1.1.1"
+    };
+    pluginPackageJson.dependencies = finalDeps;
+    fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
+  }
 }
 
 async function findFiles(pattern) {
@@ -236,7 +236,7 @@ async function lintFiles(files, linter) {
         });
       }
       if (Object.keys(report).length === 0) {
-        logger.log('  No issues found.');
+        logger.log('No issues found.');
       }
     } catch (lintError) {
       logger.error(`A critical error occurred while processing ${file}:`, lintError.message);
@@ -438,6 +438,15 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
 // --- Main Execution Logic ---
 async function main() {
   const { pattern, config: configPath, output: outputPath, format, customRulesPath, customRulesSeverity, installCustomDeps } = argv;
+  logger.log(`Lint runner arguments parsed: ${JSON.stringify({
+    files: pattern,
+    config: configPath,
+    output: outputPath,
+    format: format,
+    customRulesPath: customRulesPath,
+    customRulesSeverity: customRulesSeverity,
+    installCustomDeps: installCustomDeps
+  })}`);
 
   let dynamicPluginWasPrepared = false;
 
@@ -485,7 +494,9 @@ async function main() {
     });
 
     // Enumerate Files
+    logger.log(`Searching for files using the pattern "${pattern}"`);
     const files = await findFiles(pattern);
+    logger.log(`Files found: [${files.join(', ')}]`);
     if (files.length === 0) {
       //throw new Error('No files found to lint.');
       logger.warn('No files found to lint.');

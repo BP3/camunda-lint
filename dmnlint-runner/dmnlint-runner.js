@@ -154,30 +154,30 @@ function prepareDynamicPlugin(customRulesPath, installDeps) {
 
 // --- Cleans up the artifacts created by prepareDynamicPlugin ---
 function cleanupDynamicPlugin(doResetPackageJson = false) {
-    logger.log('Cleaning up dynamic plugin environment...');
-    const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
-    const pluginRulesPath = path.join(pluginPath, 'rules');
-    const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
-    
-    if (fs.existsSync(pluginRulesPath)) {
-      fs.rmSync(pluginRulesPath, { recursive: true, force: true });
-    }
-    if (fs.existsSync(pluginNodeModulesPath)) {
-        fs.rmSync(pluginNodeModulesPath, { recursive: true, force: true });
-    }
-    fs.mkdirSync(pluginRulesPath);
-    
-    if (doResetPackageJson) {
-      // Restore original package.json
-      const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
-      const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
-      const defaultDeps = {
-        "dmnlint": "^11.6.0",
-        "dmnlint-utils": "^1.1.1"
-      };
-      pluginPackageJson.dependencies = finalDeps;
-      fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
-    }
+  logger.log('Cleaning up dynamic plugin environment...');
+  const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
+  const pluginRulesPath = path.join(pluginPath, 'rules');
+  const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
+  
+  if (fs.existsSync(pluginRulesPath)) {
+    fs.rmSync(pluginRulesPath, { recursive: true, force: true });
+  }
+  if (fs.existsSync(pluginNodeModulesPath)) {
+      fs.rmSync(pluginNodeModulesPath, { recursive: true, force: true });
+  }
+  fs.mkdirSync(pluginRulesPath);
+  
+  if (doResetPackageJson) {
+    // Restore original package.json
+    const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
+    const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
+    const defaultDeps = {
+      "dmnlint": "^11.6.0",
+      "dmnlint-utils": "^1.1.1"
+    };
+    pluginPackageJson.dependencies = finalDeps;
+    fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
+  }
 }
 
 async function findFiles(pattern) {
@@ -438,6 +438,15 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
 // --- Main Execution Logic ---
 async function main() {
   const { pattern, config: configPath, output: outputPath, format, customRulesPath, customRulesSeverity, installCustomDeps } = argv;
+  logger.log(`Lint runner arguments parsed: ${JSON.stringify({
+    files: pattern,
+    config: configPath,
+    output: outputPath,
+    format: format,
+    customRulesPath: customRulesPath,
+    customRulesSeverity: customRulesSeverity,
+    installCustomDeps: installCustomDeps
+  })}`);
 
   let dynamicPluginWasPrepared = false;
 
@@ -485,7 +494,9 @@ async function main() {
     });
 
     // Enumerate Files
+    logger.log(`Searching for files using the pattern "${pattern}"`);
     const files = await findFiles(pattern);
+    logger.log(`Files found: [${files.join(', ')}]`);
     if (files.length === 0) {
       //throw new Error('No files found to lint.');
       logger.warn('No files found to lint.');

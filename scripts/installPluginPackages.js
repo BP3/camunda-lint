@@ -3,10 +3,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const process = require('node:process');
 const { execSync } = require('node:child_process');
+
+const LINTER_TYPE_LIST = ['bpmn', 'dmn'];
 const BPMN_PREFIX = 'bpmn';
 const DMN_PREFIX = 'dmn';
-const BPMNLINT_RUNNER = 'bpmnlint-runner';
-const DMNLINT_RUNNER = 'dmnlint-runner';
 const PACKAGE_JSON = 'package.json';
 const defaultBpmnLintConfig = {
   "extends": ["bpmnlint:recommended"],
@@ -15,6 +15,34 @@ const defaultBpmnLintConfig = {
 const defaultDmnLintConfig = {
   "extends": ["dmnlint:recommended"],
   "rules": {}
+};
+
+// --- Zero-Dependency Color Logging using ANSI Escape Codes ---
+const ANSI_COLORS = {
+  reset: "\x1b[0m",
+  bold: "\x1b[1m",
+  gray: "\x1b[90m",
+  red: "\x1b[91m",   // Bright Red
+  yellow: "\x1b[93m", // Bright Yellow
+  blue: "\x1b[94m",  // Bright Blue
+};
+
+const logger = {
+  isVerbose: false,
+  log: (...args) => {
+    if (logger.isVerbose) {
+      console.log(`${ANSI_COLORS.gray}VERBOSE:${ANSI_COLORS.reset}`, ...args);
+    }
+  },
+  info: (...args) => {
+    console.log(`${ANSI_COLORS.bold}${ANSI_COLORS.blue}INFO:${ANSI_COLORS.reset}`, ...args);
+  },
+  warn: (...args) => {
+    console.warn(`${ANSI_COLORS.bold}${ANSI_COLORS.yellow}WARN:${ANSI_COLORS.reset}`, ...args);
+  },
+  error: (...args) => {
+    console.error(`${ANSI_COLORS.bold}${ANSI_COLORS.red}ERROR:${ANSI_COLORS.reset}`, ...args);
+  }
 };
 
 // Extract the details from a possible plugin name in the lintrc file to setup dependencies correctly
@@ -146,7 +174,7 @@ function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
   // read the package json and write it
   //
   if (additionalDependencies != null && additionalDependencies.length > 0) {
-	let packageJsonFilepath = path.join(process.cwd(), lintRunner, PACKAGE_JSON);
+	let packageJsonFilepath = path.resolve(process.cwd(), lintRunner, PACKAGE_JSON);
     let currentPackageJson = JSON.parse(fs.readFileSync(packageJsonFilepath));
 	for (var idx = 0; idx < additionalDependencies.length; ++idx) {
 	  currentPackageJson.dependencies[additionalDependencies[idx].dependencyName] = additionalDependencies[idx].dependencyValue;
@@ -159,34 +187,35 @@ function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
 
   // present the plugins getting installed for this
   //
-  console.log(`Installing plugins referenced by ${filename}: [ ${npmPackages.join(', ')} ]`);
+  logger.info(`Installing plugins referenced by ${filename}: [ ${npmPackages.join(', ')} ]`);
   try {
 	// NOTE: not storing the result of this call nor handling the stdout nor stderr 
 	// 		 because applying any handling to the "npm install" command won't do anything
 	//execSync('npm install > /dev/null 2>&1 || (echo "Plugin installation failed" && exit 1)', {cwd: path.join(process.cwd(), lintRunner)});
-	execSync('npm install', { cwd: path.join(process.cwd(), lintRunner), stdio: 'pipe' });
-	console.info('Dependencies installed successfully.');
+	execSync('npm install', { cwd: path.resolve(process.cwd(), lintRunner), stdio: 'pipe' });
+	logger.info('Dependencies installed successfully.');
   } catch(err) {
-    console.error('ERROR: ' + err);
-	console.error('\nERROR: Plugin installation failed!\n');
+    logger.error('ERROR: ' + err);
+	logger.error('\nERROR: Plugin installation failed!\n');
   }
 }
 
 // Show the help text on how to use this utility
 //
 function showHelp() {
-  console.error(`
+  logger.error(`
     A utility that reads a lintrc file, generates/amends the package.json accordingly, and installs all the packages for the selected linter.
 
-    Usage: node installPluginPackages.js --type=<bpmn|dmn> --config=<path to lintrc file>
+    Usage: node installPluginPackages.js --type=<bpmn|dmn> --config=<path to lintrc file> --runnerpath=<path to the lint runner>
 
     Required Arguments:
-      --type=<bpmn|dmn>                Specifies the linter type to initialize.
-      --config=<path to lintrc file>   Specifies the lintrc file path
+      --type=<bpmn|dmn>                        Specifies the linter type to initialize.
+      --config=<path to lintrc file>           Specifies the lintrc file path
+      --runnerpath=<path to the lint runner>   Specifies the path to the lint runner directory, where the package.json is
 
     Examples:
-      node installPluginPackages.js --type=bpmn --config=.bpmnlintrc
-      node installPluginPackages.js --type=dmn --config=.dmnlintrc
+      node installPluginPackages.js --type=bpmn --config=.bpmnlintrc --runnerpath=/app/bpmnlint-runner
+      node installPluginPackages.js --type=dmn --config=.dmnlintrc --runnerpath=/app/dmnlint-runner
   `);
   process.exit(1);
 }
@@ -218,26 +247,29 @@ function parseArgs() {
 //
 let args = parseArgs();
 
-if (process.argv.length > 3
-    && process.argv[2].toLowerCase() != 'help'
-    && fs.existsSync(args["config"])
-    ) {
+if (process.argv.length > 4 && args != null) {
 
-  if (args != null && args["type"].toLowerCase() == BPMN_PREFIX) {
-    prepareLintRunner(args["config"], BPMN_PREFIX, defaultBpmnLintConfig, BPMNLINT_RUNNER);
-  } else if (args != null && args["type"].toLowerCase() == DMN_PREFIX) {
-    prepareLintRunner(args["config"], DMN_PREFIX, defaultDmnLintConfig, DMNLINT_RUNNER);
-  } else {
-    showHelp();
+  if (!LINTER_TYPE_LIST.includes(args["type"])) {
+    logger.error(`Invalid linter type selected: ${args["type"]}. Please select one from the options [${LINTER_TYPE_LIST.join(', ')}]\n`);
   }
+
+  if (args["config"] == null || !fs.existsSync(args["config"])) {
+	  logger.error(`Invalid path to lintrc file: ${args["config"]}.\n`);
+  }
+
+  if (args["runnerpath"] == null || !fs.existsSync(args["runnerpath"])) {
+	  logger.error(`Invalid path to lint the lint runner: ${args["runnerpath"]}.\n`);
+  }
+
+  let defaultLintConfig = args["type"] == BPMN_PREFIX ? defaultBpmnLintConfig : defaultDmnLintConfig;
+
+  prepareLintRunner(args["config"], args["type"], defaultLintConfig, args["runnerpath"]);
 
 } else {
   // present any error first
   //
-  if (process.argv.length <= 3) {
-	console.error(`\n\n    ERROR: please provide a lintrc file\n`);
-  } else if(process.argv[2].toLowerCase() != 'help' && !fs.existsSync(args["config"])) {
-	console.error(`\n\n    ERROR: invalid path to lintrc file: ${args["config"]}\n`);
+  if (process.argv.length <= 4 || args == null) {
+	  logger.error(`Please provide all the required parameters.\n`);
   }
   // if there wasn't an error, but just a help request
   //

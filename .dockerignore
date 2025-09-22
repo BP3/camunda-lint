@@ -1,3 +1,5 @@
 *
 !docker-entrypoint.sh
 !/scripts
+!/bpmnlint-runner
+!/dmnlint-runner

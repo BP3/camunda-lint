@@ -25,10 +25,18 @@ WORKDIR /app
 COPY --chmod=755 docker-entrypoint.sh .
 COPY --chown=bp3user:bp3 --chmod=755 scripts/*.sh scripts/
 COPY --chown=bp3user:bp3 --chmod=755 scripts/*.js scripts/
+COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/*.js* bpmnlint-runner/
+COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/*.js* dmnlint-runner/
+COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/bp3-dynamic-rules/*.js* bpmnlint-runner/bp3-dynamic-rules/
+COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/bp3-dynamic-rules/*.js* dmnlint-runner/bp3-dynamic-rules/
 # Added these because kaniko does not support the --chmod syntax yet and ignores it
 RUN chmod 755 ./docker-entrypoint.sh && \
     chmod 755 ./scripts/*.sh && \
-    chmod 755 ./scripts/*.js
+    chmod 755 ./scripts/*.js && \
+    chmod 755 ./bpmnlint-runner/*.js* && \
+    chmod 755 ./dmnlint-runner/*.js* && \
+    chmod 755 ./bpmnlint-runner/bp3-dynamic-rules/*.js* && \
+    chmod 755 ./dmnlint-runner/bp3-dynamic-rules/*.js*
 
 USER bp3user
 
@@ -37,4 +45,3 @@ WORKDIR /local
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["help"]
-

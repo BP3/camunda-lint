@@ -3,21 +3,52 @@ const fs = require('node:fs');
 const path = require('node:path');
 const process = require('node:process');
 const { execSync } = require('node:child_process');
-const BPMN_PREFIX = 'bpmn';
-const DMN_PREFIX = 'dmn';
-const BPMNLINT_RUNNER = 'bpmnlint-runner';
-const DMNLINT_RUNNER = 'dmnlint-runner';
 
+// --- Constants for clarity and maintainability ---
+const LINTER_TYPE_LIST = ['bpmn', 'dmn'];
+const LINT_RUNNERS = {
+    "bpmn": "bpmnlint-runner",
+    "dmn": "dmnlint-runner"
+}
 const REVISED_SUFFIX = 'Revised';
 
 const argumentType = 'type';
 const argumentConfig = 'config';
+const argumentFilesToLint = 'files';
+const argumentRunnerPath = 'runnerpath';
 const argumentOutputPath = 'output';
 const argumentFormat = 'format';
 const argumentRulesPath = 'rulespath';
 const argumentRulesSeverity = 'rulesseverity';
 const argumentVerbose = 'verbose';
-const argumentFilesToLint = 'files';
+
+// --- Zero-Dependency Color Logging using ANSI Escape Codes ---
+const ANSI_COLORS = {
+  reset: "\x1b[0m",
+  bold: "\x1b[1m",
+  gray: "\x1b[90m",
+  red: "\x1b[91m",   // Bright Red
+  yellow: "\x1b[93m", // Bright Yellow
+  blue: "\x1b[94m",  // Bright Blue
+};
+
+const logger = {
+  isVerbose: false,
+  log: (...args) => {
+    if (logger.isVerbose) {
+      console.log(`${ANSI_COLORS.gray}VERBOSE:${ANSI_COLORS.reset}`, ...args);
+    }
+  },
+  info: (...args) => {
+    console.log(`${ANSI_COLORS.bold}${ANSI_COLORS.blue}INFO:${ANSI_COLORS.reset}`, ...args);
+  },
+  warn: (...args) => {
+    console.warn(`${ANSI_COLORS.bold}${ANSI_COLORS.yellow}WARN:${ANSI_COLORS.reset}`, ...args);
+  },
+  error: (...args) => {
+    console.error(`${ANSI_COLORS.bold}${ANSI_COLORS.red}ERROR:${ANSI_COLORS.reset}`, ...args);
+  }
+};
 
 // Show the help text on how to use this utility
 //
@@ -29,7 +60,7 @@ function showHelp() {
 
     A utility that configures and runs either the bpmn or dmn linter.
 
-    Usage: node runLinter.js --${argumentType}=<bpmn|dmn> --${argumentConfig}=<path to lintrc file> --${argumentFilesToLint}=<path to the files to be linted>
+    Usage: node runLinter.js --${argumentType}=<bpmn|dmn> --${argumentConfig}=<path to lintrc file> --${argumentFilesToLint}=<path to the files to be linted> --${argumentRunnerPath}=<path to the lint runner>
 
     Required Arguments:
       --${argumentType}=<bpmn|dmn>
@@ -39,6 +70,8 @@ function showHelp() {
                                                                     NOTE: please use an absolute path!
       --${argumentFilesToLint}=<path to the files to be linted>
                                                                     Specifies the path to the files to be linted.
+      --${argumentRunnerPath}=<path to the lint runner>
+                                                                    Specifies the path to the lint runner files, where package.json is
 
     Optional Arguments
       --${argumentOutputPath}=<output file path>
@@ -66,13 +99,15 @@ function showHelp() {
   process.exit(1);
 }
 
-// Exit while showing an error to interrupt any pipeline
+// Exit while showing an error to interrupt any pipeline and showing help if relevant
 //
-function exitWithError(doShowHelp, errorMessage, errorDetails) {
-  console.error(`\n\n    ERROR: ${errorMessage}${errorDetails != null ? `\n           Detailed ${errorDetails}` : ``}`);
-  if (doShowHelp) {
-    showHelp();
-  }
+function exitWithErrorAndHelp(errorMessage, errorDetails) {
+  logger.error(`${errorMessage}${errorDetails != null ? `\n       Detailed ${errorDetails}\n` : ``}`);
+  showHelp();
+}
+
+function exitWithError(errorMessage, errorDetails) {
+  logger.error(`${errorMessage}${errorDetails != null ? `\n       Detailed ${errorDetails}\n` : ``}`);
   process.exit(1);
 }
 
@@ -102,13 +137,13 @@ function parseArgs() {
 // Run the selected linter with the corresponding arguments
 //
 function runLinter(args) {
-  const configFilename = fs.existsSync(`${path.join(process.cwd(), args[argumentConfig])}${REVISED_SUFFIX}`) 
-                           ? `${path.join(process.cwd(), args[argumentConfig])}${REVISED_SUFFIX}`
-                           : path.join(process.cwd(), args[argumentConfig])
+  const expectedConfigPath = path.resolve(process.cwd(), args[argumentConfig]); //path.join(process.cwd(), args[argumentConfig])
+  const configFilename = fs.existsSync(`${expectedConfigPath}${REVISED_SUFFIX}`) 
+                           ? `${expectedConfigPath}${REVISED_SUFFIX}`
+                           : expectedConfigPath
                          ;
   if (!fs.existsSync(configFilename)) {
-    console.error(`\n\n    ERROR: please provide a lintrc file\n`);
-    showHelp();
+    exitWithErrorAndHelp(`ERROR: please provide a lintrc file\n`);
   } else {
     // the configs and parameters are all ready now
     let cliCommand = `-c ${configFilename}`
@@ -118,60 +153,70 @@ function runLinter(args) {
                     + (args[argumentRulesPath] ? ` -r ${args[argumentRulesPath]} -i` : ``)
                     + (args[argumentRulesSeverity] ? ` -s ${args[argumentRulesSeverity]}` : ``);
 
-    // determine the lint runner
-    let lintRunner = null;
-    if (args[argumentType] == BPMN_PREFIX) {
-      lintRunner = BPMNLINT_RUNNER;
-    } else if (args[argumentType] == DMN_PREFIX) {
-      lintRunner = DMNLINT_RUNNER;
-    } else {
-      exitWithError(true, `Invalid linter type.`, null);
+    // determine the linter type
+    if (!LINTER_TYPE_LIST.includes(args[argumentType])) {
+      exitWithErrorAndHelp(`Invalid linter type: ${args[argumentType]}`);
+    }
+
+    //determine the lint runner path
+    const lintRunner = `${args[argumentType]}lint-runner.js`;
+    let lintRunnerPath = path.resolve(process.cwd(), args[argumentRunnerPath]);
+    let lintRunnerExec = path.resolve(lintRunnerPath, lintRunner);
+    if (!fs.existsSync(lintRunnerExec)) {
+      exitWithErrorAndHelp(`Invalid lint runner path "${args[argumentRunnerPath]}". Could not find "${lintRunnerExec}"`);
     }
 
     // set the command to run if a valid type was provided
     //
-    cliCommand = `node ${path.join(process.cwd(), lintRunner, lintRunner + '.js')}`
-                   + ` ${path.resolve(process.cwd(), args[argumentFilesToLint])}`
+    cliCommand = `node ${lintRunnerExec}`
+                   + ` "${path.resolve(process.cwd(), args[argumentFilesToLint])}"`
                    + ` ${cliCommand}`;
 
     try {
       if (args[argumentVerbose]) {
-        console.log(`\nVERBOSE: Running '${cliCommand}' from '${path.join(process.cwd(), lintRunner)}'`);
+        logger.log(`\nVERBOSE: Running '${cliCommand}' from '${path.resolve(process.cwd(), lintRunner)}'`);
       }
-      execSync(cliCommand, {cwd: path.join(process.cwd(), lintRunner), stdio: 'inherit'});
+      execSync(cliCommand, {cwd: lintRunnerPath, stdio: 'inherit'});
     } catch(err) {
-      exitWithError(false, `There was an error while running the linter.`, err);
+      exitWithError(`There was an error while running the linter.`, err);
     }
   }
 }
 
-// install plugins if lintrc provided or show some help
+// run the appropriate linter with the provided arguments
 //
 let args = parseArgs();
 
-if (process.argv.length > 4) {
+// VERBOSE: doing a type check in case a string is provided or just the 
+//          parameter without value, this simplifies additional scripting
+//
+logger.isVerbose = typeof args[argumentVerbose] == 'string' ? args[argumentVerbose] == 'true' : !!args[argumentVerbose];
 
-  if (!fs.existsSync(args[argumentConfig])) {
-    exitWithError(true, `Please provide a valid lintrc file.`, null);
+logger.log('Arguments Parsed:', JSON.stringify(args));
+
+if (process.argv.length > 5) {
+  if (!LINTER_TYPE_LIST.includes(args[argumentType])) {
+    exitWithErrorAndHelp(`Invalid linter type '${args[argumentType]}' provided. Must be one of: ${LINTER_TYPE_LIST.join(', ')}`);
+  }
+
+  if (!fs.existsSync(path.resolve(process.cwd(), args[argumentConfig]))
+      && !fs.existsSync(`${path.resolve(process.cwd(), args[argumentConfig])}${REVISED_SUFFIX}`)) {
+    exitWithErrorAndHelp(`The specified config file is not valid, '${path.resolve(process.cwd(), args[argumentConfig])}' does not exist.`);
   }
 
   if (args[argumentFilesToLint] == null) {
-    exitWithError(true, `Please provide files to be linted.`, null);
+    exitWithErrorAndHelp(`Please provide files to be linted.`);
   }
 
   runLinter(args);
 
 } else {
-  // present any error first
+  // present any additional error
   //
-  if (process.argv[2].toLowerCase().match(/((\-)+)?help/igm) != null) {
-    showHelp();
-  } else if (process.argv.length <= 4) {
-	exitWithError(true, `Please provide all the required parameters.`, null);
-  } else if(!fs.existsSync(args[argumentConfig])) {
-    exitWithError(true, `Invalid path to lintrc file: ${args[argumentConfig]}.`, null);
+  if (process.argv.length <= 5) {
+	exitWithErrorAndHelp(`Please provide all the required parameters.`);
   }
-  // if there wasn't an error, but just a help request
+  // fallback, just present a help request
   //
   showHelp();
 }

@@ -48,13 +48,16 @@ esac
 if [ $mode_bpmn = 1 ]; then
   echo ""
   # initialize the folder to run the linter if it has not been initialized for bpmnlint
-  if [ ! -f .bpmnlintrc ]; then
+  if [ ! -f "${BPMN_PATH}"/.bpmnlintrc ]; then
     bpmnlint --init
   fi
+  echo "Installing BPMN lint runner dependencies"
   # retrieve and install any plugins that were provided as part of .bpmnlintrc and generates a .bpmnlintrcRevised
-  node "${SCRIPT_DIR}"/installPluginPackages.js --type=bpmn --config=.bpmnlintrc
+  node "${SCRIPT_DIR}"/installPluginPackages.js --type=bpmn --config="${BPMN_PATH}"/.bpmnlintrc --runnerpath=/app/bpmnlint-runner
+  echo ""
+  echo "Running the linter"
   # run the linter
-  node "${SCRIPT_DIR}"/runLinter.js --files=*.bpmn --type=bpmn --config=.bpmnlintrc --output ./bpmnlint-report --format junit
+  node "${SCRIPT_DIR}"/runLinter.js --files="${BPMN_PATH}"/*.bpmn --type=bpmn --config="${BPMN_PATH}"/.bpmnlintrc --output="${OUTPUT_PATH}"/"${BPMN_REPORT_FILENAME}" --format="${REPORT_FORMAT}" --verbose="${VERBOSE}" --runnerpath=/app/bpmnlint-runner
   # TODO: --rulespath "${ADHOC_BPMN_RULES_PATH}" --rulesseverity warn 
 
   # # run bpmnlint for the current or a separate directory based on the PROJECT_DIR environment variable being set
@@ -73,9 +76,10 @@ if [ $mode_dmn = 1 ]; then
     dmnlint --init
   fi
   # retrieve and install any plugins that were provided as part of .dmnlintrc
-  node "${SCRIPT_DIR}"/installPluginPackages.js --type=dmn --config=.dmnlintrc
+  node "${SCRIPT_DIR}"/installPluginPackages.js --type=dmn --config=.dmnlintrc --runnerpath=/app/dmnlint-runner
   # run the linter
-  node "${SCRIPT_DIR}"/runLinter.js --files=*.dmn --type=dmn --config=.bpmnlintrc --output ./dmnlint-report --format junit
+  # node "${SCRIPT_DIR}"/runLinter.js --files=*.dmn --type=dmn --config=.bpmnlintrc --output ./dmnlint-report --format junit
+  node "${SCRIPT_DIR}"/runLinter.js --files="${DMN_PATH}"/*.dmn --type=dmn --config="${DMN_PATH}"/.dmnlintrc --output="${OUTPUT_PATH}"/"${DMN_REPORT_FILENAME}" --format="${REPORT_FORMAT}" --verbose="${VERBOSE}" --runnerpath=/app/dmnlint-runner
   # TODO: --rulespath "${ADHOC_DMN_RULES_PATH}" --rulesseverity warn 
 
   # # run dmnlint for the current or a separate directory based on the PROJECT_DIR environment variable being set
