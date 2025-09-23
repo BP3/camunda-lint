@@ -50,6 +50,7 @@ if [ $mode_bpmn = 1 ]; then
     (cd "${BPMN_PATH}"; bpmnlint --init)
   fi
   # retrieve and install any plugins that were provided as part of .bpmnlintrc and generates a .bpmnlintrcRevised
+  echo ""
   echo "Installing the BPMN lint runner dependencies"
   echo "---------------------------------------------------"
   node "${SCRIPT_DIR}"/installPluginPackages.js --type=bpmn --config="${BPMN_PATH}"/.bpmnlintrc --runnerpath=/app/bpmnlint-runner
@@ -58,7 +59,7 @@ if [ $mode_bpmn = 1 ]; then
   echo "---------------------------------------------------"
   # prepare params
   BPMN_LINTER_ARGS=""
-  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --files=${BPMN_PATH}/*.bpmn"
+  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --files=${BPMN_PATH}/**/*.bpmn"
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --type=bpmn"
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=${BPMN_PATH}/.bpmnlintrc"
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --runnerpath=/app/bpmnlint-runner"
@@ -96,6 +97,7 @@ if [ $mode_dmn = 1 ]; then
     (cd "${DMN_PATH}"; dmnlint --init)
   fi
   # retrieve and install any plugins that were provided as part of .dmnlintrc
+  echo ""
   echo "Installing the DMN lint runner dependencies"
   echo "---------------------------------------------------"
   node "${SCRIPT_DIR}"/installPluginPackages.js --type=dmn --config="${DMN_PATH}"/.dmnlintrc --runnerpath=/app/dmnlint-runner
@@ -105,7 +107,7 @@ if [ $mode_dmn = 1 ]; then
   echo "---------------------------------------------------"
   # prepare params
   DMN_LINTER_ARGS=""
-  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --files=${DMN_PATH}/*.dmn"
+  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --files=${DMN_PATH}/**/*.dmn"
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --type=dmn"
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=${DMN_PATH}/.dmnlintrc"
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --runnerpath=/app/dmnlint-runner"

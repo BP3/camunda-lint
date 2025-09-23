@@ -11,6 +11,11 @@ const { execSync } = require('child_process');
 const chalk = require('chalk');
 const Table = require('cli-table3');
 
+const defaultPackageJsonDependencies = {
+  "dmnlint": "^0.2.0",
+  "dmnlint-utils": "^0.1.0"
+};
+
 // --- Define and parse command-line arguments using yargs ---
 const argv = yargs(hideBin(process.argv))
   .usage('Usage: $0 <path-with-wildcards> [options]')
@@ -103,10 +108,7 @@ function prepareDynamicPlugin(customRulesPath, installDeps) {
   const sourceRulesPath = path.resolve(process.cwd(), customRulesPath);
   const sourcePackageJsonPath = path.join(sourceRulesPath, 'package.json');
   //prepare a couple of baseline dependencies
-  let finalDeps = {
-    "dmnlint": "^0.2.0",
-    "dmnlint-utils": "^0.1.0"
-  };
+  let finalDeps = JSON.parse(JSON.stringify(defaultPackageJsonDependencies));
   
   // Remove older/existing artifacts
   cleanupDynamicPlugin(false);
@@ -171,11 +173,7 @@ function cleanupDynamicPlugin(doResetPackageJson = false) {
     // Restore original package.json
     const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
     const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
-    const defaultDeps = {
-      "dmnlint": "^0.2.0",
-      "dmnlint-utils": "^0.1.0"
-    };
-    pluginPackageJson.dependencies = defaultDeps;
+    pluginPackageJson.dependencies = defaultPackageJsonDependencies;
     fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
   }
 }
