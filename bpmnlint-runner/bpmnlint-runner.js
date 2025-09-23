@@ -175,7 +175,7 @@ function cleanupDynamicPlugin(doResetPackageJson = false) {
       "bpmnlint": "^11.6.0",
       "bpmnlint-utils": "^1.1.1"
     };
-    pluginPackageJson.dependencies = finalDeps;
+    pluginPackageJson.dependencies = defaultDeps;
     fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
   }
 }

@@ -175,7 +175,7 @@ function cleanupDynamicPlugin(doResetPackageJson = false) {
       "dmnlint": "^0.2.0",
       "dmnlint-utils": "^0.1.0"
     };
-    pluginPackageJson.dependencies = finalDeps;
+    pluginPackageJson.dependencies = defaultDeps;
     fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
   }
 }
