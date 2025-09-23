@@ -91,65 +91,65 @@ function exitWithError(message) {
 
 // --- Prepare the dynamic dmnlint plugin by copying custom rules and installing their dependencies ---
 function prepareDynamicPlugin(customRulesPath, installDeps) {
-    if (!customRulesPath) {
-        logger.log('Custom rules path not provided. Skipping dynamic plugin generation.');
-        return;
+  if (!customRulesPath) {
+      logger.log('Custom rules path not provided. Skipping dynamic plugin generation.');
+      return;
+  }
+
+  const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
+  const pluginRulesPath = path.join(pluginPath, 'rules');
+  const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
+  //const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
+  const sourceRulesPath = path.resolve(process.cwd(), customRulesPath);
+  const sourcePackageJsonPath = path.join(sourceRulesPath, 'package.json');
+  //prepare a couple of baseline dependencies
+  let finalDeps = {
+    "dmnlint": "^0.2.0",
+    "dmnlint-utils": "^0.1.0"
+  };
+  
+  // Remove older/existing artifacts
+  cleanupDynamicPlugin(false);
+
+  // Move any dependencies from the rules source to the plugin
+  const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
+  if (fs.existsSync(sourcePackageJsonPath)) {
+    const sourcePackageJson = JSON.parse(fs.readFileSync(sourcePackageJsonPath, 'utf-8'));
+    finalDeps = sourcePackageJson.dependencies || finalDeps;
+  }
+  pluginPackageJson.dependencies = finalDeps;
+  fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
+
+  // Copy rule files from source to the plugin
+  logger.log(`Copying rules from ${sourceRulesPath} to ${pluginRulesPath}`);
+  const sourceAllFiles = fs.readdirSync(sourceRulesPath, { recursive: true });
+  const sourceRuleFiles = sourceAllFiles.filter(file => file.endsWith('.js') && !file.split(path.sep).includes('node_modules') && !file.split(path.sep).includes('.git'));
+
+  sourceRuleFiles.forEach(file => {
+    const sourceFile = path.join(sourceRulesPath, file);
+    const destFile = path.join(pluginRulesPath, file);
+    fs.mkdirSync(path.dirname(destFile), { recursive: true });
+    fs.copyFileSync(sourceFile, destFile);
+  });
+  logger.log(`Copied ${sourceRuleFiles.length} rule file(s).`);
+
+  // Install dependencies if needed
+  if (Object.keys(finalDeps).length > 0) {
+    if (installDeps) {
+      logger.info('Installing dependencies for dynamic plugin...');
+      try {
+        execSync('npm install', { cwd: pluginPath, stdio: 'pipe' });
+        logger.info('Dependencies installed successfully.');
+      } catch (error) {
+        throw new Error(`Failed to run 'npm install' in dynamic rules plugin directory: ${error.stderr.toString()}`);
+      }
+    } else {
+      throw new Error(
+        `Custom rules require dependencies, but they are not installed. ` +
+        `Please use the '-i' or '--install-custom-deps' flag.`
+      );
     }
-
-    const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
-    const pluginRulesPath = path.join(pluginPath, 'rules');
-    const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
-    //const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
-    const sourceRulesPath = path.resolve(process.cwd(), customRulesPath);
-    const sourcePackageJsonPath = path.join(sourceRulesPath, 'package.json');
-    //prepare a couple of baseline dependencies
-    let finalDeps = {
-      "dmnlint": "^11.6.0",
-      "dmnlint-utils": "^1.1.1"
-    };
-    
-    // Remove older/existing artifacts
-    cleanupDynamicPlugin(false);
-
-    // Move any dependencies from the rules source to the plugin
-    const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
-    if (fs.existsSync(sourcePackageJsonPath)) {
-        const sourcePackageJson = JSON.parse(fs.readFileSync(sourcePackageJsonPath, 'utf-8'));
-        finalDeps = sourcePackageJson.dependencies || finalDeps;
-    }
-    pluginPackageJson.dependencies = finalDeps;
-    fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
-
-    // Copy rule files from source to the plugin
-    logger.log(`Copying rules from ${sourceRulesPath} to ${pluginRulesPath}`);
-    const sourceAllFiles = fs.readdirSync(sourceRulesPath, { recursive: true });
-    const sourceRuleFiles = sourceAllFiles.filter(file => file.endsWith('.js') && !file.split(path.sep).includes('node_modules') && !file.split(path.sep).includes('.git'));
-
-    sourceRuleFiles.forEach(file => {
-        const sourceFile = path.join(sourceRulesPath, file);
-        const destFile = path.join(pluginRulesPath, file);
-        fs.mkdirSync(path.dirname(destFile), { recursive: true });
-        fs.copyFileSync(sourceFile, destFile);
-    });
-    logger.log(`Copied ${sourceRuleFiles.length} rule file(s).`);
-
-    // Install dependencies if needed
-    if (Object.keys(finalDeps).length > 0) {
-        if (installDeps) {
-            logger.info('Installing dependencies for dynamic plugin...');
-            try {
-                execSync('npm install', { cwd: pluginPath, stdio: 'pipe' });
-                logger.info('Dependencies installed successfully.');
-            } catch (error) {
-                throw new Error(`Failed to run 'npm install' in dynamic rules plugin directory: ${error.stderr.toString()}`);
-            }
-        } else {
-             throw new Error(
-                `Custom rules require dependencies, but they are not installed. ` +
-                `Please use the '-i' or '--install-custom-deps' flag.`
-            );
-        }
-    }
+  }
 }
 
 // --- Cleans up the artifacts created by prepareDynamicPlugin ---
@@ -172,8 +172,8 @@ function cleanupDynamicPlugin(doResetPackageJson = false) {
     const pluginPackageJsonPath = path.join(pluginPath, 'package.json');
     const pluginPackageJson = JSON.parse(fs.readFileSync(`${pluginPackageJsonPath}`, 'utf-8'));
     const defaultDeps = {
-      "dmnlint": "^11.6.0",
-      "dmnlint-utils": "^1.1.1"
+      "dmnlint": "^0.2.0",
+      "dmnlint-utils": "^0.1.0"
     };
     pluginPackageJson.dependencies = finalDeps;
     fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));

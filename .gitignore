@@ -12,6 +12,7 @@ config.yml
 
 # Local dev files
 custom-bpmn-rules
+custom-dmn-rules
 bpmnlint-runner/lint-report.*
 bpmnlint-runner/node_modules/
 bpmnlint-runner/bp3-dynamic-rules/node_modules/
