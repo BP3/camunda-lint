@@ -25,6 +25,12 @@ A typical project will have the following layout
   + model
     + process.bpmn
     + rules.dmn
+  + lint
+    + bpmn
+      + tasksWithoutUsers.js
+    + dmn
+      + unresolvedExpressions.js
+    + output
   + spec
     + bpmn.feature
     + dmn.feature
@@ -37,7 +43,7 @@ cd my-process-project
 # Use the "help" command to see options
 docker run -it --rm \
     --mount type=bind,src=${PWD},dst=/project \
-    -e PROJECT_DIR=/project \
+    --env PROJECT_PATH=/project \
         bp3global/camunda-lint help
 A CI/CD automation wrapper for linting a Camunda 8 Web Modeler project.
 
@@ -77,22 +83,19 @@ npm publish --access public
 ```
 
 ### Add rules package(s) to lintrc file
-**NOTE:** Unfortunately the Camaunda linter doesn't support the "standard" package naming formats you might expect in the lintrc file.
-But it will still find your package if you use the following rules to reference it from the lintrc file.
+Adding npm hosted rules package/s to the lintrc file will automatically include them when running the linter.
 
-In our case the full name for our package is `@bp3global/my-plugin` (or `@bp3global/my-plugin@^0.0.1` if we include the version), 
-but we can't use this form directly in the lintrc file. 
-Instead we must reference it as follows `__bp3global__my_plugin` for `@bp3global/my-plugin` - essentially you must
-replace `@` and `/` with `__`
+The full npm name for our package is `@bp3global/my-plugin` (or `@bp3global/my-plugin@^0.0.1` if we include the version). 
 
-Adding your package to the lintrc file requires `plugin` as a prefix and a ruleset, typically `/recommended` is used.
-The minimal custom rule package specification is thus
+Adding a package to the lintrc file requires `plugin` as a prefix and a ruleset, typically `/recommended` or `/all` are used as rulesets, but this can vary.
+
+The typical custom rule package specification is thus
 ```shell
 # .bpmnlintrc
 {
   "extends": [
     "bpmnlint:recommended", 
-    "plugin:__bp3global__my_plugin/recommended"
+    "plugin:@bp3global/my_plugin/recommended"
   ],
   "rules": {}
 }
@@ -103,11 +106,13 @@ or if you want to specify a specific version
 {
   "extends": [
     "bpmnlint:recommended", 
-    "plugin:__bp3global__my_plugin__0.0.1/recommended"
+    "plugin:@bp3global/my_plugin@^0.0.1/recommended"
   ],
   "rules": {}
 }
 ```
+
+[Filipe] Need to check this behaves as intended with all the latest changes.
 
 You must also use the "alias" in the `rules` section if you have one
 ```shell
@@ -115,24 +120,24 @@ You must also use the "alias" in the `rules` section if you have one
 {
   "extends": [
     "bpmnlint:recommended", 
-    "plugin:__bp3global__my_plugin/recommended"
+    "plugin:@bp3global/my_plugin/recommended"
   ],
   "rules": {
-    "__bp3global__my_plugin/my-custom-rule":"off"
+    "@bp3global/my_plugin/my-custom-rule":"off"
   }
 }
 ```
 
-or with a verion
+or with a version
 ```shell
 # .bpmnlintrc
 {
   "extends": [
     "bpmnlint:recommended", 
-    "plugin:__bp3global__my_plugin__0.0.1/recommended"
+    "plugin:@bp3global/my_plugin@^0.0.1/recommended"
   ],
   "rules": {
-    "__bp3global__my_plugin__0.0.1/my-custom-rule":"off"
+    "@bp3global/my_plugin@^0.0.1/my-custom-rule":"off"
   }
 }
 ```
@@ -141,58 +146,136 @@ or with a verion
 1. If your packages are not in the npmjs.org registry, or are there and private,
    you will need to add an `.npmrc` file with details of where to find your packages and/or auth details
 
-#### Using a local/unpublished package
-If you have been developing a new rule `my-new-rule` locally as part of your `local-rule-package` and want to try it without publishing the package
-then you need to mount the rule project `local-rule-package` separately into the `camunda-lint` container
 
+#### Using local/ad-hoc rules
+When developing a new rule `my-new-bpmn-rule` locally and would like to include it without having to create and publish a plugin, this is possible.
+
+Using the typical project example, it'd be recommended to have it under `lint/bpmn` if it's a bpmn lint rule or `lint/dmn` if it's a dmn one.
+
+**IMPORTANT**: If, and only if, the rule needs additional dependencies, just add a `package.json` with the corresponding dependencies. for example:
+
+```javascript
+{
+  "dependencies": {
+    "bpmnlint-utils": "^1.1.1",
+    "semver": "^6.3.1"
+  }
+}
+```
+
+Which would cause the project to look like this:
+```
++ my-process-project
+  + .bpmnlintrc
+  + .dmnlintrc
+  + model
+    + process.bpmn
+    + rules.dmn
+  + lint
+    + bpmn
+      + tasksWithoutUsers.js
+      + my-new-bpmn-rule.js       <=
+      + package.json              <=
+    + dmn
+      + unresolvedExpressions.js
+    + output
+  + spec
+    + bpmn.feature
+    + dmn.feature
+```
+
+When running the linter, just provide the path for the rules folder to be included and it'll be dynamically loaded 
+by the runner with the severity set to `warn`.
+
+For bpmn set the `BPMN_RULES_PATH` environment variable, if dmn set the `DMN_RULES_PATH` environment variable, or both:
+
+bpmn:
+```shell
+docker run -it --rm \
+    --mount type=bind,src=${HOME}/my-process-project,dst=/project \
+    --env PROJECT_PATH=/project \
+    --env BPMN_RULES_PATH=/project/lint/bpmn \
+        bp3global/camunda-lint bpmnlint
+```
+
+dmn:
+```shell
+docker run -it --rm \
+    --mount type=bind,src=${HOME}/my-process-project,dst=/project \
+    --env PROJECT_PATH=/project \
+    --env DMN_RULES_PATH=/project/lint/dmn \
+        bp3global/camunda-lint dmnlint
+```
+
+both:
+```shell
+docker run -it --rm \
+    --mount type=bind,src=${HOME}/my-process-project,dst=/project \
+    --env PROJECT_PATH=/project \
+    --env BPMN_RULES_PATH=/project/lint/bpmn \
+    --env DMN_RULES_PATH=/project/lint/dmn \
+        bp3global/camunda-lint lint
+```
+
+
+#### Using a local/unpublished package or your own plugin directory
+If you have been developing a new rule `my-new-rule` locally as part of your `local-rule-package` and want to try it without 
+publishing the package, then there are a couple of options to tackle this:
+1. Treat the plugin as ad-hoc rules
+1. Mount the project folder and add an ad-hoc alias to the package.json
+
+
+The ad-hoc rules were just described above, hence let's dive into mounting the project folder
+
+
+In order to try using that new rule `my-new-rule` inside the local package `local-rule-package` - without publishing the package - 
+you can mount `local-rule-package` separately into the `camunda-lint` container while making sure to add an alias for it on the 
+custom rules `package.json` and that you include it in the lintrc file.
+
+
+**IMPORTANT:** The following elements must be in place for this to work:
+1. **package.json** :: placed on the custom rules folder, setting up an alias for the local package
+1. **lintrc file/s** :: ensure .bpmnlintrc and .dmnlintrc files reference the alias accordingly
+1. the plugin implementation:
+    - rules
+    - package.json (up to date)
+    - node_modules (up to date)
+
+
+**NOTE:** The local plugin must include the prefix `bpmnlint-plugin-` so it'll match the alias format required in `package.json` 
+and also use the `plugin:` and ruleset as any other plugin.
+
+```shell
+# .bpmnlintrc
+
+{
+  "extends": [
+    "bpmnlint:recommended", 
+    "plugin:bpmnlint-plugin-local-rule-package/recommended"
+  ],
+  "rules": {}
+}
+```
+
+**NOTE:** Adding a dependency for a local plugin must include the prefix `bpmnlint-plugin-` and use the `file:<path>` syntax to indicate its location.
+
+```shell
+# package.json
+
+{
+  "dependencies": {
+    "bpmnlint-plugin-local-rule-package": "file:/plugin",
+  }
+}
+```
+
+Finally, run the linter mounting the package and ensuring to include the `package.json` references:
 ```shell
 docker run -it --rm \
     --mount type=bind,src=${HOME}/my-process-project,dst=/project \
     --mount type=bind,src=${HOME}/local-rule-package,dst=/plugin -w /plugin \
-    -e PROJECT_DIR=/project \
-        bp3global/camunda-lint
-```
-
-## Developing
-```shell
-docker build -t bp3global/camunda-lint .
-```
-
-## Using your own plugin directory
-
-It is possible to have a separate directory with a plugin ready to run.<br/>
-This means that the plugin directory should have:
-- package.json (up to date)
-- node_modules (up to date)
-- any relevant lintrc files (".bpmnlintrc", ".dmnlintrc", etc...)
-- the plugin implementation (this can be just installed locally, but can be also the project used for development)
-
-For this example the following structure is used:
-- host /project => docker /local
-- host /plugin => docker /linter
-
-The environment var is set for docker:
-- PROJECT_DIR=/local
-
-The working directory on the docker image is:
-- /linter
-
-For that purpose you need to set the working directory to that separate directory with the plugin and set the PROJECT_DIR to where the project files are kept<br/><br/>
-### Running the container locally
-```shell
-docker run -it --rm \
-    --mount type=bind,src=${PWD}/project,dst=/local \
-    --mount type=bind,src=${PWD}/plugin,dst=/linter -w /linter \
-    -e PROJECT_DIR=/local \
+    --env BPMN_RULES_PATH=/project/lint/bpmn \
+    --env DMN_RULES_PATH=/project/lint/dmn \
+    --env PROJECT_PATH=/project \
         bp3global/camunda-lint lint
 ```
-
-### On Windows Command Line
-```shell
-docker run -it --rm \
-    --mount type=bind,src=%cd%\project,dst=/local \
-    --mount type=bind,src=%cd%\plugin,dst=/linter -w /linter \
-    -e PROJECT_DIR=/local \
-        bp3global/camunda-lint lint
-```
-
