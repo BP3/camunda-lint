@@ -279,3 +279,46 @@ docker run -it --rm \
     --env PROJECT_PATH=/project \
         bp3global/camunda-lint lint
 ```
+
+
+#### Reporting options
+As this is intended to be used in CI/CD pipelines, reporting output options have been added.
+Reporting options include:
+- console
+- html  (html file extension)
+- json  (xml  file extension)
+- junit (json file extension)
+
+**IMPORTANT:** the `console` format will only write to the console and not write to a file.
+
+In order to get a report it requires to select a file and a format.
+Using the project structure example from above:
+
+```shell
+docker run -it --rm \
+    --mount type=bind,src=${HOME}/my-process-project,dst=/project \
+    --env PROJECT_PATH=/project \
+    --env BPMN_REPORT_FILEPATH=/project/lint/output/bpmnLintReport \
+    --env DMN_REPORT_FILEPATH=/project/lint/output/dmnLintReport \
+    --env REPORT_FORMAT=junit \
+        bp3global/camunda-lint lint
+```
+
+Running the command above will create the following files if there's anything to report:
+- /project/lint/output/bpmnLintReport.xml
+- /project/lint/output/dmnLintReport.xml
+
+
+#### Verbose
+This is self-explanatory, will tell all the components in `camunda-lint` to output any and all available information about its execution to assist with any debugging that might be needed.
+
+**NOTE:** For the packages to be verbose as well, need them to be aware of the `VERBOSE` environment variable.
+
+The recommended use of this capability is as below:
+```shell
+docker run -it --rm \
+    --mount type=bind,src=${HOME}/my-process-project,dst=/project \
+    --env PROJECT_PATH=/project \
+    --env VERBOSE=true \
+        bp3global/camunda-lint lint
+```

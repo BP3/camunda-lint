@@ -114,7 +114,7 @@ if [ $mode_dmn = 1 ]; then
   echo ""
   echo "Installing the DMN lint runner dependencies"
   echo "---------------------------------------------------"
-  node "${SCRIPT_DIR}/installPluginPackages.js ${DMN_LINTER_ARGS}"
+  node ${SCRIPT_DIR}/installPluginPackages.js ${DMN_LINTER_ARGS}
   # --type=dmn --config="${DMN_PATH}"/.dmnlintrc --runnerpath=/app/dmnlint-runner
   echo ""
   echo "Running the DMN linter"
