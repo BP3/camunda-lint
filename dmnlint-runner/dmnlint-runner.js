@@ -467,7 +467,7 @@ async function main() {
       const configFileContent = fs.readFileSync(configFilePath, 'utf-8');
       linterConfig = JSON.parse(configFileContent);
     } catch (error) {
-      exitWithError(`Could not load or parse the configuration file at "${configPath}".`);
+      exitWithError(`Could not load or parse the configuration file at "${configPath}": ${error.message}`);
     }
 
     // Override severities for custom rules if specified
