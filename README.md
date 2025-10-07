@@ -53,6 +53,7 @@ Available Commands:
   lint               Apply lint to BPMN + DMN files
   bpmnlint           Apply lint to just the BPMN files
   dmnlint            Apply lint to just the DMN files
+  sbom               Generate the SBOM for the linters
 
 The configuration options for the commands are defined in environment variables
 as this is intended to run as part of a CI/CD pipeline.
@@ -137,7 +138,7 @@ or with a version
     "plugin:@bp3global/my_plugin@^0.0.1/recommended"
   ],
   "rules": {
-    "@bp3global/my_plugin@^0.0.1/my-custom-rule":"off"
+    "@bp3global/my_plugin/my-custom-rule":"off"
   }
 }
 ```
@@ -321,4 +322,30 @@ docker run -it --rm \
     --env PROJECT_PATH=/project \
     --env VERBOSE=true \
         bp3global/camunda-lint lint
+```
+
+
+## Software Bill of Materials (SBOM)
+This project generates a Software Bill of Materials (SBOM) to provide a comprehensive inventory of all software components, libraries, and dependencies. This is critical for security analysis, compliance, and understanding our software supply chain.
+We use the CycloneDX standard, a lightweight and modern SBOM specification.
+
+The recommended use of this capability is as below:
+```shell
+docker run -it --rm \
+    --mount type=bind,src=${HOME}/output-files,dst=/output-files \
+    --env SBOM_REPORT_PATH=/output-files \
+        bp3global/camunda-lint sbom
+```
+
+This will output the file under `/output-files/camunda-lint-sbom.json`.
+
+
+
+With that said, here's an alternative example for camunda-lint-sbom in XML:
+```shell
+docker run -it --rm \
+    --mount type=bind,src=${HOME}/output-files,dst=/output-files \
+    --env SBOM_REPORT_PATH=/output-files \
+    --env SBOM_REPORT_FORMAT=XML \
+        bp3global/camunda-lint sbom
 ```
