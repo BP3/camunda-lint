@@ -30,13 +30,8 @@ COPY --chown=bp3user:bp3 --chmod=755 scripts/ scripts/
 COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/ bpmnlint-runner/
 COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/ dmnlint-runner/
 
-# Added these because kaniko does not support the --chmod syntax yet and ignores it
-RUN chmod 755 ./docker-entrypoint.sh && \
-    chmod 755 ./scripts/*.js && \
-    chmod 755 ./scripts/*.sh && \
-    chmod 755 ./bpmnlint-runner/**/* && \
-    chmod 755 ./dmnlint-runner/**/* && \
-    npm install
+# As this is now a node workspace, this installs all the dependencies for child folders also
+RUN npm install
 
 VOLUME /local
 WORKDIR /local
