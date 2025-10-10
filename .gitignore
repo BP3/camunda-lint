@@ -53,6 +53,4 @@ venv.bak/
 .dmnlintrc*
 
 /node_modules/
-/package.json
-/package-lock.json
 packages.txt
