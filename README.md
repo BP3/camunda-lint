@@ -41,10 +41,7 @@ To run the linter on the files in this project then use the following commands
 cd my-process-project
 
 # Use the "help" command to see options
-docker run -it --rm \
-    --mount type=bind,src=${PWD},dst=/project \
-    --env PROJECT_PATH=/project \
-        bp3global/camunda-lint help
+docker run -it --rm bp3global/camunda-lint help
 A CI/CD automation wrapper for linting a Camunda 8 Web Modeler project.
 
 Usage: [COMMAND]
