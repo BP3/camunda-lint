@@ -1,0 +1,22 @@
+name: Build main
+
+env:
+  GITHUB_IMAGE_NAME: 'ghcr.io/bp3/camunda-lint'
+  PROJECT_NAME: 'camunda-lint'
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  call-workflow-build-image:
+    uses: ./.github/workflows/build-image.yaml
+    with:
+      username: ${{ github.actor }}
+      project-name:  '$PROJECT_NAME'
+      # image-name: ghcr.io/bp3/camunda-lint
+      image-name: '$GITHUB_IMAGE_NAME'
+      branch-name: ${{ github.head_ref || github.ref_name }}
+    secrets: inherit
