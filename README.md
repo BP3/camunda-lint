@@ -287,8 +287,8 @@ As this is intended to be used in CI/CD pipelines, reporting output options have
 Reporting options include:
 - console
 - html  (html file extension)
-- json  (xml  file extension)
-- junit (json file extension)
+- json  (json file extension)
+- junit (xml  file extension)
 
 **IMPORTANT:** the `console` format will only write to the console and not write to a file.
 

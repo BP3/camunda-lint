@@ -350,7 +350,21 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
                 tbody tr:hover { background-color: #f1f1f1; }
                 .severity-error { color: #c00; font-weight: bold; }
                 .severity-warning { color: #d97400; font-weight: bold; }
-                .icon { margin-right: 8px; font-size: 1.2em; vertical-align: middle; }
+                .icon {
+            /* Vertically align icon with text */
+            vertical-align: middle; 
+            /* Define a standard size */
+            width: 1.2em;
+            height: 1.2em;
+        }
+        .icon-error {
+            /* Color for the error icon */
+            stroke: #d9534f; /* A nice red color */
+        }
+        .icon-warning {
+            /* Color for the warning icon */
+            stroke: #f0ad4e; /* A nice orange/yellow color */
+        }
                 .file-path { font-family: monospace; font-size: 0.9em; color: #555; }
               </style>
             </head>
@@ -380,11 +394,15 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
                         let icon = '';
                         let severityClass = '';
                         if (severity.toLowerCase().includes('error')) {
-                            icon = '<span class="icon">❌</span>';
+                            icon = '<span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-error">\n' +
+                                '                        <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>\n' +
+                                '                    </svg></span>';
                             severityClass = 'severity-error';
                             severity = "Error";
                         } else if (severity.toLowerCase().includes('warn')) {
-                            icon = '<span class="icon">⚠️</span>';
+                            icon = '<span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-warning">\n' +
+                                '                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>\n' +
+                                '                    </svg></span>';
                             severityClass = 'severity-warning';
                             severity = "Warning";
                         }
