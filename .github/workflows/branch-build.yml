@@ -13,9 +13,9 @@ jobs:
     uses: ./.github/workflows/build-image.yaml
     with:
       username: ${{ github.actor }}
-      project-name:  '$PROJECT_NAME'
+      project-name:  'camunda-lint'
       # image-name: ghcr.io/bp3/camunda-lint
-      image-name: '$GITHUB_IMAGE_NAME'
+      image-name: 'ghcr.io/bp3/camunda-lint'
       branch-name: ${{ github.head_ref || github.ref_name }}
     secrets: inherit
 
