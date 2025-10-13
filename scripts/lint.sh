@@ -77,8 +77,8 @@ if [ $mode_sbom = 1 ]; then
 fi
 
 if [ -n "${PROJECT_PATH}" ]; then
-  BPMN_PATH = "${PROJECT_PATH}"
-  DMN_PATH = "${PROJECT_PATH}"
+  BPMN_PATH="${PROJECT_PATH}"
+  DMN_PATH="${PROJECT_PATH}"
 fi
 
 if [ $mode_bpmn = 1 ]; then
