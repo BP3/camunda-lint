@@ -32,28 +32,25 @@ jobs:
 
       - name: Find previous image tagged with branch name - and delete it
         run: |
-          PROJECT_NAME=${{ inputs.project-name }}
-          echo "project-name=${{ inputs.project-name }}"
-          echo "image-name=${{ inputs.image-name }}"
           id=$(curl -s -L \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/orgs/bp3/packages/container/$PROJECT_NAME/versions" \
-              | jq -r ".[] | select(.metadata.container.tags | index(\"$PROJECT_NAME\")) | .id")
+            "https://api.github.com/orgs/bp3/packages/container/camunda-lint/versions" \
+              | jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id")
           if [ "$id" != "" ]; then
             # First call is just to see the result
             curl -s -L \
               -H "Accept: application/vnd.github+json" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/orgs/bp3/packages/container/$PROJECT_NAME/versions/$id"
+              "https://api.github.com/orgs/bp3/packages/container/camunda-lint/versions/$id"
             # Second call does the actual delete
             curl -s -L -X DELETE \
               -H "Accept: application/vnd.github+json" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/orgs/bp3/packages/container/$PROJECT_NAME/versions/$id"
+              "https://api.github.com/orgs/bp3/packages/container/camunda-lint/versions/$id"
           fi
 
       - name: Build Docker image of application, tag with branch name
