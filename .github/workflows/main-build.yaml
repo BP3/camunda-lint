@@ -1,0 +1,56 @@
+name: Build main
+
+env:
+  GITHUB_IMAGE_NAME: 'ghcr.io/bp3/camunda-lint'
+  PROJECT_NAME: 'camunda-lint'
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  call-workflow-build-image:
+    uses: ./.github/workflows/build-image.yaml
+    with:
+      username: ${{ github.actor }}
+      project-name:  ${{ env.PROJECT_NAME }}
+      # image-name: ghcr.io/bp3/camunda-lint
+      image-name: ${{ env.GITHUB_IMAGE_NAME }}
+      branch-name: ${{ github.head_ref || github.ref_name }}
+    secrets: inherit
+
+  # generate-sbom:
+  #   name: Lint the project
+  #   needs: call-workflow-build-image
+  #   runs-on: ubuntu-latest
+  #   permissions: 
+  #     id-token: write
+  #     contents: write
+  #   steps:
+  #     - name: Generate SBOM
+  #       run: |
+  #         mkdir ./sbom
+  #         docker run --rm \
+  #           -v "$(pwd)/sbom:/output" \
+  #           -e SBOM_REPORT_PATH=/output \
+  #           ${{ steps.generate-tag.outputs.tags }} \
+  #           sbom
+  #         echo "SBOM generated: ./sbom/camunda-lint-sbom.json"
+
+  #     - name: Upload SBOM
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         # The name of the artifact as it will appear in the GitHub UI
+  #         name: camunda-lint-sbom.json
+  #         path: ./sbom/
+  #         # How long to keep it. Optional, default/max = 90 days
+  #         # retention-days: 0
+
+  #     # From: https://github.com/advanced-security/spdx-dependency-submission-action
+  #     #  and: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/using-the-dependency-submission-api
+  #     - name: Add to SBOM self-service
+  #       uses: advanced-security/spdx-dependency-submission-action@v0.1.1
+  #       with:
+  #         filePath: "./sbom/"
