@@ -42,7 +42,7 @@ jobs:
             "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions")
 
           # this should work because we're only interested in the exit code as there's no status if there are versions present
-          if echo "${json_response}" | jq -e '.status == "404"' > /dev/null; then
+          if echo "${json_response}" | jq -e '(.status // "") == "404"' > /dev/null; then
             exit 0
           fi
 
