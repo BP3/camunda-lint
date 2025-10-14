@@ -41,15 +41,11 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions")
 
-          echo "json=${json_response}"
-          status=$(echo "${json_response}" | jq -r '.status // ""')
-          
-          echo "status=${status}"
-          if [ "${status}" = "404" ]; then
+          # this should work because we're only interested in the exit code as there's no status if there are versions present
+          if echo "${json_response}" | jq -e '.status == "404"' > /dev/null; then
             exit 0
           fi
 
-          echo "json=${json_response}"
           id=$(echo "${json_response}" | jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id")
 
           if [ "$id" != "" ]; then
