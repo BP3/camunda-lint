@@ -35,18 +35,32 @@ jobs:
 
       - name: Find previous image tagged with branch name - and delete it
         run: |
-          json_response=$(curl -s -L  \
+          json_response_file=$(mktemp)
+
+          http_status=$(curl -s -w "%{http_code}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -o "${json_response_file}" \
             "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions")
 
-          # this should work because we're only interested in the exit code as there's no status if there are versions present
-          if echo "${json_response}" | jq -e 'has("status") and (.status == "404")' > /dev/null; then
+          if [ "${http_status}" -eq 404 ]; then
             exit 0
           fi
 
-          id=$(echo "${json_response}" | jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id")
+          # json_response=$(curl -s -L  \
+          #   -H "Accept: application/vnd.github+json" \
+          #   -H "X-GitHub-Api-Version: 2022-11-28" \
+          #   -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          #   "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions")
+
+          # this should work because we're only interested in the exit code as there's no status if there are versions present
+          # if echo "${json_response}" | jq -e 'has("status") and (.status == "404")' > /dev/null; then
+          #   exit 0
+          # fi
+
+          #id=$(echo "${json_response}" | jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id")
+          id=$(jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id" "${json_response_file}")
 
           if [ "$id" != "" ]; then
             # First call is just to see the result
