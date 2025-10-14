@@ -3,6 +3,7 @@ name: Build branch
 env:
   GITHUB_IMAGE_NAME: 'ghcr.io/bp3/camunda-lint'
   PROJECT_NAME: 'camunda-lint'
+  ORG_NAME: 'bp3'
 
 on:
   pull_request:
@@ -14,6 +15,7 @@ jobs:
     with:
       username: ${{ github.actor }}
       project-name:  'camunda-lint'
+      org-name:  'bp3'
       # image-name: ghcr.io/bp3/camunda-lint
       image-name: 'ghcr.io/bp3/camunda-lint'
       branch-name: ${{ github.head_ref || github.ref_name }}

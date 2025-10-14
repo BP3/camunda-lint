@@ -3,6 +3,7 @@ name: Build main
 env:
   GITHUB_IMAGE_NAME: 'ghcr.io/bp3/camunda-lint'
   PROJECT_NAME: 'camunda-lint'
+  ORG_NAME: 'bp3'
 
 on:
   push:
@@ -15,8 +16,9 @@ jobs:
     uses: ./.github/workflows/build-image.yaml
     with:
       username: ${{ github.actor }}
-      project-name:  '$PROJECT_NAME'
+      project-name:  'camunda-lint'
+      org-name:  'bp3'
       # image-name: ghcr.io/bp3/camunda-lint
-      image-name: '$GITHUB_IMAGE_NAME'
+      image-name: 'ghcr.io/bp3/camunda-lint'
       branch-name: ${{ github.head_ref || github.ref_name }}
     secrets: inherit
