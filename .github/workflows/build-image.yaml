@@ -1,0 +1,88 @@
+name: Build image
+
+on:
+  workflow_call:
+    inputs:
+      username:
+        required: true
+        type: string
+      project-name:
+        required: true
+        type: string
+      org-name:
+        required: true
+        type: string
+      image-name:
+        required: true
+        type: string
+      branch-name:
+        required: true
+        type: string
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ inputs.username }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find previous image tagged with branch name - and delete it
+        run: |
+          json_response_file=$(mktemp)
+
+          http_status=$(curl -s -w "%{http_code}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -o "${json_response_file}" \
+            "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions")
+
+          if [ "${http_status}" -eq 404 ]; then
+            exit 0
+          fi
+
+          # json_response=$(curl -s -L  \
+          #   -H "Accept: application/vnd.github+json" \
+          #   -H "X-GitHub-Api-Version: 2022-11-28" \
+          #   -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          #   "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions")
+
+          # this should work because we're only interested in the exit code as there's no status if there are versions present
+          # if echo "${json_response}" | jq -e 'has("status") and (.status == "404")' > /dev/null; then
+          #   exit 0
+          # fi
+
+          #id=$(echo "${json_response}" | jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id")
+          id=$(jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id" "${json_response_file}")
+
+          if [ "$id" != "" ]; then
+            # First call is just to see the result
+            curl -s -L \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions/$id"
+            # Second call does the actual delete
+            curl -s -L -X DELETE \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions/$id"
+          fi
+
+      - name: Build Docker image of application, tag with branch name
+        run: |
+          echo "image-name = ${{ inputs.image-name }}"
+          echo "branch-name = ${{ inputs.branch-name}}"
+          docker build -t ${{ inputs.image-name }}:${{ inputs.branch-name }} .
+
+      - name: Push to local registry
+        run: |
+          docker push ${{ inputs.image-name }}:${{ inputs.branch-name }}
