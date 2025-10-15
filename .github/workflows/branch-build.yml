@@ -1,0 +1,43 @@
+name: Build branch
+
+env:
+  GITHUB_IMAGE_NAME: 'ghcr.io/bp3/camunda-lint'
+  PROJECT_NAME: 'camunda-lint'
+  ORG_NAME: 'bp3'
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  call-workflow-build-image:
+    uses: ./.github/workflows/build-image.yaml
+    with:
+      username: ${{ github.actor }}
+      project-name:  'camunda-lint'
+      org-name:  'bp3'
+      # image-name: ghcr.io/bp3/camunda-lint
+      image-name: 'ghcr.io/bp3/camunda-lint'
+      branch-name: ${{ github.head_ref || github.ref_name }}
+    secrets: inherit
+
+# TODO: add at a later date... need to understand the authorization mechanism
+  # VULNERABILITY SCANNING
+#   vulnerability-scan:
+#     name: Run vulnerability scan
+#     runs-on: ubuntu-latest
+#     needs: call-workflow-build-image
+#     steps:
+#       - name: Get image from repository
+#         run: |
+#           docker pull $GITHUB_IMAGE_NAME:${{ github.head_ref || github.ref_name }}
+
+#       - name: Scan image for vulnerabilities with Trivy
+#         uses: aquasecurity/trivy-action@0.33.1
+#         with:
+#           image-ref: ${{ format('{0}:{1}', env.GITHUB_IMAGE_NAME, github.head_ref || github.ref_name) }}
+#           format: 'table'
+#           # Fail the build if any 'fixed' and HIGH or CRITICAL severity vulnerabilities are found.
+#           exit-code: '1'
+#           ignore-unfixed: true
+#           severity: 'HIGH,CRITICAL'
