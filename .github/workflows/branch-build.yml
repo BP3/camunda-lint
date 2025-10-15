@@ -21,7 +21,7 @@ jobs:
       branch-name: ${{ github.head_ref || github.ref_name }}
     secrets: inherit
 
-# TODO: add at a later date
+# TODO: add at a later date... need to understand the authorization mechanism
   # VULNERABILITY SCANNING
 #   vulnerability-scan:
 #     name: Run vulnerability scan
