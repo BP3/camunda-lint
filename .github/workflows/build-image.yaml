@@ -48,18 +48,6 @@ jobs:
             exit 0
           fi
 
-          # json_response=$(curl -s -L  \
-          #   -H "Accept: application/vnd.github+json" \
-          #   -H "X-GitHub-Api-Version: 2022-11-28" \
-          #   -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          #   "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions")
-
-          # this should work because we're only interested in the exit code as there's no status if there are versions present
-          # if echo "${json_response}" | jq -e 'has("status") and (.status == "404")' > /dev/null; then
-          #   exit 0
-          # fi
-
-          #id=$(echo "${json_response}" | jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id")
           id=$(jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id" "${json_response_file}")
 
           if [ "$id" != "" ]; then
