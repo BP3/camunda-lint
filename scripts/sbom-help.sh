@@ -13,17 +13,23 @@
 ############################################################################
 
 cat <<_EOF
-A CI/CD automation wrapper for linting a Camunda 8 Web Modeler project.
+The SBOM generator for the Camunda 8 linter tool.
 
-Usage: [COMMAND]
+Required Parameters:
 
-Available Commands:
-  lint               Apply lint to BPMN + DMN file
-  bpmnlint           Apply lint to just the BPMN files
-  dmnlint            Apply lint to just the DMN files
-  sbom               Generate the SBOM for the linters
+  SBOM_REPORT_PATH      Set the output path to store the SBOM file.
 
-The configuration options for the commands are defined in environment variables
+
+Optional Parameters:
+
+  SBOM_REPORT_NAME      Set the output filename.
+                        Defaults to "camunda-lint-sbom".
+
+  SBOM_REPORT_FORMAT    Set the output file format.
+                        Options are "XML" and "JSON".
+                        Defaults to "JSON".
+
+The parameters for the command are defined in environment variables
 as this is intended to run as part of a CI/CD pipeline.
 See https://github.com/BP3/camunda-lint for more details.
 _EOF
