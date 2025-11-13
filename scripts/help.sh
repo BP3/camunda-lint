@@ -21,7 +21,6 @@ Available Commands:
   lint               Apply lint to BPMN + DMN file
   bpmnlint           Apply lint to just the BPMN files
   dmnlint            Apply lint to just the DMN files
-  sbom               Generate the SBOM for the linters
 
 The configuration options for the commands are defined in environment variables
 as this is intended to run as part of a CI/CD pipeline.
