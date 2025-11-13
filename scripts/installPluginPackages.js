@@ -1,114 +1,277 @@
 //#! /usr/bin/env node
-const fs = require('fs');
-const { execSync } = require("child_process");
-let packageJson = {"dependencies":{}};
-const currentPluginList = [];
-const outputFilepath = 'package.json';
+const fs = require('node:fs');
+const path = require('node:path');
+const process = require('node:process');
+const { execSync } = require('node:child_process');
 
-// Format the name for use with npm in the package.json file
-//
-// FROM __bp3global__bpmn-rules__0.0.1 OR __bp3global__bpmn-rules__^0.0.1
-//   TO npm:@bp3global/bpmn-rules@^0.0.1
-// OR
-// FROM __bp3global__bpmn-rules__~0.0.1
-//   TO npm:@bp3global/bpmn-rules@~0.0.1
-// OR
-// FROM __bp3global__bpmn-rules
-//   TO npm:@bp3global/bpmn-rules
-//
-function getNpmPackagename(packageName) {
-	return packageName == null ? "" : packageName.replace('__', '@').replace('__', '/').replace('__~', '@~').replace(/__\^?/im, '@^');
-}
+const LINTER_TYPE_LIST = ['bpmn', 'dmn'];
+const BPMN_PREFIX = 'bpmn';
+const DMN_PREFIX = 'dmn';
+const PACKAGE_JSON = 'package.json';
+const defaultBpmnLintConfig = {
+  "extends": ["bpmnlint:recommended"],
+  "rules": {}
+};
+const defaultDmnLintConfig = {
+  "extends": ["dmnlint:recommended"],
+  "rules": {}
+};
 
-// Convert a possible plugin in the lintrc file into a project dependency
+// --- Zero-Dependency Color Logging using ANSI Escape Codes ---
+const ANSI_COLORS = {
+  reset: "\x1b[0m",
+  bold: "\x1b[1m",
+  gray: "\x1b[90m",
+  red: "\x1b[91m",   // Bright Red
+  yellow: "\x1b[93m", // Bright Yellow
+  blue: "\x1b[94m",  // Bright Blue
+};
+
+const logger = {
+  isVerbose: false,
+  log: (...args) => {
+    if (logger.isVerbose) {
+      console.log(`${ANSI_COLORS.gray}VERBOSE:${ANSI_COLORS.reset}`, ...args);
+    }
+  },
+  info: (...args) => {
+    console.log(`${ANSI_COLORS.bold}${ANSI_COLORS.blue}INFO:${ANSI_COLORS.reset}`, ...args);
+  },
+  warn: (...args) => {
+    console.warn(`${ANSI_COLORS.bold}${ANSI_COLORS.yellow}WARN:${ANSI_COLORS.reset}`, ...args);
+  },
+  error: (...args) => {
+    console.error(`${ANSI_COLORS.bold}${ANSI_COLORS.red}ERROR:${ANSI_COLORS.reset}`, ...args);
+  }
+};
+
+// Extract the details from a possible plugin name in the lintrc file to setup dependencies correctly
 //
-// 1) FROM plugin:__bp3global__bpmn-rules/recommended 
-//      TO __bp3global__bpmn-rules
+// BPMN
+// ----
+// FROM plugin:@bp3global/bpmn-rules@^0.0.5/recommended
+//   TO {
+//			configName: 'plugin:bp3global-bpmn-rules-0.0.5',
+//			dependencyName: 'bpmnlint-plugin-bp3global-bpmn-rules-0.0.5',
+//			dependencyValue: 'npm:@bp3global/bpmn-rules@^0.0.5'
+//			npmReference: '@bp3global/bpmn-rules@^0.0.5'
+//		}
 //
-// 2) SET ALIAS "bpmnlint-plugin-__bp3global__bpmn-rules" == "npm:@bp3global/bpmn-rules"
+// DMN
+// ---
+// FROM plugin:@bp3global/dmn-rules@^0.0.1/recommended
+//   TO {
+//			configName: 'plugin:bp3global-dmn-rules-0.0.5',
+//			dependencyName: 'dmnlint-plugin-bp3global-dmn-rules-0.0.5',
+//			dependencyValue: 'npm:@bp3global/dmn-rules@^0.0.5'
+//			npmReference: '@bp3global/dmn-rules@^0.0.5'
+//		}
 //
-function addPluginDependency(packageName) {
-	//assuming the correctness of the lintrc file, the currPackageName should be something like "plugin:pluginName/ruleset" at this time
+function getPluginDetails(packageName, pluginPrefix) {
+	let result = null;
+	//
+	// assuming the correctness of the lintrc file, the currPackageName should be something like "plugin:pluginName/ruleset" at this time
+	//
 	if (packageName != null && packageName.indexOf('plugin:') == 0) {
+		//
 		// transform the package name provided to be used as a dependency
-		let currPackageName = packageName.substring(0, packageName.lastIndexOf('/')).replace('plugin:', '');
-		// get the reference name
-		let npmReference = getNpmPackagename(currPackageName);
-		// record this for later use
-		currentPluginList.push(npmReference);
-		packageJson.dependencies["bpmnlint-plugin-" + currPackageName] = 'npm:' + npmReference;
+		//
+		// currConfigName
+		// from: plugin:@bp3global/bpmn-rules@^0.0.5/all
+		//  substring => plugin:@bp3global/bpmn-rules@^0.0.5
+		//  replace => plugin:-bp3global-bpmn-rules--0.0.5
+		//  replace => plugin:bp3global-bpmn-rules--0.0.5
+		//  replace => plugin:bp3global-bpmn-rules-0.0.5
+		//
+		// dependencyName
+		// from:plugin:bp3global-bpmn-rules-0.0.5
+		//  replace => bp3global-bpmn-rules-0.0.5
+		//  => bpmnlint-plugin-bp3global-bpmn-rules-0.0.5
+		//
+		// dependencyValue
+		// from: plugin:@bp3global/bpmn-rules@^0.0.5/all
+		//  substring => plugin:@bp3global/bpmn-rules@^0.0.5
+		//  replace => npm:@bp3global/bpmn-rules@^0.0.5
+		//
+		const dependencyWithoutRuleSet = packageName.substring(0, packageName.lastIndexOf('/'));
+		const ruleSet = packageName.substring(packageName.lastIndexOf('/'));
+		//
+		//prepare the revised config name for a new lintrc
+		//
+		const configName = dependencyWithoutRuleSet.replace(/@|\^|~|\.|\//igm, '-')
+														.replace('--', '-')
+														.replace('plugin:-', 'plugin:');
+		//
+		// prepare the output with:
+		// - the config for a revised lintrc that will use aliases
+		// - the package.json dependency name adapted to the alias
+		// - the package.json dependency value to match the lintrc config
+		// - the npm package name to present to the user
+		//
+		result = { 
+			configName: `${configName}${ruleSet}`,
+			dependencyName: `${pluginPrefix}lint-plugin-${configName.replace('plugin:', '')}`, 
+			dependencyValue: dependencyWithoutRuleSet.replace('plugin:', 'npm:'),
+			npmReference: dependencyWithoutRuleSet.replace('plugin:', '')
+		};
 	}
+	return result;
 }
 
-// Parse a lintrc file and prepare a set of dependencies
+// Prepare the config and dependencies for the bpmnlint runner
 //
-function digestLintrc(filename) {
-	let lintConfig = JSON.parse(fs.readFileSync(filename));
-	if (lintConfig != null && lintConfig.extends != null && lintConfig.extends.length > 0) {
-		for (var idx = 0; idx < lintConfig.extends.length; ++idx) {
-			addPluginDependency(lintConfig.extends[idx]);
+// 1) Parse the provided lintrc file
+// 2) Prepare and write a revised lintrc and matching package.json dependencies
+// 3) Prepare and write the bpmnlint-runner package.json
+// 4) install the npm dependencies
+//
+function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
+  let revisedLintConfig = {
+	extends: [],
+	rules: {}
+  };
+  let additionalDependencies = [];
+  let npmPackages = [];
+
+  // read the provided config and collect the configs and dependencies
+  //
+  let lintConfig = JSON.parse(fs.readFileSync(filename));
+  revisedLintConfig.rules = lintConfig.rules || {};
+  if (lintConfig != null && lintConfig.extends != null)  {
+    if (typeof lintConfig.extends == 'string') {
+		// if it's just the one, push it
+		//
+		revisedLintConfig.extends.push(lintConfig.extends);
+	} else if (lintConfig.extends.length > 0) {
+      for (var idx = 0; idx < lintConfig.extends.length; ++idx) {
+        const currentPluginDetails = getPluginDetails(lintConfig.extends[idx], prefix);
+        // if it's a plugin, prepare the appropriate dependencies
+        //
+        if (currentPluginDetails != null) {
+          revisedLintConfig.extends.push(currentPluginDetails.configName);
+          additionalDependencies.push(currentPluginDetails);
+          npmPackages.push(currentPluginDetails.npmReference);
+        } else {
+          // the assumption here is this is just the baseline bpmnlint ruleset
+          //
+          revisedLintConfig.extends.push(lintConfig.extends[idx]);
 		}
+      }
+	} else {
+      // always default to the bpmnlint recommended rules
+      //
+	  revisedLintConfig = defaultLintConfig;    
 	}
+  } else {
+    // always default to the bpmnlint recommended rules
+    //
+	revisedLintConfig = defaultLintConfig;
+  }
+  // write the revised lintrc file
+  //
+  fs.writeFileSync(`${filename}Revised`, JSON.stringify(revisedLintConfig));
+
+  // read the package json and write it
+  //
+  if (additionalDependencies != null && additionalDependencies.length > 0) {
+	let packageJsonFilepath = path.resolve(process.cwd(), lintRunner, PACKAGE_JSON);
+    let currentPackageJson = JSON.parse(fs.readFileSync(packageJsonFilepath));
+	for (var idx = 0; idx < additionalDependencies.length; ++idx) {
+	  currentPackageJson.dependencies[additionalDependencies[idx].dependencyName] = additionalDependencies[idx].dependencyValue;
+	}
+	fs.writeFileSync(packageJsonFilepath, JSON.stringify(currentPackageJson));
+  }
+
+  // install any required packages
+  //
+
+  // present the plugins getting installed for this
+  //
+  logger.info(`Installing plugins referenced by ${filename}: [ ${npmPackages.join(', ')} ]`);
+  try {
+	// NOTE: not storing the result of this call nor handling the stdout nor stderr 
+	// 		 because applying any handling to the "npm install" command won't do anything
+	//execSync('npm install > /dev/null 2>&1 || (echo "Plugin installation failed" && exit 1)', {cwd: path.join(process.cwd(), lintRunner)});
+	execSync('npm install', { cwd: path.resolve(process.cwd(), lintRunner), stdio: 'pipe' });
+	logger.info('Dependencies installed successfully.');
+  } catch(err) {
+    logger.error('ERROR: ' + err);
+	logger.error('\nERROR: Plugin installation failed!\n');
+  }
 }
 
 // Show the help text on how to use this utility
 //
 function showHelp() {
-	console.log(
-		'A utility that reads a lintrc file, generates/amends the package.json accordingly, and installs all the packages'
-		+ '\n'
-		+ '\nUsage: node installPluginPackages.js <path to lintrc file>'
-		+ '\n'
-	);
+  logger.error(`
+    A utility that reads a lintrc file, generates/amends the package.json accordingly, and installs all the packages for the selected linter.
+
+    Usage: node installPluginPackages.js --type=<bpmn|dmn> --config=<path to lintrc file> --runnerpath=<path to the lint runner>
+
+    Required Arguments:
+      --type=<bpmn|dmn>                        Specifies the linter type to initialize.
+      --config=<path to lintrc file>           Specifies the lintrc file path
+      --runnerpath=<path to the lint runner>   Specifies the path to the lint runner directory, where the package.json is
+
+    Examples:
+      node installPluginPackages.js --type=bpmn --config=.bpmnlintrc --runnerpath=/app/bpmnlint-runner
+      node installPluginPackages.js --type=dmn --config=.dmnlintrc --runnerpath=/app/dmnlint-runner
+  `);
+  process.exit(1);
+}
+
+// Parse the command line arguments
+//
+function parseArgs() {
+  const result = {};
+  // process.argv contains: [0: node executable, 1: script path, 2+: arguments]
+  const argumentsList = process.argv.slice(2);
+
+  for (let idx = 0; idx < argumentsList.length; idx++) {
+    const arg = argumentsList[idx];
+    if (arg.startsWith('--')) {
+      const [key, value] = arg.substring(2).split('=');
+      // Handles --key=value
+      if (value != null) {
+        result[key] = value;
+      // Handles any other flags without value (e.g.: --verbose)
+      } else {
+        result[key] = true;
+      }
+    }
+  }
+  return result;
 }
 
 // install plugins if lintrc provided or show some help
 //
-if (process.argv.length > 2
-	&& process.argv[2].toLowerCase() != 'help'
-	&& fs.existsSync(process.argv[2])) {
+let args = parseArgs();
 
-	// read the existing packages.json if it exists
-	try {
-		if (fs.existsSync(outputFilepath)) {
-			packageJson = JSON.parse(fs.readFileSync(outputFilepath));
-		}
-	} catch (err) {
-		//TODO: should log the error?
-		// set a default value
-		packageJson = {"dependencies":{}};
-	}
+if (process.argv.length > 4 && args != null) {
 
-	// add the dependencies from the lintrc file
-	//console.log(`Retrieving plugins referenced by ${process.argv[2]}`);
-	digestLintrc(process.argv[2]);
+  if (!LINTER_TYPE_LIST.includes(args["type"])) {
+    logger.error(`Invalid linter type selected: ${args["type"]}. Please select one from the options [${LINTER_TYPE_LIST.join(', ')}]\n`);
+  }
 
-	//if there are depedencies, then output the package.json file
-	if (Object.keys(packageJson.dependencies) != null && currentPluginList != null && currentPluginList.length > 0) {
-		// present the plugins getting installed for this 
-		console.log(`Installing plugins referenced by ${process.argv[2]}: [ ${currentPluginList.join(', ')} ]`);
+  if (args["config"] == null || !fs.existsSync(args["config"])) {
+	  logger.error(`Invalid path to lintrc file: ${args["config"]}.\n`);
+  }
 
-		// create/overwrite a the package.json file with the updated dependencies
-		fs.writeFileSync(outputFilepath, JSON.stringify(packageJson, undefined, 2));
+  if (args["runnerpath"] == null || !fs.existsSync(args["runnerpath"])) {
+	  logger.error(`Invalid path to lint the lint runner: ${args["runnerpath"]}.\n`);
+  }
 
-		// install the required packages
-		try {
-			// NOTE: not storing the result of this call nor handling the stdout nor stderr 
-			// 		 because applying any handling to the "npm install" command won't do anything
-			execSync('npm install > /dev/null 2>&1 || (echo "Plugin installation failed" && exit 1)');
-		} catch(err) {
-			console.error('ERROR: ' + err);
-			console.error('\nERROR: Plugin installation failed!\n');
-		}
-	}
+  let defaultLintConfig = args["type"] == BPMN_PREFIX ? defaultBpmnLintConfig : defaultDmnLintConfig;
+
+  prepareLintRunner(args["config"], args["type"], defaultLintConfig, args["runnerpath"]);
+
 } else {
-	// present any error first
-	if (process.argv.length <= 2) {
-		console.error(`\nError: please provide a lintrc file\n`);
-	} else if(process.argv[2].toLowerCase() != 'help' && !fs.existsSync(process.argv[2])) {
-		console.error(`\nError: invalid path to lintrc file: ${process.argv[2]}\n`);
-	}
-	// if there wasn't an error, but just a help request
-	showHelp();
+  // present any error first
+  //
+  if (process.argv.length <= 4 || args == null) {
+	  logger.error(`Please provide all the required parameters.\n`);
+  }
+  // if there wasn't an error, but just a help request
+  //
+  showHelp();
 }
-
