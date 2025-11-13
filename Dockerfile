@@ -27,8 +27,8 @@ USER bp3user
 
 COPY --chown=bp3user:bp3 --chmod=755 ["docker-entrypoint.sh", "package*.js*", "./" ]
 COPY --chown=bp3user:bp3 --chmod=755 scripts/ scripts/
-# COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/ bpmnlint-runner/
-# COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/ dmnlint-runner/
+COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/ bpmnlint-runner/
+COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/ dmnlint-runner/
 
 # As this is now a node workspace, this installs all the dependencies for child folders also
 RUN npm install
