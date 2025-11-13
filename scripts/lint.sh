@@ -41,36 +41,108 @@ case "$1" in
         ;;
 esac
 
+if [ -n "${PROJECT_PATH}" ]; then
+  BPMN_PATH = "${PROJECT_PATH}"
+  DMN_PATH = "${PROJECT_PATH}"
+fi
+
 if [ $mode_bpmn = 1 ]; then
   echo ""
   # initialize the folder to run the linter if it has not been initialized for bpmnlint
-  if [ ! -f .bpmnlintrc ]; then
-    bpmnlint --init
+  echo "Initializing the BPMN rules for linting (if needed)"
+  echo "---------------------------------------------------"
+  if [ ! -f "${BPMN_PATH}"/.bpmnlintrc ]; then
+    (cd "${BPMN_PATH}"; bpmnlint --init)
   fi
-  # retrieve and install any plugins that were provided as part of .bpmnlintrc
-  node "${SCRIPT_DIR}"/installPluginPackages.js .bpmnlintrc
-  # run bpmnlint for the current or a separate directory based on the PROJECT_DIR environment variable being set
-  if [ -z ${PROJECT_DIR+x} ]; then 
-    find . -name "*.bpmn" -exec sh -c 'bpmnlint "$1"' shell {} \;
+
+  BPMN_LINTER_ARGS=""
+  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --type=bpmn"
+  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=${BPMN_PATH}/.bpmnlintrc"
+  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --runnerpath=/app/bpmnlint-runner"
+
+  # retrieve and install any plugins that were provided as part of .bpmnlintrc and generates a .bpmnlintrcRevised
+  echo ""
+  echo "Installing the BPMN lint runner dependencies"
+  echo "---------------------------------------------------"
+  node ${SCRIPT_DIR}/installPluginPackages.js ${BPMN_LINTER_ARGS}
+  #--type=bpmn --config="${BPMN_PATH}"/.bpmnlintrc --runnerpath=/app/bpmnlint-runner
+  echo ""
+  echo "Running the BPMN linter"
+  echo "---------------------------------------------------"
+  # prepare params
+  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --files=${BPMN_PATH}/**/*.bpmn"
+
+  if [ -n "${BPMN_REPORT_FILEPATH}" ]; then
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --output=${BPMN_REPORT_FILEPATH}"
+  fi
+
+  if [ -n "${REPORT_FORMAT}" ]; then
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --format=${REPORT_FORMAT}"
   else
-    find $PROJECT_DIR -name "*.bpmn" -exec sh -c 'bpmnlint "$1"' shell {} \;
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --format=console"
   fi
+
+  if [ -n "${BPMN_RULES_PATH}" ]; then
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --rulespath=${BPMN_RULES_PATH} --rulesseverity=warn"
+  fi
+
+  if [[ "${VERBOSE}" == "true" ]]; then
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --verbose"
+  fi
+
+  # run the linter
+  node ${SCRIPT_DIR}/runLinter.js ${BPMN_LINTER_ARGS}
+
   echo ""
 fi
 
 if [ $mode_dmn = 1 ]; then
   echo ""
   # initialize the folder to run the linter if it has not been initialized for dmnlint
-  if [ ! -f .dmnlintrc ]; then
-    dmnlint --init
+  echo "Initializing the DMN rules for linting (if needed)"
+  echo "---------------------------------------------------"
+  if [ ! -f "${DMN_PATH}"/.dmnlintrc ]; then
+    (cd "${DMN_PATH}"; dmnlint --init)
   fi
+
+  DMN_LINTER_ARGS=""
+  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --type=dmn"
+  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=${DMN_PATH}/.dmnlintrc"
+  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --runnerpath=/app/dmnlint-runner"
+
   # retrieve and install any plugins that were provided as part of .dmnlintrc
-  node "${SCRIPT_DIR}"/installPluginPackages.js .dmnlintrc
-  # run dmnlint for the current or a separate directory based on the PROJECT_DIR environment variable being set
-  if [ -z ${PROJECT_DIR+x} ]; then 
-    find . -name "*.dmn" -exec sh -c 'dmnlint "$1"' shell {} \;
-  else
-    find $PROJECT_DIR -name "*.dmn" -exec sh -c 'dmnlint "$1"' shell {} \;
+  echo ""
+  echo "Installing the DMN lint runner dependencies"
+  echo "---------------------------------------------------"
+  node ${SCRIPT_DIR}/installPluginPackages.js ${DMN_LINTER_ARGS}
+  # --type=dmn --config="${DMN_PATH}"/.dmnlintrc --runnerpath=/app/dmnlint-runner
+  echo ""
+  echo "Running the DMN linter"
+  echo "---------------------------------------------------"
+
+  # prepare params
+  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --files=${DMN_PATH}/**/*.dmn"
+
+  if [ -n "${DMN_REPORT_FILEPATH}" ]; then
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --output=${DMN_REPORT_FILEPATH}"
   fi
+
+  if [ -n "${REPORT_FORMAT}" ]; then
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --format=${REPORT_FORMAT}"
+  else
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --format=console"
+  fi
+
+  if [ -n "${DMN_RULES_PATH}" ]; then
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --rulespath=${DMN_RULES_PATH} --rulesseverity=warn"
+  fi
+
+  if [[ "${VERBOSE}" == "true" ]]; then
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --verbose"
+  fi
+
+  # run the linter
+  node ${SCRIPT_DIR}/runLinter.js ${DMN_LINTER_ARGS}
+  
   echo ""
 fi
