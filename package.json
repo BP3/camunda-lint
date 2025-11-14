@@ -7,31 +7,35 @@
     "*mnlint-runner/bp3-dynamic-rules"
   ],
   "scripts": {
-    "generate-sbom": "cyclonedx-bom"
+    "generate-sbom": "cyclonedx-bom",
+    "test": "mocha ./test/**/*.js"
   },
   "engines": {
-      "node": ">=20"
+    "node": ">=20"
   },
   "dependencies": {
-    "chalk": "^4.1.2",
-    "cli-table3": "^0.6.5",
-    "junit-report-builder": "^5.1.1",
-    "tiny-glob": "^0.2.9",
-    "yargs": "^18.0.0",
-    "dmn-moddle": "^11.0.0",
-    "dmnlint": "^0.2.0",
-    "dmnlint-utils": "^0.1.0",
+    "@bp3global/bpmn-rules": "^0.0.5",
     "bpmn-moddle": "^9.0.3",
     "bpmnlint": "^11.6.0",
     "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@bp3global/bpmn-rules",
     "bpmnlint-utils": "^1.1.1",
-    "semver": "^7.7.2"
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.5",
+    "dmn-moddle": "^11.0.0",
+    "dmnlint": "^0.2.0",
+    "dmnlint-utils": "^0.1.0",
+    "junit-report-builder": "^5.1.1",
+    "semver": "^7.7.2",
+    "tiny-glob": "^0.2.9",
+    "yargs": "^18.0.0"
   },
   "devDependencies": {
+    "chai": "^6.2.1",
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.4.0",
+    "mocha": "^11.7.5",
     "prettier": "^3.6.2"
   }
 }
