@@ -74,3 +74,7 @@ jobs:
       - name: Push to local registry
         run: |
           docker push ${{ inputs.image-name }}:${{ inputs.branch-name }}
+
+      - name: Test the image
+        run: |
+          docker run -rm -it -v ${PWD}/test/smoke-test:/project -e PROJECT_PATH=/project ${{ inputs.image-name }}:${{ inputs.branch-name }} lint

@@ -1,0 +1,5 @@
+{
+  "extends": ["bpmnlint:recommended", "plugin:@bp3global/bpmn-rules/all", "plugin:bp3-dynamic-rules/all"],
+  "rules": {
+  }
+}
