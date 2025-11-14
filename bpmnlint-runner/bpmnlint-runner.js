@@ -350,6 +350,21 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
                 tbody tr:hover { background-color: #f1f1f1; }
                 .severity-error { color: #c00; font-weight: bold; }
                 .severity-warning { color: #d97400; font-weight: bold; }
+                .icon {
+            /* Vertically align icon with text */
+            vertical-align: middle; 
+            /* Define a standard size */
+            width: 1.2em;
+            height: 1.2em;
+        }
+        .icon-error {
+            /* Color for the error icon */
+            stroke: #d9534f; /* A nice red color */
+        }
+        .icon-warning {
+            /* Color for the warning icon */
+            stroke: #f0ad4e; /* A nice orange/yellow color */
+        }
                 .icon { margin-right: 8px; font-size: 1.2em; vertical-align: middle; }
                 .file-path { font-family: monospace; font-size: 0.9em; color: #555; }
               </style>

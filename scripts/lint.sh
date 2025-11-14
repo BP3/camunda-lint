@@ -17,8 +17,12 @@ SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 
 mode_bpmn=0
 mode_dmn=0
+mode_sbom=0
 
 case "$1" in
+    sbom)
+      mode_sbom=1
+        ;;
     lint)
       mode_bpmn=1
       mode_dmn=1
@@ -41,9 +45,40 @@ case "$1" in
         ;;
 esac
 
+if [ $mode_sbom = 1 ]; then
+  echo ""
+  if [ ! "${SBOM_REPORT_PATH}" ]; then
+    SBOM_REPORT_PATH="/local"
+    if [ -n "${PROJECT_PATH}" ]; then
+      SBOM_REPORT_PATH="${PROJECT_PATH}"
+    fi
+  fi
+  if [ ! "${SBOM_REPORT_NAME}" ]; then
+    SBOM_REPORT_NAME="camunda-lint-sbom"
+  fi
+  SBOM_REPORT_EXT="json"
+  case "${SBOM_REPORT_FORMAT}" in
+    XML)
+      SBOM_REPORT_EXT="xml"
+        ;;
+    *)
+      SBOM_REPORT_FORMAT="JSON"
+      SBOM_REPORT_EXT="json"
+        ;;
+  esac
+
+  echo "Generating the SBOM..."
+  echo "---------------------------------------------------"
+  echo "Writing: ${SBOM_REPORT_PATH}/${SBOM_REPORT_NAME}.${SBOM_REPORT_EXT}"
+  cyclonedx-npm /app/package.json -o "${SBOM_REPORT_PATH}/${SBOM_REPORT_NAME}.${SBOM_REPORT_EXT}" --of "${SBOM_REPORT_FORMAT}"
+  echo ""
+  echo "Done!"
+  echo ""
+fi
+
 if [ -n "${PROJECT_PATH}" ]; then
-  BPMN_PATH = "${PROJECT_PATH}"
-  DMN_PATH = "${PROJECT_PATH}"
+  BPMN_PATH="${PROJECT_PATH}"
+  DMN_PATH="${PROJECT_PATH}"
 fi
 
 if [ $mode_bpmn = 1 ]; then

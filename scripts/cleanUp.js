@@ -14,4 +14,3 @@ if (fs.existsSync(packageLockFilepath)) {
 if (fs.existsSync(nodeModulesPath)) {
     fs.rmSync(nodeModulesPath, {recursive: true, force: true});
 }
-
