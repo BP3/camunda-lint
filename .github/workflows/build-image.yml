@@ -77,4 +77,4 @@ jobs:
 
       - name: Test the image
         run: |
-          docker run -rm -it -v ${PWD}/test/smoke-test:/project -e PROJECT_PATH=/project ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
+          docker run -it --rm -v ${PWD}/test/smoke-test:/project -e PROJECT_PATH=/project ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
