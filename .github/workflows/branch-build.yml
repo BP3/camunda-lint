@@ -20,7 +20,9 @@ jobs:
       image-name: 'ghcr.io/bp3/camunda-lint'
       branch-name: ${{ github.head_ref || github.ref_name }}
     secrets: inherit
+
   call-workflow-test-image:
+    needs: call-workflow-build-image
     uses: ./.github/workflows/test-image.yml
     with:
       username: ${{ github.actor }}
