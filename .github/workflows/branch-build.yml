@@ -23,6 +23,7 @@ jobs:
   call-workflow-test-image:
     uses: ./.github/workflows/test-image.yml
     with:
+      username: ${{ github.actor }}
       image-name: 'camunda-lint'
       branch-name: ${{ github.head_ref || github.ref_name }}
     secrets: inherit
