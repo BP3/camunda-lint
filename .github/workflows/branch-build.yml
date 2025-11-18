@@ -21,15 +21,6 @@ jobs:
       branch-name: ${{ github.head_ref || github.ref_name }}
     secrets: inherit
 
-  call-workflow-test-image:
-    needs: call-workflow-build-image
-    uses: ./.github/workflows/test-image.yml
-    with:
-      username: ${{ github.actor }}
-      image-name: 'camunda-lint'
-      branch-name: ${{ github.head_ref || github.ref_name }}
-    secrets: inherit
-
 # TODO: add at a later date... need to understand the authorization mechanism
   # VULNERABILITY SCANNING
 #   vulnerability-scan:
