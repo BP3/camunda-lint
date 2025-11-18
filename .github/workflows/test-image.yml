@@ -1,0 +1,25 @@
+name: Build image
+
+on:
+  workflow_call:
+    inputs:
+      username:
+        required: true
+        type: string
+      image-name:
+        required: true
+        type: string
+      branch-name:
+        required: true
+        type: string
+
+jobs:
+  test-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Smoke Test
+        run: |
+          docker run -i --rm -v ${PWD}/test/smoke-test:/project -e PROJECT_PATH=/project ${{ inputs.image-name }}:${{ inputs.branch-name }} lint

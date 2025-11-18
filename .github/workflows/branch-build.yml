@@ -20,6 +20,12 @@ jobs:
       image-name: 'ghcr.io/bp3/camunda-lint'
       branch-name: ${{ github.head_ref || github.ref_name }}
     secrets: inherit
+  call-workflow-test-image:
+    uses: ./.github/workflows/test-imag-yml
+    with:
+      image-name: 'camunda-lint'
+      branch-name: ${{ github.head_ref || github.ref_name }}
+    secrets: inherit
 
 # TODO: add at a later date... need to understand the authorization mechanism
   # VULNERABILITY SCANNING
