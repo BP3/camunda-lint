@@ -21,7 +21,7 @@ jobs:
       branch-name: ${{ github.head_ref || github.ref_name }}
     secrets: inherit
   call-workflow-test-image:
-    uses: ./.github/workflows/test-imag-yml
+    uses: ./.github/workflows/test-image.yml
     with:
       image-name: 'camunda-lint'
       branch-name: ${{ github.head_ref || github.ref_name }}
