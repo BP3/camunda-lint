@@ -88,6 +88,10 @@ jobs:
           username: ${{ inputs.username }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Pull the image
+        run: |
+          docker pull ${{ inputs.image-name }}:${{ inputs.branch-name }}
+
       - name: Run Smoke Test
         run: |
           docker run -i --rm -v ${PWD}/test/smoke-test:/project -e PROJECT_PATH=/project ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
