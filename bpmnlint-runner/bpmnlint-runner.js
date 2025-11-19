@@ -40,7 +40,7 @@ const argv = yargs(hideBin(process.argv))
   .option('format', {
     alias: 'f',
     describe: 'Format for the report',
-    choices: ['console', 'json', 'html', 'junit'],
+    choices: ['json', 'html', 'junit'], //'console', 
     default: 'json',
   })
   .option('custom-rules-path', {
@@ -59,6 +59,12 @@ const argv = yargs(hideBin(process.argv))
     type: 'boolean',
     default: false,
     describe: 'If a custom rules directory has a package.json, automatically run "npm install". Use with caution in untrusted environments.',
+  })
+  .option('show-console-table', {
+    alias: 't',
+    type: 'boolean',
+    description: 'Show results table on the console',
+    default: true,
   })
   .option('verbose', {
     alias: 'v',
@@ -252,14 +258,14 @@ async function lintFiles(files, linter) {
   return { allIssues, totalErrors, totalWarnings };
 }
 
-function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath) {
+function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath, showConsoleTable) {
   logger.info('--- Linting Summary ---');
   logger.info(`Total Files Linted: ${lintedFiles.length}`);
   logger.info(`Total Errors: ${chalk.red.bold(totalErrors)}`);
   logger.info(`Total Warnings: ${chalk.yellow.bold(totalWarnings)}`);
   logger.info('-----------------------');
 
-  if (format === 'console') {
+  if (showConsoleTable/*format === 'console'*/) {
     if (allIssues.length > 0) {
       // Create a new table
       const table = new Table({
@@ -311,7 +317,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
       // Print the table to the console
       console.log(table.toString());
     }
-    return;
+    //return;
   }
 
   const extension = format === 'junit' ? 'xml' : format;
@@ -450,7 +456,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
 
 // --- Main Execution Logic ---
 async function main() {
-  const { pattern, config: configPath, output: outputPath, format, customRulesPath, customRulesSeverity, installCustomDeps } = argv;
+  const { pattern, config: configPath, output: outputPath, format, customRulesPath, customRulesSeverity, installCustomDeps, showConsoleTable } = argv;
   logger.log(`Lint runner arguments parsed: ${JSON.stringify({
     files: pattern,
     config: configPath,
@@ -458,7 +464,10 @@ async function main() {
     format: format,
     customRulesPath: customRulesPath,
     customRulesSeverity: customRulesSeverity,
-    installCustomDeps: installCustomDeps
+    installCustomDeps: installCustomDeps,
+    showConsoleTable: showConsoleTable
+  })
+
   })}`);
 
   let dynamicPluginWasPrepared = false;
@@ -520,7 +529,7 @@ async function main() {
     const lintResults = await lintFiles(files, linter);
 
     // Generate Report
-    generateReport(lintResults, files, format, outputPath);
+    generateReport(lintResults, files, format, outputPath, showConsoleTable);
 
     // Final decision on exit code
     if (lintResults.totalErrors > 0) {

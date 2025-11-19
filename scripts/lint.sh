@@ -18,6 +18,11 @@ SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 mode_bpmn=0
 mode_dmn=0
 mode_sbom=0
+verbose=0
+
+if [ "${VERBOSE}" == "true" ]; then
+  verbose=1
+fi
 
 case "$1" in
     sbom)
@@ -114,15 +119,23 @@ if [ $mode_bpmn = 1 ]; then
   if [ -n "${REPORT_FORMAT}" ]; then
     BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --format=${REPORT_FORMAT}"
   else
-    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --format=console"
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --format=json"
   fi
 
   if [ -n "${BPMN_RULES_PATH}" ]; then
     BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --rulespath=${BPMN_RULES_PATH} --rulesseverity=warn"
   fi
 
-  if [[ "${VERBOSE}" == "true" ]]; then
-    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --verbose"
+  if [ -n "${CONSOLE_TABLE}" ]; then
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --consoletable=${CONSOLE_TABLE}"
+  fi
+
+  if [ -n "${VERBOSE}" ]; then
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --verbose=${VERBOSE}"
+  fi
+
+  if [ $verbose = 1 ]; then
+    echo "Running linter with params: ${BPMN_LINTER_ARGS}"
   fi
 
   # run the linter
@@ -165,15 +178,23 @@ if [ $mode_dmn = 1 ]; then
   if [ -n "${REPORT_FORMAT}" ]; then
     DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --format=${REPORT_FORMAT}"
   else
-    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --format=console"
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --format=json"
   fi
 
   if [ -n "${DMN_RULES_PATH}" ]; then
     DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --rulespath=${DMN_RULES_PATH} --rulesseverity=warn"
   fi
 
-  if [[ "${VERBOSE}" == "true" ]]; then
-    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --verbose"
+  if [ -n "${CONSOLE_TABLE}" ]; then
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --consoletable=${CONSOLE_TABLE}"
+  fi
+
+  if [ -n "${VERBOSE}" ]; then
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --verbose=${VERBOSE}"
+  fi
+
+  if [ $verbose = 1 ]; then
+    echo "Running linter with params: ${DMN_LINTER_ARGS}"
   fi
 
   # run the linter
