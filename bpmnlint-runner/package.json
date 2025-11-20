@@ -21,7 +21,7 @@
     "bpmn-moddle": "^9.0.3",
     "bpmnlint": "^11.6.0",
     "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
-    "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@bp3global/bpmn-rules",
+    "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@bp3global/bpmnlint-plugin-bpmn-rules",
     "bpmnlint-utils": "^1.1.1",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",

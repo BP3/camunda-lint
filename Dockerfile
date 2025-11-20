@@ -13,7 +13,7 @@
 FROM node:22.14.0-alpine3.21
 
 # Install the Camunda lint packages
-RUN npm install -g bpmnlint@11.6.0 dmnlint@0.2.0 @cyclonedx/cyclonedx-npm
+RUN npm install -g bpmnlint@11.6.0 dmnlint@0.2.0 @cyclonedx/cyclonedx-npm @bp3global/bpmnlint-plugin-bpmn-rules
 # Add the bp3 user and group. Note: using 1001 because node's is already using 1000
 RUN addgroup --gid 1001 bp3 && \
     adduser --uid 1001 --ingroup bp3 --home /home/bp3user --shell /bin/bash --disabled-password bp3user
