@@ -127,11 +127,13 @@ function getPluginDetails(packageName, pluginPrefix) {
 //
 function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
   let revisedLintConfig = {
-	extends: [],
-	rules: {}
+    extends: [],
+    rules: {}
   };
   let additionalDependencies = [];
   let npmPackages = [];
+
+  // logger.log(`preparing lint runner with params: filename=${filename}, prefix=${prefix}, lintRunner=${lintRunner}, defaultLintConfig=${JSON.stringify(defaultLintConfig)}`);
 
   // read the provided config and collect the configs and dependencies
   //
@@ -139,47 +141,50 @@ function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
   revisedLintConfig.rules = lintConfig.rules || {};
   if (lintConfig != null && lintConfig.extends != null)  {
     if (typeof lintConfig.extends == 'string') {
-		// if it's just the one, push it
-		//
-		revisedLintConfig.extends.push(lintConfig.extends);
-	} else if (lintConfig.extends.length > 0) {
-      for (var idx = 0; idx < lintConfig.extends.length; ++idx) {
-        const currentPluginDetails = getPluginDetails(lintConfig.extends[idx], prefix);
-        // if it's a plugin, prepare the appropriate dependencies
-        //
-        if (currentPluginDetails != null) {
-          revisedLintConfig.extends.push(currentPluginDetails.configName);
-          additionalDependencies.push(currentPluginDetails);
-          npmPackages.push(currentPluginDetails.npmReference);
-        } else {
-          // the assumption here is this is just the baseline bpmnlint ruleset
+      // if it's just the one, push it
+      //
+      revisedLintConfig.extends.push(lintConfig.extends);
+    } else if (lintConfig.extends.length > 0) {
+        for (var idx = 0; idx < lintConfig.extends.length; ++idx) {
+          const currentPluginDetails = getPluginDetails(lintConfig.extends[idx], prefix);
+          // if it's a plugin, prepare the appropriate dependencies
           //
-          revisedLintConfig.extends.push(lintConfig.extends[idx]);
-		}
+          if (currentPluginDetails != null) {
+            revisedLintConfig.extends.push(currentPluginDetails.configName);
+            additionalDependencies.push(currentPluginDetails);
+            npmPackages.push(currentPluginDetails.npmReference);
+          } else {
+            // the assumption here is this is just the baseline bpmnlint ruleset
+            //
+            revisedLintConfig.extends.push(lintConfig.extends[idx]);
       }
-	} else {
+        }
+    } else {
       // always default to the bpmnlint recommended rules
       //
-	  revisedLintConfig = defaultLintConfig;    
-	}
+      revisedLintConfig = defaultLintConfig;    
+    }
   } else {
     // always default to the bpmnlint recommended rules
     //
-	revisedLintConfig = defaultLintConfig;
+	  revisedLintConfig = defaultLintConfig;
   }
   // write the revised lintrc file
   //
-  fs.writeFileSync(`${filename}Revised`, JSON.stringify(revisedLintConfig));
+  let revisedLintrcFile = path.join(lintRunner, `${path.basename(filename)}Revised`);
+  logger.info(`Writing lintrc revised file: ${revisedLintrcFile}`);
+  //fs.writeFileSync(`${filename}Revised`, JSON.stringify(revisedLintConfig));
+  fs.writeFileSync(revisedLintrcFile, JSON.stringify(revisedLintConfig));
 
   // read the package json and write it
   //
   if (additionalDependencies != null && additionalDependencies.length > 0) {
-	let packageJsonFilepath = path.resolve(process.cwd(), lintRunner, PACKAGE_JSON);
+    let packageJsonFilepath = path.resolve(process.cwd(), lintRunner, PACKAGE_JSON);
     let currentPackageJson = JSON.parse(fs.readFileSync(packageJsonFilepath));
-	for (var idx = 0; idx < additionalDependencies.length; ++idx) {
-	  currentPackageJson.dependencies[additionalDependencies[idx].dependencyName] = additionalDependencies[idx].dependencyValue;
-	}
-	fs.writeFileSync(packageJsonFilepath, JSON.stringify(currentPackageJson));
+    for (var idx = 0; idx < additionalDependencies.length; ++idx) {
+      currentPackageJson.dependencies[additionalDependencies[idx].dependencyName] = additionalDependencies[idx].dependencyValue;
+    }
+    fs.writeFileSync(packageJsonFilepath, JSON.stringify(currentPackageJson));
   }
 
   // install any required packages
@@ -189,14 +194,14 @@ function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
   //
   logger.info(`Installing plugins referenced by ${filename}: [ ${npmPackages.join(', ')} ]`);
   try {
-	// NOTE: not storing the result of this call nor handling the stdout nor stderr 
-	// 		 because applying any handling to the "npm install" command won't do anything
-	//execSync('npm install > /dev/null 2>&1 || (echo "Plugin installation failed" && exit 1)', {cwd: path.join(process.cwd(), lintRunner)});
-	execSync('npm install', { cwd: path.resolve(process.cwd(), lintRunner), stdio: 'pipe' });
-	logger.info('Dependencies installed successfully.');
+    // NOTE: not storing the result of this call nor handling the stdout nor stderr 
+    // 		 because applying any handling to the "npm install" command won't do anything
+    //execSync('npm install > /dev/null 2>&1 || (echo "Plugin installation failed" && exit 1)', {cwd: path.join(process.cwd(), lintRunner)});
+    execSync('npm install', { cwd: path.resolve(process.cwd(), lintRunner), stdio: 'pipe' });
+    logger.info('Dependencies installed successfully.');
   } catch(err) {
     logger.error('ERROR: ' + err);
-	logger.error('\nERROR: Plugin installation failed!\n');
+	  logger.error('\nERROR: Plugin installation failed!\n');
   }
 }
 
@@ -249,6 +254,10 @@ let args = parseArgs();
 
 if (process.argv.length > 4 && args != null) {
 
+  if (args["verbose"] != null) {
+    logger.isVerbose = args["verbose"];
+  }
+
   if (!LINTER_TYPE_LIST.includes(args["type"])) {
     logger.error(`Invalid linter type selected: ${args["type"]}. Please select one from the options [${LINTER_TYPE_LIST.join(', ')}]\n`);
   }
@@ -263,6 +272,9 @@ if (process.argv.length > 4 && args != null) {
 
   let defaultLintConfig = args["type"] == BPMN_PREFIX ? defaultBpmnLintConfig : defaultDmnLintConfig;
 
+  logger.log(`Preparing the lint runner with the params: ${JSON.stringify(args)}`);
+
+  //this ensures there's always a revised lintrc under the runner path
   prepareLintRunner(args["config"], args["type"], defaultLintConfig, args["runnerpath"]);
 
 } else {
