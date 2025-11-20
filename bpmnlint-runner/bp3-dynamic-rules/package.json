@@ -14,6 +14,7 @@
   "dependencies": {
     "bpmnlint": "^11.6.0",
     "bpmnlint-utils": "^1.1.1",
+    "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.0",
     "semver": "^7.7.2"
   },
   "files": [
