@@ -172,7 +172,7 @@ function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
   // write the revised lintrc file
   //
   let revisedLintrcFile = path.join(lintRunner, `${path.basename(filename)}Revised`);
-  logger.info(`Writing lintrc revised file: ${revisedLintrcFile}`);
+  logger.log(`Writing lintrc revised file: ${revisedLintrcFile}`);
   //fs.writeFileSync(`${filename}Revised`, JSON.stringify(revisedLintConfig));
   fs.writeFileSync(revisedLintrcFile, JSON.stringify(revisedLintConfig));
 
@@ -255,7 +255,7 @@ let args = parseArgs();
 if (process.argv.length > 4 && args != null) {
 
   if (args["verbose"] != null) {
-    logger.isVerbose = args["verbose"];
+    logger.isVerbose = args["verbose"] == 'true';
   }
 
   if (!LINTER_TYPE_LIST.includes(args["type"])) {

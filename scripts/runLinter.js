@@ -20,6 +20,7 @@ const argumentOutputPath = 'output';
 const argumentFormat = 'format';
 const argumentRulesPath = 'rulespath';
 const argumentRulesSeverity = 'rulesseverity';
+const argumentConsoleTable = 'consoletable';
 const argumentVerbose = 'verbose';
 
 // --- Zero-Dependency Color Logging using ANSI Escape Codes ---
@@ -80,8 +81,7 @@ function showHelp() {
                                                                     NOTE: please use an absolute path!
       --${argumentFormat}=<format option>
                                                                     Specifies the format output.
-                                                                    Possible options are: console (default), html, json, junit
-                                                                    NOTE: 'console' does not generate a file even if one is specified.
+                                                                    Possible options are: json (default), html, junit
                                                                     NOTE: 'junit' generates a file with the xml extension.
       --${argumentRulesPath}=<path to ad-hoc/custom rules>
                                                                     Specifies the path to the ad-hoc/custom rules to include when running.
@@ -89,6 +89,8 @@ function showHelp() {
       --${argumentRulesSeverity}=<severity to apply to ad-hoc/custom rules>
                                                                     Specifies the ad-hoc/custom rules severity to apply when running.
                                                                     NOTE: This argument is only relevant if used with '${argumentRulesPath}'.
+      --${argumentConsoleTable}=<true|false>
+                                                                    Specifies whether the tool should present the report table to the console.
       --${argumentVerbose}
                                                                     Enables the tool to be verbose and output the steps to the console.
 
@@ -147,9 +149,10 @@ function runLinter(args) {
   } else {
     // the configs and parameters are all ready now
     let cliCommand = `-c ${configFilename}`
-                    + (args[argumentVerbose] ? ` -v` : ``)
+                    + (args[argumentVerbose] && args[argumentVerbose] == 'false' ? `` : ` -v`)
+                    + (args[argumentConsoleTable] && args[argumentConsoleTable] == 'false' ? ` -t false` : ` -t`)
                     + (args[argumentOutputPath] ? ` -o ${path.resolve(process.cwd(), args[argumentOutputPath])}` : ``)
-                    + (args[argumentFormat] ? ` -f ${args[argumentFormat]}` : ` -f console`)
+                    + (args[argumentFormat] ? ` -f ${args[argumentFormat]}` : ` -f json`)
                     + (args[argumentRulesPath] ? ` -r ${args[argumentRulesPath]} -i` : ``)
                     + (args[argumentRulesSeverity] ? ` -s ${args[argumentRulesSeverity]}` : ``);
 
