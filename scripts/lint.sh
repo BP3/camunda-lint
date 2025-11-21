@@ -18,6 +18,13 @@ SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 mode_bpmn=0
 mode_dmn=0
 mode_sbom=0
+verbose=0
+
+if [ -n "${VERBOSE}" ]; then
+  if [ "${VERBOSE}" != "false" ]; then
+    verbose=1
+  fi
+fi
 
 case "$1" in
     sbom)
@@ -91,20 +98,27 @@ if [ $mode_bpmn = 1 ]; then
   fi
 
   BPMN_LINTER_ARGS=""
+  if [ $verbose = 1 ]; then
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --verbose=true"
+  else
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --verbose=false"
+  fi
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --type=bpmn"
-  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=${BPMN_PATH}/.bpmnlintrc"
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --runnerpath=/app/bpmnlint-runner"
-
-  # retrieve and install any plugins that were provided as part of .bpmnlintrc and generates a .bpmnlintrcRevised
+  # BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=${BPMN_PATH}/.bpmnlintrc"
+  
+  # retrieve and install any plugins that were provided as part of .bpmnlintrc and generates a .bpmnlintrcRevised under the runner path
   echo ""
   echo "Installing the BPMN lint runner dependencies"
   echo "---------------------------------------------------"
-  node ${SCRIPT_DIR}/installPluginPackages.js ${BPMN_LINTER_ARGS}
+  node ${SCRIPT_DIR}/installPluginPackages.js ${BPMN_LINTER_ARGS} --config="${BPMN_PATH}"/.bpmnlintrc
   #--type=bpmn --config="${BPMN_PATH}"/.bpmnlintrc --runnerpath=/app/bpmnlint-runner
   echo ""
   echo "Running the BPMN linter"
   echo "---------------------------------------------------"
   # prepare params
+  # use the revised file that should have been generated
+  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=/app/bpmnlint-runner/.bpmnlintrcRevised"
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --files=${BPMN_PATH}/**/*.bpmn"
 
   if [ -n "${BPMN_REPORT_FILEPATH}" ]; then
@@ -114,15 +128,19 @@ if [ $mode_bpmn = 1 ]; then
   if [ -n "${REPORT_FORMAT}" ]; then
     BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --format=${REPORT_FORMAT}"
   else
-    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --format=console"
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --format=json"
   fi
 
   if [ -n "${BPMN_RULES_PATH}" ]; then
     BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --rulespath=${BPMN_RULES_PATH} --rulesseverity=warn"
   fi
 
-  if [[ "${VERBOSE}" == "true" ]]; then
-    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --verbose"
+  if [ -n "${CONSOLE_TABLE}" ]; then
+    BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --consoletable=${CONSOLE_TABLE}"
+  fi
+
+  if [ $verbose = 1 ]; then
+    echo "Running linter with params: ${BPMN_LINTER_ARGS}"
   fi
 
   # run the linter
@@ -141,21 +159,28 @@ if [ $mode_dmn = 1 ]; then
   fi
 
   DMN_LINTER_ARGS=""
+  if [ $verbose = 1 ]; then
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --verbose=true"
+  else
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --verbose=false"
+  fi
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --type=dmn"
-  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=${DMN_PATH}/.dmnlintrc"
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --runnerpath=/app/dmnlint-runner"
+  # DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=${DMN_PATH}/.dmnlintrc"
 
-  # retrieve and install any plugins that were provided as part of .dmnlintrc
+  # retrieve and install any plugins that were provided as part of .dmnlintrc and generates a .dmnlintrcRevised under the runner path
   echo ""
   echo "Installing the DMN lint runner dependencies"
   echo "---------------------------------------------------"
-  node ${SCRIPT_DIR}/installPluginPackages.js ${DMN_LINTER_ARGS}
+  node ${SCRIPT_DIR}/installPluginPackages.js ${DMN_LINTER_ARGS} --config=${DMN_PATH}/.dmnlintrc
   # --type=dmn --config="${DMN_PATH}"/.dmnlintrc --runnerpath=/app/dmnlint-runner
   echo ""
   echo "Running the DMN linter"
   echo "---------------------------------------------------"
 
   # prepare params
+  # use the revised file that should have been generated
+  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=/app/dmnlint-runner/.dmnlintrcRevised"
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --files=${DMN_PATH}/**/*.dmn"
 
   if [ -n "${DMN_REPORT_FILEPATH}" ]; then
@@ -165,15 +190,19 @@ if [ $mode_dmn = 1 ]; then
   if [ -n "${REPORT_FORMAT}" ]; then
     DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --format=${REPORT_FORMAT}"
   else
-    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --format=console"
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --format=json"
   fi
 
   if [ -n "${DMN_RULES_PATH}" ]; then
     DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --rulespath=${DMN_RULES_PATH} --rulesseverity=warn"
   fi
 
-  if [[ "${VERBOSE}" == "true" ]]; then
-    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --verbose"
+  if [ -n "${CONSOLE_TABLE}" ]; then
+    DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --consoletable=${CONSOLE_TABLE}"
+  fi
+
+  if [ $verbose = 1 ]; then
+    echo "Running linter with params: ${DMN_LINTER_ARGS}"
   fi
 
   # run the linter
