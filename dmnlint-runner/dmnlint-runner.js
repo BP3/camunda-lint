@@ -259,41 +259,64 @@ async function lintFiles(files, linter) {
 }
 
 function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath, showConsoleTable) {
-  logger.info('--- Linting Summary ---');
-  logger.info(`Total Files Linted: ${lintedFiles.length}`);
-  logger.info(`Total Errors: ${chalk.red.bold(totalErrors)}`);
-  logger.info(`Total Warnings: ${chalk.yellow.bold(totalWarnings)}`);
-  logger.info('-----------------------');
+  console.log('--- Linting Summary ---');
+  console.log(`Total Files Linted: ${lintedFiles.length}`);
+  console.log(`Total Errors: ${chalk.red.bold(totalErrors)}`);
+  console.log(`Total Warnings: ${chalk.yellow.bold(totalWarnings)}`);
+  console.log('-----------------------');
 
   if (showConsoleTable /*format === 'console'*/) {
     if (allIssues.length > 0) {
       // Create a new table
-      const table = new Table({
-        head: [
-          chalk.cyan('Severity'),
-          chalk.cyan('File'),
-          chalk.cyan('Element ID'),
-          chalk.cyan('Rule'),
-          chalk.cyan('Message')
-        ],
-        // Set column widths and enable word wrapping
-        colWidths: [20, 40, 25, 20, 60],
-        wordWrap: true,
-        // Style the table for a cleaner look
-        style: {
-            head: [], // remove colors from head, chalk is doing it
-            border: ['grey']
-        }
-      });
+      // const table = new Table({
+      //   head: [
+      //     chalk.cyan('Severity'),
+      //     chalk.cyan('File'),
+      //     chalk.cyan('Element ID'),
+      //     chalk.cyan('Rule'),
+      //     chalk.cyan('Message')
+      //   ],
+      //   // Set column widths and enable word wrapping
+      //   colWidths: [20, 40, 25, 20, 60],
+      //   wordWrap: true,
+      //   // Style the table for a cleaner look
+      //   style: {
+      //       head: [], // remove colors from head, chalk is doing it
+      //       border: ['grey']
+      //   }
+      // });
 
-      // Sort issues by severity (errors first)
-      allIssues.sort((a, b) => {
-          const severityA = a.category?.includes('error') ? 0 : 1;
-          const severityB = b.category?.includes('error') ? 0 : 1;
-          return severityA - severityB;
-      });
+      // // Sort issues by severity (errors first)
+      // allIssues.sort((a, b) => {
+      //     const severityA = a.category?.includes('error') ? 0 : 1;
+      //     const severityB = b.category?.includes('error') ? 0 : 1;
+      //     return severityA - severityB;
+      // });
 
-      // Populate the table with issue data
+      // // Populate the table with issue data
+      // allIssues.forEach(issue => {
+      //   const severity = issue.category || 'unknown';
+      //   let severityStyled = severity;
+
+      //   if (severity.toLowerCase().includes('error')) {
+      //     severityStyled = chalk.red(`❌  Error`);
+      //   } else if (severity.toLowerCase().includes('warn')) {
+      //     severityStyled = chalk.yellow(`⚠️  Warning`);
+      //   }
+
+      //   table.push([
+      //     severityStyled,
+      //     // Truncate file path from the beginning if it's too long
+      //     '...' + issue.file.slice(-34),
+      //     issue.id || 'N/A',
+      //     issue.rule,
+      //     issue.message
+      //   ]);
+      // });
+
+      // // Print the table to the console
+      // console.log(table.toString());
+
       allIssues.forEach(issue => {
         const severity = issue.category || 'unknown';
         let severityStyled = severity;
@@ -303,19 +326,8 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
         } else if (severity.toLowerCase().includes('warn')) {
           severityStyled = chalk.yellow(`⚠️  Warning`);
         }
-
-        table.push([
-          severityStyled,
-          // Truncate file path from the beginning if it's too long
-          '...' + issue.file.slice(-34),
-          issue.id || 'N/A',
-          issue.rule,
-          issue.message
-        ]);
+        console.log(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
       });
-
-      // Print the table to the console
-      console.log(table.toString());
     }
     return;
   }
