@@ -13,7 +13,8 @@ const Table = require('cli-table3');
 
 const defaultPackageJsonDependencies = {
   "bpmnlint": "^11.6.0",
-  "bpmnlint-utils": "^1.1.1"
+  "bpmnlint-utils": "^1.1.1",
+  "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.0"
 };
 
 // --- Define and parse command-line arguments using yargs ---
@@ -60,17 +61,17 @@ const argv = yargs(hideBin(process.argv))
     default: false,
     describe: 'If a custom rules directory has a package.json, automatically run "npm install". Use with caution in untrusted environments.',
   })
-  .option('show-console-table', {
-    alias: 't',
-    type: 'boolean',
-    description: 'Show results table on the console',
-    default: true,
-  })
   .option('verbose', {
     alias: 'v',
     type: 'boolean',
     description: 'Enable detailed logging for each step',
     default: false,
+  })
+  .option('show-console-table', {
+    alias: 't',
+    type: 'boolean',
+    description: 'Show results table on the console',
+    default: true,
   })
   .demandCommand(1, 'You must provide a pattern for the files to lint.')
   .help()
@@ -80,6 +81,7 @@ const argv = yargs(hideBin(process.argv))
 const logger = {
   log: (...args) => {
     if (argv.verbose) {
+      console.log(`GOT VERBOSE TO: ${argv.verbose}`);
       console.log(chalk.gray('VERBOSE:'), ...args);
     }
   },
