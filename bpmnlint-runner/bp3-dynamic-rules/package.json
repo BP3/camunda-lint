@@ -12,9 +12,10 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "bpmnlint": "^11.6.0",
-    "bpmnlint-utils": "^1.1.1",
     "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.0",
+    "bpmnlint": "^11.6.0",
+    "bpmnlint-plugin-camunda-compat": "^2.44.0",
+    "bpmnlint-utils": "^1.1.1",
     "semver": "^7.7.2"
   },
   "files": [

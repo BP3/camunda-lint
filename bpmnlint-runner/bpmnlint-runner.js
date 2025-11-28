@@ -14,6 +14,7 @@ const Table = require('cli-table3');
 const defaultPackageJsonDependencies = {
   "bpmnlint": "^11.6.0",
   "bpmnlint-utils": "^1.1.1",
+  "bpmnlint-plugin-camunda-compat": "^2.44.0",
   "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.0"
 };
 
@@ -494,7 +495,7 @@ async function main() {
 
     // Load Configuration: default to load the bpmnlinter rules and the dynamic rules plugin
     let linterConfig = {
-        "extends": ["bpmnlint:recommended", "plugin:bp3-dynamic-rules/all"],
+        "extends": ["bpmnlint:recommended", "plugin:bp3-dynamic-rules/all", "plugin:bpmnlint-plugin-camunda-compat/camunda-cloud-8-8"],
         "rules": {
       }
     };

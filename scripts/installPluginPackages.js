@@ -9,7 +9,7 @@ const BPMN_PREFIX = 'bpmn';
 const DMN_PREFIX = 'dmn';
 const PACKAGE_JSON = 'package.json';
 const defaultBpmnLintConfig = {
-  "extends": ["bpmnlint:recommended"],
+  "extends": ["bpmnlint:recommended", "plugin:bpmnlint-plugin-camunda-compat/camunda-cloud-8-8"],
   "rules": {}
 };
 const defaultDmnLintConfig = {
