@@ -155,7 +155,7 @@ if [ $mode_dmn = 1 ]; then
   echo "Initializing the DMN rules for linting (if needed)"
   echo "---------------------------------------------------"
   if [ ! -f "${DMN_PATH}"/.dmnlintrc ]; then
-    (cd "${DMN_PATH}"; dmnlint --init)
+    (cd "${DMN_PATH}"; dmnlint --init) 
   fi
 
   DMN_LINTER_ARGS=""
