@@ -82,7 +82,7 @@ const argv = yargs(hideBin(process.argv))
 const logger = {
   log: (...args) => {
     if (argv.verbose) {
-      console.log(`GOT VERBOSE TO: ${argv.verbose}`);
+      //console.log(`GOT VERBOSE TO: ${argv.verbose}`);
       console.log(chalk.gray('VERBOSE:'), ...args);
     }
   },

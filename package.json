@@ -14,7 +14,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.0",
+    "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.1",
     "bpmn-moddle": "^9.0.3",
     "bpmnlint": "^11.6.0",
     "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@bp3global/bpmnlint-plugin-bpmn-rules",
@@ -38,5 +38,15 @@
     "globals": "^16.4.0",
     "mocha": "^11.7.5",
     "prettier": "^3.6.2"
+  },
+  "overrides": {
+    "@bp3global/bpmnlint-plugin-bpmn-rules": "$@bp3global/bpmnlint-plugin-bpmn-rules",
+    "bpmn-moddle": "$bpmn-moddle",
+    "bpmnlint": "$bpmnlint",
+    "bpmnlint-plugin-camunda-compat": "$bpmnlint-plugin-camunda-compat",
+    "bpmnlint-utils": "$bpmnlint-utils",
+    "dmn-moddle": "$dmn-moddle",
+    "dmnlint": "$dmnlint",
+    "dmnlint-utils": "$dmnlint-utils"
   }
 }
