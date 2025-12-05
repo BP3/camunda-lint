@@ -13,7 +13,7 @@
 FROM node:22.14.0-alpine3.21
 
 # Install the Camunda lint packages
-RUN npm install -g bpmnlint@11.6.0 dmnlint@0.2.0 @cyclonedx/cyclonedx-npm @bp3global/bpmnlint-plugin-bpmn-rules
+RUN npm install -g bpmnlint@11.6.0 dmnlint@0.2.0 bpmnlint-plugin-camunda-compat@2.44.0 @cyclonedx/cyclonedx-npm @bp3global/bpmnlint-plugin-bpmn-rules
 # Add the bp3 user and group. Note: using 1001 because node's is already using 1000
 RUN addgroup --gid 1001 bp3 && \
     adduser --uid 1001 --ingroup bp3 --home /home/bp3user --shell /bin/bash --disabled-password bp3user
@@ -25,7 +25,7 @@ RUN chown -R bp3user:bp3 /usr/local/lib/node_modules && \
 
 USER bp3user
 
-COPY --chown=bp3user:bp3 --chmod=755 ["docker-entrypoint.sh", "package*.js*", "./" ]
+COPY --chown=bp3user:bp3 --chmod=755 ["docker-entrypoint.sh", "default*mnlintrc.json", "package*.js*", "./" ]
 COPY --chown=bp3user:bp3 --chmod=755 scripts/ scripts/
 COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/ bpmnlint-runner/
 COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/ dmnlint-runner/

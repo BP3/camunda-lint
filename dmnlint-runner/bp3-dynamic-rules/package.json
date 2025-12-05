@@ -12,8 +12,8 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "dmnlint": "^0.2.0",
-    "dmnlint-utils": "^0.1.0"
+    "dmnlint": "*",
+    "dmnlint-utils": "*"
   },
   "files": [
     "rules",

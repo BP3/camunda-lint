@@ -14,6 +14,7 @@ const Table = require('cli-table3');
 const defaultPackageJsonDependencies = {
   "bpmnlint": "^11.6.0",
   "bpmnlint-utils": "^1.1.1",
+  "bpmnlint-plugin-camunda-compat": "^2.44.0",
   "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.0"
 };
 
@@ -81,7 +82,7 @@ const argv = yargs(hideBin(process.argv))
 const logger = {
   log: (...args) => {
     if (argv.verbose) {
-      console.log(`GOT VERBOSE TO: ${argv.verbose}`);
+      //console.log(`GOT VERBOSE TO: ${argv.verbose}`);
       console.log(chalk.gray('VERBOSE:'), ...args);
     }
   },
@@ -326,6 +327,8 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
           severityStyled = chalk.red(`❌  Error`);
         } else if (severity.toLowerCase().includes('warn')) {
           severityStyled = chalk.yellow(`⚠️  Warning`);
+        } else if (severity.toLowerCase().includes('info')) {
+          severityStyled = chalk.blueBright(`ℹ️  Info`);
         }
         console.log(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
       });
@@ -494,7 +497,7 @@ async function main() {
 
     // Load Configuration: default to load the bpmnlinter rules and the dynamic rules plugin
     let linterConfig = {
-        "extends": ["bpmnlint:recommended", "plugin:bp3-dynamic-rules/all"],
+        "extends": ["bpmnlint:recommended", "plugin:bp3-dynamic-rules/all", "plugin:bpmnlint-plugin-camunda-compat/camunda-cloud-8-8"],
         "rules": {
       }
     };
