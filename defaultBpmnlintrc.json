@@ -3,7 +3,7 @@
   "rules": {
     "label-required":"warn",
     "no-duplicate-sequence-flows":"warn",
-    "camunda-compat/implementation": "warn",
+    "camunda-compat/implementation": "off",
     "camunda-compat/sequence-flow-condition": "warn"
   }
 }
