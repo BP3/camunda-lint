@@ -106,7 +106,7 @@ if [ $mode_bpmn = 1 ]; then
   # initialize the folder to run the linter if it has not been initialized for bpmnlint
   BPMN_LINTRC_PATH="${BPMN_PATH}/.bpmnlintrc"
   if [ ! -f "${BPMN_PATH}"/.bpmnlintrc ]; then
-    log_info "Initializing the BPMN rules for linting (if needed)"
+    log_info "Initializing the BPMN rules for linting"
     log_info "---------------------------------------------------"
     # (cd "${BPMN_PATH}"; bpmnlint --init)
     BPMN_LINTRC_PATH="/app/.bpmnlintrc"
@@ -114,7 +114,9 @@ if [ $mode_bpmn = 1 ]; then
       (cd /app; bpmnlint --init; cd "${BPMN_PATH}")
     else
       cp -f /app/defaultBpmnlintrc.json /app/.bpmnlintrc
+      log_info "Using recommended rules."
     fi
+    log_info "Done!"
   fi
 
   BPMN_LINTER_ARGS=""
@@ -131,7 +133,7 @@ if [ $mode_bpmn = 1 ]; then
   echo ""
   log_info "Installing the BPMN lint runner dependencies"
   log_info "---------------------------------------------------"
-  node ${SCRIPT_DIR}/installPluginPackages.js ${BPMN_LINTER_ARGS} --config="${BPMN_PATH}"/.bpmnlintrc
+  node ${SCRIPT_DIR}/installPluginPackages.js ${BPMN_LINTER_ARGS} --config="${BPMN_LINTRC_PATH}"
   #--type=bpmn --config="${BPMN_PATH}"/.bpmnlintrc --runnerpath=/app/bpmnlint-runner
   echo ""
   log_info "Running the BPMN linter"
@@ -172,7 +174,7 @@ if [ $mode_dmn = 1 ]; then
   # initialize the folder to run the linter if it has not been initialized for dmnlint
   DMN_LINTRC_PATH="${DMN_PATH}/.dmnlintrc"
   if [ ! -f "${DMN_PATH}"/.dmnlintrc ]; then
-      log_info "Initializing the DMN rules for linting (if needed)"
+      log_info "Initializing the DMN rules for linting"
       log_info "---------------------------------------------------"
 
       DMN_LINTRC_PATH="/app/.dmnlintrc"
@@ -180,7 +182,9 @@ if [ $mode_dmn = 1 ]; then
         (cd /app; dmnlint --init; cd "${DMN_PATH}")
       else
         cp -f /app/defaultDmnlintrc.json /app/.dmnlintrc
+        log_info "Using recommended rules."
       fi
+      log_info "Done!"
   fi
 
   DMN_LINTER_ARGS=""
