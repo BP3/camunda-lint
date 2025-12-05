@@ -1,0 +1,7 @@
+{
+  "extends": ["bpmnlint:recommended", "plugin:bpmnlint-plugin-camunda-compat/camunda-cloud-8-8", "plugin:@bp3global/bpmnlint-plugin-bpmn-rules/all", "plugin:bp3-dynamic-rules/all"],
+  "rules": {
+    "label-required":"warn",
+    "no-duplicate-sequence-flows":"warn"
+  }
+}
