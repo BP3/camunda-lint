@@ -16,15 +16,6 @@ SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 #. "${SCRIPT_DIR}"/functions.sh
 . "${SCRIPT_DIR}"/logger.sh
 
-# Echo colors
-ColorOff="\033[0m"    # Text Reset
-Blue="\033[0;34m"     # Blue
-Cyan="\033[0;36m"     # Cyan
-White="\033[0;37m"    # White
-Red="\033[0;31m"      # Red
-Green="\033[0;32m"    # Green
-Yellow="\033[0;33m"   # Yellow
-
 # Run modes
 mode_bpmn=0
 mode_dmn=0
