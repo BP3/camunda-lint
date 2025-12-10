@@ -28,7 +28,8 @@
     "junit-report-builder": "^5.1.1",
     "semver": "^7.7.2",
     "tiny-glob": "^0.2.9",
-    "yargs": "^18.0.0"
+    "yargs": "^18.0.0",
+    "zeebe-bpmn-moddle": "^1.11.0"
   },
   "devDependencies": {
     "chai": "^6.2.1",
