@@ -23,7 +23,6 @@
     "bpmnlint": "*",
     "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
     "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@bp3global/bpmnlint-plugin-bpmn-rules",
-    "bpmnlint-plugin-camunda-compat": "*",
     "bpmnlint-utils": "*",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",

@@ -22,7 +22,7 @@
         "cli-table3": "^0.6.5",
         "dmn-moddle": "*",
         "dmnlint": "*",
-        "dmnlint-plugin-bp3-dynamic-rules": "npm:bp3-dynamic-rules",
+        "dmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
         "dmnlint-utils": "*",
         "junit-report-builder": "^5.1.1",
         "tiny-glob": "^0.2.9",
