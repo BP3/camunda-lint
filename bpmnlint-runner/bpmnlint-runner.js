@@ -81,7 +81,6 @@ const argv = yargs(hideBin(process.argv))
 const logger = {
   log: (...args) => {
     if (argv.verbose) {
-      console.log(`GOT VERBOSE TO: ${argv.verbose}`);
       console.log(chalk.gray('VERBOSE:'), ...args);
     }
   },
@@ -326,6 +325,8 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
           severityStyled = chalk.red(`❌  Error`);
         } else if (severity.toLowerCase().includes('warn')) {
           severityStyled = chalk.yellow(`⚠️  Warning`);
+        } else if (severity.toLowerCase().includes('info')) {
+          severityStyled = chalk.blueBright(`ℹ️  Info`);
         }
         console.log(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
       });
