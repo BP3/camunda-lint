@@ -19,7 +19,7 @@ RUN addgroup --gid 1001 bp3 && \
                     dmnlint@0.2.0 \
                     bpmnlint-plugin-camunda-compat@2.44.0 \
                     @cyclonedx/cyclonedx-npm \
-                    @bp3global/bpmnlint-plugin-bpmn-rules && \
+                    @BP3/bpmnlint-plugin-bpmn-rules && \
     mkdir /app  && \
     chown -R bp3user:bp3 /usr/local/lib/node_modules && \
     chown -R bp3user:bp3 /app
