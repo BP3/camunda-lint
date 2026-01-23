@@ -32,10 +32,9 @@ COPY --chown=bp3user:bp3 --chmod=755 scripts/ /app/scripts/
 COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/ /app/bpmnlint-runner/
 COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/ /app/dmnlint-runner/
 
-
-# As this is now a node workspace, this installs all the dependencies for child folders also
 WORKDIR /app
 
+# As this is now a node workspace, this installs all the dependencies for child folders also
 # NOTE: can only install globally the @BP3/bpmnlint-plugin-bpmn-rules because it requires the steps above to be done
 RUN --mount=type=secret,id=GH_TOKEN,uid=1001 \
     GITHUB_TOKEN=$(cat /run/secrets/GH_TOKEN | tr -d '\r\n') \
