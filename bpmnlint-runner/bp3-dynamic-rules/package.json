@@ -12,7 +12,7 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@bp3global/bpmnlint-plugin-bpmn-rules": "*",
+    "@BP3/bpmnlint-plugin-bpmn-rules": "*",
     "bpmnlint": "*",
     "bpmnlint-utils": "*",
     "semver": "^7.7.2"

@@ -17,12 +17,12 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@bp3global/bpmnlint-plugin-bpmn-rules": "*",
+    "@BP3/bpmnlint-plugin-bpmn-rules": "*",
     "bp3-dynamic-rules": "file:bp3-dynamic-rules",
     "bpmn-moddle": "*",
     "bpmnlint": "*",
     "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
-    "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@bp3global/bpmnlint-plugin-bpmn-rules",
+    "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@BP3/bpmnlint-plugin-bpmn-rules",
     "bpmnlint-utils": "*",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",
