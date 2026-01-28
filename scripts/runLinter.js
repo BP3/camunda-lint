@@ -89,7 +89,7 @@ function showHelp() {
                                                                     Enables the tool to be verbose and output the steps to the console.
 
     Examples:
-      node runLinter.js --${argumentType}=bpmn --${argumentConfig}=.bpmnlintrc --${argumentFilesToLint}=./test/smoke-test/Process_AcceptRequest.bpmn
+      node runLinter.js --${argumentType}=bpmn --${argumentConfig}=.bpmnlintrc --${argumentFilesToLint}=./test/*.bpmn
       node runLinter.js --${argumentType}=dmn --${argumentConfig}=.dmnlintrc --${argumentFilesToLint}=./diagrams/*.dmn
   `);
   process.exit(1);
