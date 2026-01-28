@@ -1,0 +1,34 @@
+{
+  "name": "lint-plugin-bp3-dynamic-rules",
+  "version": "0.0.1",
+  "description": "BP3's dynamic rules loader for both bpmnlint and dmnlint",
+  "main": "index.js",
+  "keywords": [
+    "bpmnlint",
+    "dmnlint",
+    "plugin"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@bp3global/bpmnlint-plugin-bpmn-rules": "*",
+    "bpmnlint": "*",
+    "bpmnlint-utils": "*",
+    "dmnlint": "*",
+    "dmnlint-utils": "*",
+    "semver": "^7.7.2"
+  },
+  "files": [
+    "rules",
+    "index.js"
+  ],
+  "devDependencies": {
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2"
+  }
+}

@@ -6,7 +6,6 @@ const { execSync } = require('node:child_process');
 
 const LINTER_TYPE_LIST = ['bpmn', 'dmn'];
 const BPMN_PREFIX = 'bpmn';
-const DMN_PREFIX = 'dmn';
 const PACKAGE_JSON = 'package.json';
 const defaultBpmnLintConfig = {
   "extends": ["bpmnlint:recommended"],
@@ -211,17 +210,16 @@ function showHelp() {
   logger.error(`
     A utility that reads a lintrc file, generates/amends the package.json accordingly, and installs all the packages for the selected linter.
 
-    Usage: node installPluginPackages.js --type=<bpmn|dmn> --config=<path to lintrc file> --runnerpath=<path to the lint runner>
+    Usage: node installPluginPackages.js --type=<bpmn|dmn> --config=<path to lintrc file>
 
     Required Arguments:
       --type=<bpmn|dmn>                        Specifies the linter type to initialize.
       --config=<path to lintrc file>           Specifies the lintrc file path
-      --runnerpath=<path to the lint runner>   Specifies the path to the lint runner directory, where the package.json is
 
     Examples:
-      node installPluginPackages.js --type=bpmn --config=.bpmnlintrc --runnerpath=/app/bpmnlint-runner
-      node installPluginPackages.js --type=dmn --config=.dmnlintrc --runnerpath=/app/dmnlint-runner
-  `);
+      node installPluginPackages.js --type=bpmn --config=.bpmnlintrc 
+      node installPluginPackages.js --type=dmn --config=.dmnlintrc
+  `);;
   process.exit(1);
 }
 
@@ -252,7 +250,7 @@ function parseArgs() {
 //
 let args = parseArgs();
 
-if (process.argv.length > 4 && args != null) {
+if (process.argv.length > 3 && args != null) {
 
   if (args["verbose"] != null) {
     logger.isVerbose = args["verbose"] == 'true';
@@ -266,16 +264,18 @@ if (process.argv.length > 4 && args != null) {
 	  logger.error(`Invalid path to lintrc file: ${args["config"]}.\n`);
   }
 
-  if (args["runnerpath"] == null || !fs.existsSync(args["runnerpath"])) {
-	  logger.error(`Invalid path to lint the lint runner: ${args["runnerpath"]}.\n`);
+  const runnerPath = path.resolve(process.cwd(), '../lint-runner');
+  
+  if (!fs.existsSync(runnerPath)) {
+	  logger.error(`Invalid path to lint runner: ${runnerPath}.\n`);
   }
 
   let defaultLintConfig = args["type"] == BPMN_PREFIX ? defaultBpmnLintConfig : defaultDmnLintConfig;
 
-  logger.log(`Preparing the lint runner with the params: ${JSON.stringify(args)}`);
+  logger.log(`Preparing the lint runner with the params: ${JSON.stringify({...args, runnerpath: runnerPath})}`);
 
   //this ensures there's always a revised lintrc under the runner path
-  prepareLintRunner(args["config"], args["type"], defaultLintConfig, args["runnerpath"]);
+  prepareLintRunner(args["config"], args["type"], defaultLintConfig, runnerPath);
 
 } else {
   // present any error first

@@ -6,16 +6,12 @@ const { execSync } = require('node:child_process');
 
 // --- Constants for clarity and maintainability ---
 const LINTER_TYPE_LIST = ['bpmn', 'dmn'];
-const LINT_RUNNERS = {
-    "bpmn": "bpmnlint-runner",
-    "dmn": "dmnlint-runner"
-}
+const LINT_RUNNER_DIR = 'lint-runner';
 const REVISED_SUFFIX = 'Revised';
 
 const argumentType = 'type';
 const argumentConfig = 'config';
 const argumentFilesToLint = 'files';
-const argumentRunnerPath = 'runnerpath';
 const argumentOutputPath = 'output';
 const argumentFormat = 'format';
 const argumentRulesPath = 'rulespath';
@@ -61,7 +57,7 @@ function showHelp() {
 
     A utility that configures and runs either the bpmn or dmn linter.
 
-    Usage: node runLinter.js --${argumentType}=<bpmn|dmn> --${argumentConfig}=<path to lintrc file> --${argumentFilesToLint}=<path to the files to be linted> --${argumentRunnerPath}=<path to the lint runner>
+    Usage: node runLinter.js --${argumentType}=<bpmn|dmn> --${argumentConfig}=<path to lintrc file> --${argumentFilesToLint}=<path to the files to be linted>
 
     Required Arguments:
       --${argumentType}=<bpmn|dmn>
@@ -71,8 +67,6 @@ function showHelp() {
                                                                     NOTE: please use an absolute path!
       --${argumentFilesToLint}=<path to the files to be linted>
                                                                     Specifies the path to the files to be linted.
-      --${argumentRunnerPath}=<path to the lint runner>
-                                                                    Specifies the path to the lint runner files, where package.json is
 
     Optional Arguments
       --${argumentOutputPath}=<output file path>
@@ -95,8 +89,8 @@ function showHelp() {
                                                                     Enables the tool to be verbose and output the steps to the console.
 
     Examples:
-      node runLinter.js --${argumentType}=bpmn --${argumentConfig}=.bpmnlintrc /project/*.bpmn
-      node runLinter.js --${argumentType}=dmn --${argumentConfig}=.dmnlintrc /project/*.dmn
+      node runLinter.js --${argumentType}=bpmn --${argumentConfig}=.bpmnlintrc --${argumentFilesToLint}=./test/smoke-test/Process_AcceptRequest.bpmn
+      node runLinter.js --${argumentType}=dmn --${argumentConfig}=.dmnlintrc --${argumentFilesToLint}=./diagrams/*.dmn
   `);
   process.exit(1);
 }
@@ -148,38 +142,40 @@ function runLinter(args) {
     exitWithErrorAndHelp(`ERROR: please provide a lintrc file\n`);
   } else {
     // the configs and parameters are all ready now
-    let cliCommand = `-c ${configFilename}`
-                    + (args[argumentVerbose] && args[argumentVerbose] == 'false' ? `` : ` -v`)
-                    + (args[argumentConsoleTable] && args[argumentConsoleTable] == 'false' ? ` -t false` : ` -t`)
-                    + (args[argumentOutputPath] ? ` -o ${path.resolve(process.cwd(), args[argumentOutputPath])}` : ``)
-                    + (args[argumentFormat] ? ` -f ${args[argumentFormat]}` : ` -f json`)
-                    + (args[argumentRulesPath] ? ` -r ${args[argumentRulesPath]} -i` : ``)
-                    + (args[argumentRulesSeverity] ? ` -s ${args[argumentRulesSeverity]}` : ``);
+    let cliCommand = `--type=${args[argumentType]}`
+                    + ` --config=${configFilename}`
+                    + (args[argumentVerbose] && args[argumentVerbose] == 'false' ? `` : ` --verbose`)
+                    + (args[argumentConsoleTable] && args[argumentConsoleTable] == 'false' ? ` --show-console-table=false` : ` --show-console-table`)
+                    + (args[argumentOutputPath] ? ` --output=${path.resolve(process.cwd(), args[argumentOutputPath])}` : ``)
+                    + (args[argumentFormat] ? ` --format=${args[argumentFormat]}` : ` --format=json`)
+                    + (args[argumentRulesPath] ? ` --custom-rules-path=${args[argumentRulesPath]}` : ``)
+                    + (args[argumentRulesSeverity] ? ` --custom-rules-severity=${args[argumentRulesSeverity]}` : ``)
+                    + (args[argumentRulesPath] && args[argumentInstallCustomDeps] ? ` --install-custom-deps` : ``);
 
     // determine the linter type
     if (!LINTER_TYPE_LIST.includes(args[argumentType])) {
       exitWithErrorAndHelp(`Invalid linter type: ${args[argumentType]}`);
     }
 
-    //determine the lint runner path
-    const lintRunner = `${args[argumentType]}lint-runner.js`;
-    let lintRunnerPath = path.resolve(process.cwd(), args[argumentRunnerPath]);
-    let lintRunnerExec = path.resolve(lintRunnerPath, lintRunner);
-    if (!fs.existsSync(lintRunnerExec)) {
-      exitWithErrorAndHelp(`Invalid lint runner path "${args[argumentRunnerPath]}". Could not find "${lintRunnerExec}"`);
+    // Resolve the lint runner path
+    const lintRunnerDir = path.resolve(__dirname, '..', LINT_RUNNER_DIR);
+    const lintRunnerPath = path.resolve(lintRunnerDir, 'index.js');
+    
+    if (!fs.existsSync(lintRunnerPath)) {
+      exitWithErrorAndHelp(`Could not find lint runner at "${lintRunnerPath}"`);
     }
 
     // set the command to run if a valid type was provided
     //
-    cliCommand = `node ${lintRunnerExec}`
+    cliCommand = `node ${lintRunnerPath}`
                    + ` "${path.resolve(process.cwd(), args[argumentFilesToLint])}"`
                    + ` ${cliCommand}`;
 
     try {
       if (args[argumentVerbose]) {
-        logger.log(`\nVERBOSE: Running '${cliCommand}' from '${path.resolve(process.cwd(), lintRunner)}'`);
+        logger.log(`\nVERBOSE: Running '${cliCommand}' from '${lintRunnerDir}'`);
       }
-      execSync(cliCommand, {cwd: lintRunnerPath, stdio: 'inherit'});
+      execSync(cliCommand, {cwd: lintRunnerDir, stdio: 'inherit'});
     } catch(err) {
       exitWithError(`There was an error while running the linter.`, err);
     }
@@ -197,7 +193,7 @@ logger.isVerbose = typeof args[argumentVerbose] == 'string' ? args[argumentVerbo
 
 logger.log('Arguments Parsed:', JSON.stringify(args));
 
-if (process.argv.length > 5) {
+if (process.argv.length > 4) {
   if (!LINTER_TYPE_LIST.includes(args[argumentType])) {
     exitWithErrorAndHelp(`Invalid linter type '${args[argumentType]}' provided. Must be one of: ${LINTER_TYPE_LIST.join(', ')}`);
   }
@@ -216,7 +212,7 @@ if (process.argv.length > 5) {
 } else {
   // present any additional error
   //
-  if (process.argv.length <= 5) {
+  if (process.argv.length <= 4) {
 	exitWithErrorAndHelp(`Please provide all the required parameters.`);
   }
   // fallback, just present a help request
