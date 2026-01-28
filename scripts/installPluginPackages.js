@@ -8,22 +8,22 @@ const LINTER_TYPE_LIST = ['bpmn', 'dmn'];
 const BPMN_PREFIX = 'bpmn';
 const PACKAGE_JSON = 'package.json';
 const defaultBpmnLintConfig = {
-  "extends": ["bpmnlint:recommended"],
-  "rules": {}
+  extends: ['bpmnlint:recommended'],
+  rules: {},
 };
 const defaultDmnLintConfig = {
-  "extends": ["dmnlint:recommended"],
-  "rules": {}
+  extends: ['dmnlint:recommended'],
+  rules: {},
 };
 
 // --- Zero-Dependency Color Logging using ANSI Escape Codes ---
 const ANSI_COLORS = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  gray: "\x1b[90m",
-  red: "\x1b[91m",   // Bright Red
-  yellow: "\x1b[93m", // Bright Yellow
-  blue: "\x1b[94m",  // Bright Blue
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  gray: '\x1b[90m',
+  red: '\x1b[91m', // Bright Red
+  yellow: '\x1b[93m', // Bright Yellow
+  blue: '\x1b[94m', // Bright Blue
 };
 
 const logger = {
@@ -41,7 +41,7 @@ const logger = {
   },
   error: (...args) => {
     console.error(`${ANSI_COLORS.bold}${ANSI_COLORS.red}ERROR:${ANSI_COLORS.reset}`, ...args);
-  }
+  },
 };
 
 // Extract the details from a possible plugin name in the lintrc file to setup dependencies correctly
@@ -67,54 +67,55 @@ const logger = {
 //		}
 //
 function getPluginDetails(packageName, pluginPrefix) {
-	let result = null;
-	//
-	// assuming the correctness of the lintrc file, the currPackageName should be something like "plugin:pluginName/ruleset" at this time
-	//
-	if (packageName != null && packageName.indexOf('plugin:') == 0) {
-		//
-		// transform the package name provided to be used as a dependency
-		//
-		// currConfigName
-		// from: plugin:@bp3global/bpmn-rules@^0.0.5/all
-		//  substring => plugin:@bp3global/bpmn-rules@^0.0.5
-		//  replace => plugin:-bp3global-bpmn-rules--0.0.5
-		//  replace => plugin:bp3global-bpmn-rules--0.0.5
-		//  replace => plugin:bp3global-bpmn-rules-0.0.5
-		//
-		// dependencyName
-		// from:plugin:bp3global-bpmn-rules-0.0.5
-		//  replace => bp3global-bpmn-rules-0.0.5
-		//  => bpmnlint-plugin-bp3global-bpmn-rules-0.0.5
-		//
-		// dependencyValue
-		// from: plugin:@bp3global/bpmn-rules@^0.0.5/all
-		//  substring => plugin:@bp3global/bpmn-rules@^0.0.5
-		//  replace => npm:@bp3global/bpmn-rules@^0.0.5
-		//
-		const dependencyWithoutRuleSet = packageName.substring(0, packageName.lastIndexOf('/'));
-		const ruleSet = packageName.substring(packageName.lastIndexOf('/'));
-		//
-		//prepare the revised config name for a new lintrc
-		//
-		const configName = dependencyWithoutRuleSet.replace(/@|\^|~|\.|\//igm, '-')
-														.replace('--', '-')
-														.replace('plugin:-', 'plugin:');
-		//
-		// prepare the output with:
-		// - the config for a revised lintrc that will use aliases
-		// - the package.json dependency name adapted to the alias
-		// - the package.json dependency value to match the lintrc config
-		// - the npm package name to present to the user
-		//
-		result = { 
-			configName: `${configName}${ruleSet}`,
-			dependencyName: `${pluginPrefix}lint-plugin-${configName.replace('plugin:', '')}`, 
-			dependencyValue: dependencyWithoutRuleSet.replace('plugin:', 'npm:'),
-			npmReference: dependencyWithoutRuleSet.replace('plugin:', '')
-		};
-	}
-	return result;
+  let result = null;
+  //
+  // assuming the correctness of the lintrc file, the currPackageName should be something like "plugin:pluginName/ruleset" at this time
+  //
+  if (packageName != null && packageName.indexOf('plugin:') == 0) {
+    //
+    // transform the package name provided to be used as a dependency
+    //
+    // currConfigName
+    // from: plugin:@bp3global/bpmn-rules@^0.0.5/all
+    //  substring => plugin:@bp3global/bpmn-rules@^0.0.5
+    //  replace => plugin:-bp3global-bpmn-rules--0.0.5
+    //  replace => plugin:bp3global-bpmn-rules--0.0.5
+    //  replace => plugin:bp3global-bpmn-rules-0.0.5
+    //
+    // dependencyName
+    // from:plugin:bp3global-bpmn-rules-0.0.5
+    //  replace => bp3global-bpmn-rules-0.0.5
+    //  => bpmnlint-plugin-bp3global-bpmn-rules-0.0.5
+    //
+    // dependencyValue
+    // from: plugin:@bp3global/bpmn-rules@^0.0.5/all
+    //  substring => plugin:@bp3global/bpmn-rules@^0.0.5
+    //  replace => npm:@bp3global/bpmn-rules@^0.0.5
+    //
+    const dependencyWithoutRuleSet = packageName.substring(0, packageName.lastIndexOf('/'));
+    const ruleSet = packageName.substring(packageName.lastIndexOf('/'));
+    //
+    //prepare the revised config name for a new lintrc
+    //
+    const configName = dependencyWithoutRuleSet
+      .replace(/@|\^|~|\.|\//gim, '-')
+      .replace('--', '-')
+      .replace('plugin:-', 'plugin:');
+    //
+    // prepare the output with:
+    // - the config for a revised lintrc that will use aliases
+    // - the package.json dependency name adapted to the alias
+    // - the package.json dependency value to match the lintrc config
+    // - the npm package name to present to the user
+    //
+    result = {
+      configName: `${configName}${ruleSet}`,
+      dependencyName: `${pluginPrefix}lint-plugin-${configName.replace('plugin:', '')}`,
+      dependencyValue: dependencyWithoutRuleSet.replace('plugin:', 'npm:'),
+      npmReference: dependencyWithoutRuleSet.replace('plugin:', ''),
+    };
+  }
+  return result;
 }
 
 // Prepare the config and dependencies for the bpmnlint runner
@@ -127,7 +128,7 @@ function getPluginDetails(packageName, pluginPrefix) {
 function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
   let revisedLintConfig = {
     extends: [],
-    rules: {}
+    rules: {},
   };
   let additionalDependencies = [];
   let npmPackages = [];
@@ -138,35 +139,35 @@ function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
   //
   let lintConfig = JSON.parse(fs.readFileSync(filename));
   revisedLintConfig.rules = lintConfig.rules || {};
-  if (lintConfig != null && lintConfig.extends != null)  {
+  if (lintConfig != null && lintConfig.extends != null) {
     if (typeof lintConfig.extends == 'string') {
       // if it's just the one, push it
       //
       revisedLintConfig.extends.push(lintConfig.extends);
     } else if (lintConfig.extends.length > 0) {
-        for (var idx = 0; idx < lintConfig.extends.length; ++idx) {
-          const currentPluginDetails = getPluginDetails(lintConfig.extends[idx], prefix);
-          // if it's a plugin, prepare the appropriate dependencies
+      for (var idx = 0; idx < lintConfig.extends.length; ++idx) {
+        const currentPluginDetails = getPluginDetails(lintConfig.extends[idx], prefix);
+        // if it's a plugin, prepare the appropriate dependencies
+        //
+        if (currentPluginDetails != null) {
+          revisedLintConfig.extends.push(currentPluginDetails.configName);
+          additionalDependencies.push(currentPluginDetails);
+          npmPackages.push(currentPluginDetails.npmReference);
+        } else {
+          // the assumption here is this is just the baseline bpmnlint ruleset
           //
-          if (currentPluginDetails != null) {
-            revisedLintConfig.extends.push(currentPluginDetails.configName);
-            additionalDependencies.push(currentPluginDetails);
-            npmPackages.push(currentPluginDetails.npmReference);
-          } else {
-            // the assumption here is this is just the baseline bpmnlint ruleset
-            //
-            revisedLintConfig.extends.push(lintConfig.extends[idx]);
-      }
+          revisedLintConfig.extends.push(lintConfig.extends[idx]);
         }
+      }
     } else {
       // always default to the bpmnlint recommended rules
       //
-      revisedLintConfig = defaultLintConfig;    
+      revisedLintConfig = defaultLintConfig;
     }
   } else {
     // always default to the bpmnlint recommended rules
     //
-	  revisedLintConfig = defaultLintConfig;
+    revisedLintConfig = defaultLintConfig;
   }
   // write the revised lintrc file
   //
@@ -193,14 +194,14 @@ function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
   //
   logger.info(`Installing plugins referenced by ${filename}: [ ${npmPackages.join(', ')} ]`);
   try {
-    // NOTE: not storing the result of this call nor handling the stdout nor stderr 
+    // NOTE: not storing the result of this call nor handling the stdout nor stderr
     // 		 because applying any handling to the "npm install" command won't do anything
     //execSync('npm install > /dev/null 2>&1 || (echo "Plugin installation failed" && exit 1)', {cwd: path.join(process.cwd(), lintRunner)});
     execSync('npm install', { cwd: path.resolve(process.cwd(), lintRunner), stdio: 'pipe' });
     logger.info('Dependencies installed successfully.');
-  } catch(err) {
+  } catch (err) {
     logger.error('ERROR: ' + err);
-	  logger.error('\nERROR: Plugin installation failed!\n');
+    logger.error('\nERROR: Plugin installation failed!\n');
   }
 }
 
@@ -219,7 +220,7 @@ function showHelp() {
     Examples:
       node installPluginPackages.js --type=bpmn --config=.bpmnlintrc 
       node installPluginPackages.js --type=dmn --config=.dmnlintrc
-  `);;
+  `);
   process.exit(1);
 }
 
@@ -237,7 +238,7 @@ function parseArgs() {
       // Handles --key=value
       if (value != null) {
         result[key] = value;
-      // Handles any other flags without value (e.g.: --verbose)
+        // Handles any other flags without value (e.g.: --verbose)
       } else {
         result[key] = true;
       }
@@ -251,37 +252,35 @@ function parseArgs() {
 let args = parseArgs();
 
 if (process.argv.length > 3 && args != null) {
-
-  if (args["verbose"] != null) {
-    logger.isVerbose = args["verbose"] == 'true';
+  if (args['verbose'] != null) {
+    logger.isVerbose = args['verbose'] == 'true';
   }
 
-  if (!LINTER_TYPE_LIST.includes(args["type"])) {
-    logger.error(`Invalid linter type selected: ${args["type"]}. Please select one from the options [${LINTER_TYPE_LIST.join(', ')}]\n`);
+  if (!LINTER_TYPE_LIST.includes(args['type'])) {
+    logger.error(`Invalid linter type selected: ${args['type']}. Please select one from the options [${LINTER_TYPE_LIST.join(', ')}]\n`);
   }
 
-  if (args["config"] == null || !fs.existsSync(args["config"])) {
-	  logger.error(`Invalid path to lintrc file: ${args["config"]}.\n`);
+  if (args['config'] == null || !fs.existsSync(args['config'])) {
+    logger.error(`Invalid path to lintrc file: ${args['config']}.\n`);
   }
 
   const runnerPath = path.resolve(process.cwd(), '../lint-runner');
-  
+
   if (!fs.existsSync(runnerPath)) {
-	  logger.error(`Invalid path to lint runner: ${runnerPath}.\n`);
+    logger.error(`Invalid path to lint runner: ${runnerPath}.\n`);
   }
 
-  let defaultLintConfig = args["type"] == BPMN_PREFIX ? defaultBpmnLintConfig : defaultDmnLintConfig;
+  let defaultLintConfig = args['type'] == BPMN_PREFIX ? defaultBpmnLintConfig : defaultDmnLintConfig;
 
-  logger.log(`Preparing the lint runner with the params: ${JSON.stringify({...args, runnerpath: runnerPath})}`);
+  logger.log(`Preparing the lint runner with the params: ${JSON.stringify({ ...args, runnerpath: runnerPath })}`);
 
   //this ensures there's always a revised lintrc under the runner path
-  prepareLintRunner(args["config"], args["type"], defaultLintConfig, runnerPath);
-
+  prepareLintRunner(args['config'], args['type'], defaultLintConfig, runnerPath);
 } else {
   // present any error first
   //
   if (process.argv.length <= 4 || args == null) {
-	  logger.error(`Please provide all the required parameters.\n`);
+    logger.error(`Please provide all the required parameters.\n`);
   }
   // if there wasn't an error, but just a help request
   //

@@ -18,13 +18,14 @@ const LINTER_CONFIGS = {
     reportTitle: 'BPMN Lint Report',
     defaultConfig: {
       extends: ['bpmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
-      rules: {}
+      rules: {},
     },
+    // prettier-ignore
     defaultDependencies: {
-      'bpmnlint': '^11.6.0',
-      'bpmnlint-utils': '^1.1.1',
-      '@bp3global/bpmnlint-plugin-bpmn-rules': '^0.1.0'
-    }
+      "bpmnlint": "^11.6.0",
+      "bpmnlint-utils": "^1.1.1",
+      "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.0",
+    },
   },
   dmn: {
     name: 'dmnlint',
@@ -34,13 +35,14 @@ const LINTER_CONFIGS = {
     reportTitle: 'DMN Lint Report',
     defaultConfig: {
       extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
-      rules: {}
+      rules: {},
     },
+    // prettier-ignore
     defaultDependencies: {
-      'dmnlint': '^0.2.0',
-      'dmnlint-utils': '^0.1.0'
-    }
-  }
+      "dmnlint": "^0.2.0",
+      "dmnlint-utils": "^0.1.0",
+    },
+  },
 };
 
 // --- Define and parse command-line arguments using yargs ---
@@ -105,8 +107,7 @@ const argv = yargs(hideBin(process.argv))
     default: true,
   })
   .demandCommand(1, 'You must provide a pattern for the files to lint.')
-  .help()
-  .argv;
+  .help().argv;
 
 // --- Create a local logger and use color coding ---
 const logger = {
@@ -163,9 +164,9 @@ function prepareDynamicPlugin(customRulesPath, installDeps, linterType) {
   // Copy rule files from source to the plugin
   logger.log(`Copying rules from ${sourceRulesPath} to ${pluginRulesPath}`);
   const sourceAllFiles = fs.readdirSync(sourceRulesPath, { recursive: true });
-  const sourceRuleFiles = sourceAllFiles.filter(file => file.endsWith('.js') && !file.split(path.sep).includes('node_modules') && !file.split(path.sep).includes('.git'));
+  const sourceRuleFiles = sourceAllFiles.filter((file) => file.endsWith('.js') && !file.split(path.sep).includes('node_modules') && !file.split(path.sep).includes('.git'));
 
-  sourceRuleFiles.forEach(file => {
+  sourceRuleFiles.forEach((file) => {
     const sourceFile = path.join(sourceRulesPath, file);
     const destFile = path.join(pluginRulesPath, file);
     fs.mkdirSync(path.dirname(destFile), { recursive: true });
@@ -184,10 +185,7 @@ function prepareDynamicPlugin(customRulesPath, installDeps, linterType) {
         throw new Error(`Failed to run 'npm install' in dynamic rules plugin directory: ${error.stderr.toString()}`);
       }
     } else {
-      throw new Error(
-        `Custom rules require dependencies, but they are not installed. ` +
-        `Please use the '-i' or '--install-custom-deps' flag.`
-      );
+      throw new Error(`Custom rules require dependencies, but they are not installed. ` + `Please use the '-i' or '--install-custom-deps' flag.`);
     }
   }
 }
@@ -246,20 +244,17 @@ async function lintFiles(files, linter, linterType) {
     const xmlContent = fs.readFileSync(file, 'utf-8');
     try {
       logger.log('  - Parsing diagram...');
-      const {
-        rootElement,
-        warnings: parseWarnings
-      } = await moddle.fromXML(xmlContent);
+      const { rootElement, warnings: parseWarnings } = await moddle.fromXML(xmlContent);
 
       if (parseWarnings && parseWarnings.length) {
-        parseWarnings.forEach(warning => {
+        parseWarnings.forEach((warning) => {
           logger.log(`    - [import-warning] (${moddeleName}) ${warning.element ? warning.element.id : 'FileLevel'}: ${warning.message}`);
           allIssues.push({
             file,
             id: warning.element?.id || 'FileLevel',
             message: warning.message,
             category: 'import-warning',
-            rule: moddeleName
+            rule: moddeleName,
           });
           totalWarnings++;
         });
@@ -269,7 +264,7 @@ async function lintFiles(files, linter, linterType) {
       const report = await linter.lint(rootElement);
 
       for (const [ruleName, issues] of Object.entries(report)) {
-        issues.forEach(issue => {
+        issues.forEach((issue) => {
           logger.log(`    - [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
           if (issue.category?.includes('error')) totalErrors++;
           else totalWarnings++;
@@ -286,7 +281,7 @@ async function lintFiles(files, linter, linterType) {
         id: 'Fatal',
         message: lintError.message,
         category: 'internal-error',
-        rule: 'linter-internal'
+        rule: 'linter-internal',
       });
       totalErrors++;
     }
@@ -304,7 +299,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
 
   if (showConsoleTable) {
     if (allIssues.length > 0) {
-      allIssues.forEach(issue => {
+      allIssues.forEach((issue) => {
         const severity = issue.category || 'unknown';
         let severityStyled = severity;
 
@@ -336,10 +331,14 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
 
     switch (format) {
       case 'json':
-        reportContent = JSON.stringify({
-          summary: { totalFiles: lintedFiles.length, totalErrors, totalWarnings },
-          issues: allIssues,
-        }, null, 2);
+        reportContent = JSON.stringify(
+          {
+            summary: { totalFiles: lintedFiles.length, totalErrors, totalWarnings },
+            issues: allIssues,
+          },
+          null,
+          2
+        );
         fs.writeFileSync(finalOutputPath, reportContent);
         break;
 
@@ -372,7 +371,9 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
                 <p><strong>Total Warnings:</strong> ${totalWarnings}</p>
               </div>
               <h2>All Issues (${allIssues.length})</h2>
-              ${allIssues.length > 0 ? `
+              ${
+                allIssues.length > 0
+                  ? `
                 <table>
                   <thead>
                     <tr>
@@ -384,20 +385,21 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
                     </tr>
                   </thead>
                   <tbody>
-                    ${allIssues.map(issue => {
-          let severity = issue.category || 'unknown';
-          let icon = '';
-          let severityClass = '';
-          if (severity.toLowerCase().includes('error')) {
-            icon = '<span class="icon">❌</span>';
-            severityClass = 'severity-error';
-            severity = "Error";
-          } else if (severity.toLowerCase().includes('warn')) {
-            icon = '<span class="icon">⚠️</span>';
-            severityClass = 'severity-warning';
-            severity = "Warning";
-          }
-          return `
+                    ${allIssues
+                      .map((issue) => {
+                        let severity = issue.category || 'unknown';
+                        let icon = '';
+                        let severityClass = '';
+                        if (severity.toLowerCase().includes('error')) {
+                          icon = '<span class="icon">❌</span>';
+                          severityClass = 'severity-error';
+                          severity = 'Error';
+                        } else if (severity.toLowerCase().includes('warn')) {
+                          icon = '<span class="icon">⚠️</span>';
+                          severityClass = 'severity-warning';
+                          severity = 'Warning';
+                        }
+                        return `
                             <tr>
                               <td class="${severityClass}">${icon}${severity}</td>
                               <td class="file-path">${issue.file}</td>
@@ -406,10 +408,13 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
                               <td>${issue.message}</td>
                             </tr>
                           `;
-        }).join('')}
+                      })
+                      .join('')}
                   </tbody>
                 </table>
-              ` : '<p>No issues found.</p>'}
+              `
+                  : '<p>No issues found.</p>'
+              }
             </body>
           </html>
         `;
@@ -420,14 +425,12 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
         const builder = junitReportBuilder.newBuilder();
         const suite = builder.testSuite().name(`${linterType}-lint-report`).time(0);
 
-        lintedFiles.forEach(file => {
-          const issuesForFile = allIssues.filter(issue => issue.file === file);
+        lintedFiles.forEach((file) => {
+          const issuesForFile = allIssues.filter((issue) => issue.file === file);
           const testCase = suite.testCase().className(file).name(`${linterType.toUpperCase()} Linting`);
 
           if (issuesForFile.length > 0) {
-            const failureMessages = issuesForFile.map(issue =>
-              `[${issue.category}] (${issue.rule}) ${issue.id || 'N/A'}: ${issue.message}`
-            ).join('\n');
+            const failureMessages = issuesForFile.map((issue) => `[${issue.category}] (${issue.rule}) ${issue.id || 'N/A'}: ${issue.message}`).join('\n');
             testCase.failure(failureMessages);
           }
         });
@@ -449,17 +452,19 @@ async function main() {
   const configPath = argv.config || configDefault;
   const { pattern, output: outputPath, format, customRulesPath, customRulesSeverity, installCustomDeps, showConsoleTable } = argv;
 
-  logger.log(`Lint runner arguments parsed: ${JSON.stringify({
-    type: linterType,
-    files: pattern,
-    config: configPath,
-    output: outputPath,
-    format: format,
-    customRulesPath: customRulesPath,
-    customRulesSeverity: customRulesSeverity,
-    installCustomDeps: installCustomDeps,
-    showConsoleTable: showConsoleTable
-  })}`);
+  logger.log(
+    `Lint runner arguments parsed: ${JSON.stringify({
+      type: linterType,
+      files: pattern,
+      config: configPath,
+      output: outputPath,
+      format: format,
+      customRulesPath: customRulesPath,
+      customRulesSeverity: customRulesSeverity,
+      installCustomDeps: installCustomDeps,
+      showConsoleTable: showConsoleTable,
+    })}`
+  );
 
   let dynamicPluginWasPrepared = false;
 
@@ -492,7 +497,7 @@ async function main() {
     if (customRulesPath) {
       // make sure that the dynamic plugin is added to the config when loading the linter
       if (finalConfig?.extends?.indexOf('plugin:bp3-dynamic-rules') < 0) {
-        finalConfig.extends.push("plugin:bp3-dynamic-rules/all");
+        finalConfig.extends.push('plugin:bp3-dynamic-rules/all');
       }
       // make sure that each rule has a default severity if one was provided
       if (customRulesSeverity) {
@@ -510,7 +515,7 @@ async function main() {
 
     const linter = new Linter({
       config: finalConfig,
-      resolver: new NodeResolver()
+      resolver: new NodeResolver(),
     });
 
     // Enumerate Files
@@ -544,6 +549,6 @@ async function main() {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   exitWithError(`An unexpected top-level error occurred: ${err.message}`);
 });

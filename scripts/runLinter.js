@@ -21,12 +21,12 @@ const argumentVerbose = 'verbose';
 
 // --- Zero-Dependency Color Logging using ANSI Escape Codes ---
 const ANSI_COLORS = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  gray: "\x1b[90m",
-  red: "\x1b[91m",   // Bright Red
-  yellow: "\x1b[93m", // Bright Yellow
-  blue: "\x1b[94m",  // Bright Blue
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  gray: '\x1b[90m',
+  red: '\x1b[91m', // Bright Red
+  yellow: '\x1b[93m', // Bright Yellow
+  blue: '\x1b[94m', // Bright Blue
 };
 
 const logger = {
@@ -44,7 +44,7 @@ const logger = {
   },
   error: (...args) => {
     console.error(`${ANSI_COLORS.bold}${ANSI_COLORS.red}ERROR:${ANSI_COLORS.reset}`, ...args);
-  }
+  },
 };
 
 // Show the help text on how to use this utility
@@ -121,7 +121,7 @@ function parseArgs() {
       // Handles --key=value
       if (value != null && value.trim() != '') {
         result[key] = value;
-      // Handles any other flags without value (e.g.: --verbose)
+        // Handles any other flags without value (e.g.: --verbose)
       } else {
         result[key] = true;
       }
@@ -134,23 +134,21 @@ function parseArgs() {
 //
 function runLinter(args) {
   const expectedConfigPath = path.resolve(process.cwd(), args[argumentConfig]); //path.join(process.cwd(), args[argumentConfig])
-  const configFilename = fs.existsSync(`${expectedConfigPath}${REVISED_SUFFIX}`) 
-                           ? `${expectedConfigPath}${REVISED_SUFFIX}`
-                           : expectedConfigPath
-                         ;
+  const configFilename = fs.existsSync(`${expectedConfigPath}${REVISED_SUFFIX}`) ? `${expectedConfigPath}${REVISED_SUFFIX}` : expectedConfigPath;
   if (!fs.existsSync(configFilename)) {
     exitWithErrorAndHelp(`ERROR: please provide a lintrc file\n`);
   } else {
     // the configs and parameters are all ready now
-    let cliCommand = `--type=${args[argumentType]}`
-                    + ` --config=${configFilename}`
-                    + (args[argumentVerbose] && args[argumentVerbose] == 'false' ? `` : ` --verbose`)
-                    + (args[argumentConsoleTable] && args[argumentConsoleTable] == 'false' ? ` --show-console-table=false` : ` --show-console-table`)
-                    + (args[argumentOutputPath] ? ` --output=${path.resolve(process.cwd(), args[argumentOutputPath])}` : ``)
-                    + (args[argumentFormat] ? ` --format=${args[argumentFormat]}` : ` --format=json`)
-                    + (args[argumentRulesPath] ? ` --custom-rules-path=${args[argumentRulesPath]}` : ``)
-                    + (args[argumentRulesSeverity] ? ` --custom-rules-severity=${args[argumentRulesSeverity]}` : ``)
-                    + (args[argumentRulesPath] && args[argumentInstallCustomDeps] ? ` --install-custom-deps` : ``);
+    let cliCommand =
+      `--type=${args[argumentType]}` +
+      ` --config=${configFilename}` +
+      (args[argumentVerbose] && args[argumentVerbose] == 'false' ? `` : ` --verbose`) +
+      (args[argumentConsoleTable] && args[argumentConsoleTable] == 'false' ? ` --show-console-table=false` : ` --show-console-table`) +
+      (args[argumentOutputPath] ? ` --output=${path.resolve(process.cwd(), args[argumentOutputPath])}` : ``) +
+      (args[argumentFormat] ? ` --format=${args[argumentFormat]}` : ` --format=json`) +
+      (args[argumentRulesPath] ? ` --custom-rules-path=${args[argumentRulesPath]}` : ``) +
+      (args[argumentRulesSeverity] ? ` --custom-rules-severity=${args[argumentRulesSeverity]}` : ``) +
+      (args[argumentRulesPath] && args[argumentInstallCustomDeps] ? ` --install-custom-deps` : ``);
 
     // determine the linter type
     if (!LINTER_TYPE_LIST.includes(args[argumentType])) {
@@ -160,23 +158,21 @@ function runLinter(args) {
     // Resolve the lint runner path
     const lintRunnerDir = path.resolve(__dirname, '..', LINT_RUNNER_DIR);
     const lintRunnerPath = path.resolve(lintRunnerDir, 'index.js');
-    
+
     if (!fs.existsSync(lintRunnerPath)) {
       exitWithErrorAndHelp(`Could not find lint runner at "${lintRunnerPath}"`);
     }
 
     // set the command to run if a valid type was provided
     //
-    cliCommand = `node ${lintRunnerPath}`
-                   + ` "${path.resolve(process.cwd(), args[argumentFilesToLint])}"`
-                   + ` ${cliCommand}`;
+    cliCommand = `node ${lintRunnerPath}` + ` "${path.resolve(process.cwd(), args[argumentFilesToLint])}"` + ` ${cliCommand}`;
 
     try {
       if (args[argumentVerbose]) {
         logger.log(`\nVERBOSE: Running '${cliCommand}' from '${lintRunnerDir}'`);
       }
-      execSync(cliCommand, {cwd: lintRunnerDir, stdio: 'inherit'});
-    } catch(err) {
+      execSync(cliCommand, { cwd: lintRunnerDir, stdio: 'inherit' });
+    } catch (err) {
       exitWithError(`There was an error while running the linter.`, err);
     }
   }
@@ -186,7 +182,7 @@ function runLinter(args) {
 //
 let args = parseArgs();
 
-// VERBOSE: doing a type check in case a string is provided or just the 
+// VERBOSE: doing a type check in case a string is provided or just the
 //          parameter without value, this simplifies additional scripting
 //
 logger.isVerbose = typeof args[argumentVerbose] == 'string' ? args[argumentVerbose] == 'true' : !!args[argumentVerbose];
@@ -198,8 +194,7 @@ if (process.argv.length > 4) {
     exitWithErrorAndHelp(`Invalid linter type '${args[argumentType]}' provided. Must be one of: ${LINTER_TYPE_LIST.join(', ')}`);
   }
 
-  if (!fs.existsSync(path.resolve(process.cwd(), args[argumentConfig]))
-      && !fs.existsSync(`${path.resolve(process.cwd(), args[argumentConfig])}${REVISED_SUFFIX}`)) {
+  if (!fs.existsSync(path.resolve(process.cwd(), args[argumentConfig])) && !fs.existsSync(`${path.resolve(process.cwd(), args[argumentConfig])}${REVISED_SUFFIX}`)) {
     exitWithErrorAndHelp(`The specified config file is not valid, '${path.resolve(process.cwd(), args[argumentConfig])}' does not exist.`);
   }
 
@@ -208,12 +203,11 @@ if (process.argv.length > 4) {
   }
 
   runLinter(args);
-
 } else {
   // present any additional error
   //
   if (process.argv.length <= 4) {
-	exitWithErrorAndHelp(`Please provide all the required parameters.`);
+    exitWithErrorAndHelp(`Please provide all the required parameters.`);
   }
   // fallback, just present a help request
   //

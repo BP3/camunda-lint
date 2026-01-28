@@ -13,20 +13,20 @@ function prepareExport() {
     rules: {},
     configs: {
       all: {
-        rules: {}
+        rules: {},
       },
       recommended: {
-        rules: {}
-      }
-    }
+        rules: {},
+      },
+    },
   };
 
   if (fs.existsSync(rulesDir)) {
     const files = fs.readdirSync(rulesDir, { recursive: true });
 
     files
-      .filter(file => file.endsWith('.js'))
-      .forEach(file => {
+      .filter((file) => file.endsWith('.js'))
+      .forEach((file) => {
         const ruleName = path.basename(file, '.js');
         const prefixedRuleName = `${rulePrefix}${rulePrefix && '/'}${ruleName}`;
 
