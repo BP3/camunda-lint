@@ -13,16 +13,13 @@ custom-*mn-rules
 outputfiles
 *.bak
 tmp/
+.vscode/
 
 # Local dev files
-bpmnlint-runner/lint-report.*
-bpmnlint-runner/node_modules/
-bpmnlint-runner/bp3-dynamic-rules/node_modules/
-bpmnlint-runner/bp3-dynamic-rules/rules/*.js
-dmnlint-runner/lint-report.*
-dmnlint-runner/node_modules/
-dmnlint-runner/bp3-dynamic-rules/node_modules/
-dmnlint-runner/bp3-dynamic-rules/rules/*.js
+lint-runner/lint-report.*
+lint-runner/node_modules/
+lint-runner/bp3-dynamic-rules/node_modules/
+lint-runner/bp3-dynamic-rules/rules/*.js
 
 # Distribution / packaging
 build/
