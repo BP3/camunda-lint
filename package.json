@@ -8,7 +8,9 @@
   ],
   "scripts": {
     "generate-sbom": "cyclonedx-bom",
-    "test": "mocha ./test/**/*.js"
+    "test": "mocha ./test/**/*.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "engines": {
     "node": ">=20"
