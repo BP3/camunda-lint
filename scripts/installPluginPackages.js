@@ -264,7 +264,7 @@ if (process.argv.length > 3 && args != null) {
     logger.error(`Invalid path to lintrc file: ${args['config']}.\n`);
   }
 
-  const runnerPath = path.resolve(process.cwd(), '../lint-runner');
+  const runnerPath = path.resolve(__dirname, '../lint-runner');
 
   if (!fs.existsSync(runnerPath)) {
     logger.error(`Invalid path to lint runner: ${runnerPath}.\n`);

@@ -98,7 +98,7 @@ if [ $mode_bpmn = 1 ]; then
   log_info "Initializing the BPMN rules for linting (if needed)"
   log_info "---------------------------------------------------"
   if [ ! -f "${BPMN_PATH}"/.bpmnlintrc ]; then
-    (cd "${BPMN_PATH}"; bpmnlint --init)
+    (cd "${BPMN_PATH}"; npx bpmnlint --init)
   fi
 
   BPMN_LINTER_ARGS=""
@@ -155,7 +155,7 @@ if [ $mode_dmn = 1 ]; then
   log_info "Initializing the DMN rules for linting (if needed)"
   log_info "---------------------------------------------------"
   if [ ! -f "${DMN_PATH}"/.dmnlintrc ]; then
-    (cd "${DMN_PATH}"; dmnlint --init)
+    (cd "${DMN_PATH}"; npx dmnlint --init)
   fi
 
   DMN_LINTER_ARGS=""
