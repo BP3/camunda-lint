@@ -14,7 +14,7 @@ const LINTER_CONFIGS = {
     name: 'bpmnlint',
     Linter: () => require('bpmnlint').Linter,
     NodeResolver: () => require('bpmnlint/lib/resolver/node-resolver'),
-    Moddle: () => require('bpmn-moddle'),
+    Moddle: () => require('bpmn-moddle').BpmnModdle,
     reportTitle: 'BPMN Lint Report',
     defaultConfig: {
       extends: ['bpmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
@@ -31,7 +31,7 @@ const LINTER_CONFIGS = {
     name: 'dmnlint',
     Linter: () => require('dmnlint').Linter,
     NodeResolver: () => require('dmnlint/lib/resolver/node-resolver'),
-    Moddle: () => require('dmn-moddle'),
+    Moddle: () => require('dmn-moddle').DmnModdle,
     reportTitle: 'DMN Lint Report',
     defaultConfig: {
       extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
@@ -234,8 +234,8 @@ async function lintFiles(files, linter, linterType) {
   let totalWarnings = 0;
 
   const linterConfig = LINTER_CONFIGS[linterType];
-  const Moddle = linterConfig.Moddle();
-  const moddle = new Moddle();
+  const ModdleConstructor = linterConfig.Moddle();
+  const moddle = new ModdleConstructor();
   const xmlContentKey = linterType === 'bpmn' ? 'bpmnXML' : 'dmnXML';
   const moddeleName = linterType === 'bpmn' ? 'bpmn-moddle' : 'dmn-moddle';
 
