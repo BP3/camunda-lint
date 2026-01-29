@@ -14,7 +14,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@BP3/bpmnlint-plugin-bpmn-rules": "npm:@bp3/bpmnlint-plugin-bpmn-rules@^0.0.4",
+    "@BP3/bpmnlint-plugin-bpmn-rules": "npm:@bp3/bpmnlint-plugin-bpmn-rules",
     "bpmn-moddle": "^9.0.3",
     "bpmnlint": "^11.6.0",
     "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@BP3/bpmnlint-plugin-bpmn-rules",

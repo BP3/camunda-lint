@@ -14,7 +14,7 @@ const Table = require('cli-table3');
 const defaultPackageJsonDependencies = {
   "bpmnlint": "^11.6.0",
   "bpmnlint-utils": "^1.1.1",
-  "@BP3/bpmnlint-plugin-bpmn-rules": "^0.0.2"
+  "@BP3/bpmnlint-plugin-bpmn-rules": "^0.0.4"
 };
 
 // --- Define and parse command-line arguments using yargs ---
