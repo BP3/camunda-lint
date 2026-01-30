@@ -18,7 +18,6 @@ RUN addgroup --gid 1001 bp3 && \
     npm install -g bpmnlint@11.6.0 \
                     dmnlint@0.2.0 \
                     bpmnlint-plugin-camunda-compat@2.44.0 \
-                    @cyclonedx/cyclonedx-npm \
                     @bp3global/bpmnlint-plugin-bpmn-rules && \
     mkdir /app  && \
     chown -R bp3user:bp3 /usr/local/lib/node_modules && \
@@ -30,6 +29,7 @@ COPY --chown=bp3user:bp3 --chmod=755 ["docker-entrypoint.sh", "package*.js*", "/
 COPY --chown=bp3user:bp3 --chmod=755 scripts/ /app/scripts/
 COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/ /app/bpmnlint-runner/
 COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/ /app/dmnlint-runner/
+COPY --chown=bp3user:bp3 camunda-lint-sbom.json /app/camunda-lint-sbom.json
 
 # As this is now a node workspace, this installs all the dependencies for child folders also
 WORKDIR /app
