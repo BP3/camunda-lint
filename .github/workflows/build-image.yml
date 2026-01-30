@@ -31,6 +31,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Generate SBOM
         run: |
           npx @cyclonedx/cyclonedx-npm -o camunda-lint-sbom.json
