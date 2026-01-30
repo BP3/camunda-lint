@@ -26,6 +26,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Generate SBOM
+        run: |
+          npx @cyclonedx/cyclonedx-npm -o camunda-lint-sbom.json
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -64,7 +73,6 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
               "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions/$id"
           fi
-
       - name: Build Docker image of application, tag with branch name
         run: |
           echo "image-name = ${{ inputs.image-name }}"
