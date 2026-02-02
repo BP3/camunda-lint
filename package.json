@@ -16,10 +16,10 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.1",
+    "@BP3/bpmnlint-plugin-bpmn-rules": "npm:@bp3/bpmnlint-plugin-bpmn-rules",
     "bpmn-moddle": "^9.0.3",
     "bpmnlint": "^11.6.0",
-    "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@bp3global/bpmnlint-plugin-bpmn-rules",
+    "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@BP3/bpmnlint-plugin-bpmn-rules",
     "bpmnlint-utils": "^1.1.1",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",
@@ -42,7 +42,7 @@
     "prettier": "^3.6.2"
   },
   "overrides": {
-    "@bp3global/bpmnlint-plugin-bpmn-rules": "$@bp3global/bpmnlint-plugin-bpmn-rules",
+    "@BP3/bpmnlint-plugin-bpmn-rules": "$@BP3/bpmnlint-plugin-bpmn-rules",
     "bpmn-moddle": "$bpmn-moddle",
     "bpmnlint": "$bpmnlint",
     "bpmnlint-plugin-camunda-compat": "$bpmnlint-plugin-camunda-compat",

@@ -14,7 +14,7 @@ const LINTER_CONFIGS = {
     name: 'bpmnlint',
     Linter: () => require('bpmnlint').Linter,
     NodeResolver: () => require('bpmnlint/lib/resolver/node-resolver'),
-    Moddle: () => require('bpmn-moddle').BpmnModdle,
+    Moddle: () => require('bpmn-moddle'),
     reportTitle: 'BPMN Lint Report',
     defaultConfig: {
       extends: ['bpmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
@@ -24,14 +24,14 @@ const LINTER_CONFIGS = {
     defaultDependencies: {
       "bpmnlint": "^11.6.0",
       "bpmnlint-utils": "^1.1.1",
-      "@bp3global/bpmnlint-plugin-bpmn-rules": "^0.1.0",
+      "@BP3/bpmnlint-plugin-bpmn-rules": "^0.0.4",
     },
   },
   dmn: {
     name: 'dmnlint',
     Linter: () => require('dmnlint').Linter,
     NodeResolver: () => require('dmnlint/lib/resolver/node-resolver'),
-    Moddle: () => require('dmn-moddle').DmnModdle,
+    Moddle: () => require('dmn-moddle'),
     reportTitle: 'DMN Lint Report',
     defaultConfig: {
       extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
