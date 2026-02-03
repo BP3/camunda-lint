@@ -234,8 +234,8 @@ async function lintFiles(files, linter, linterType) {
   let totalWarnings = 0;
 
   const linterConfig = LINTER_CONFIGS[linterType];
-  const ModdleConstructor = linterConfig.Moddle();
-  const moddle = new ModdleConstructor();
+  const Moddle = linterConfig.Moddle();
+  const moddle = new Moddle();
   const xmlContentKey = linterType === 'bpmn' ? 'bpmnXML' : 'dmnXML';
   const moddeleName = linterType === 'bpmn' ? 'bpmn-moddle' : 'dmn-moddle';
 
