@@ -202,6 +202,7 @@ function prepareLintRunner(filename, prefix, defaultLintConfig, lintRunner) {
   } catch (err) {
     logger.error('ERROR: ' + err);
     logger.error('\nERROR: Plugin installation failed!\n');
+    process.exit(1);
   }
 }
 
