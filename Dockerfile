@@ -25,11 +25,10 @@ RUN addgroup --gid 1001 bp3 && \
 
 USER bp3user
 
-COPY --chown=bp3user:bp3 --chmod=755 ["docker-entrypoint.sh", "package*.js*", "/app/" ]
+COPY --chown=bp3user:bp3 --chmod=755 ["docker-entrypoint.sh", "package*.js*", "camunda-lint-sbom.json", "/app/" ]
 COPY --chown=bp3user:bp3 --chmod=755 scripts/ /app/scripts/
 COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/ /app/bpmnlint-runner/
 COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/ /app/dmnlint-runner/
-COPY --chown=bp3user:bp3 camunda-lint-sbom.json /app/camunda-lint-sbom.json
 
 # As this is now a node workspace, this installs all the dependencies for child folders also
 WORKDIR /app
