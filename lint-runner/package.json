@@ -1,16 +1,16 @@
 {
-  "name": "bpmnlint-runner",
+  "name": "lint-runner",
   "version": "0.0.1",
-  "description": "A simple runner for bpmnlint in order to better integrate with CI/CD pipelines and have custom reporting beyond the console",
+  "description": "A lint runner for both BPMN and DMN files with support for custom reporting formats",
   "license": "MIT",
   "author": "Filipe Pereira",
   "type": "commonjs",
-  "main": "bpmnlint-runner.js",
+  "main": "index.js",
   "bin": {
-    "bpmn-linter": "./bpmnlint-runner.js"
+    "linter": "./index.js"
   },
   "scripts": {
-    "start": "node ./bpmnlint-runner.js",
+    "start": "node ./index.js",
     "format": "prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
@@ -22,8 +22,12 @@
     "bpmn-moddle": "*",
     "bpmnlint": "*",
     "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
-    "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@BP3/bpmnlint-plugin-bpmn-rules",
+    "bpmnlint-plugin-bp3-bpmn-rules": "npm:@BP3/bpmnlint-plugin-bpmn-rules",
     "bpmnlint-utils": "*",
+    "dmn-moddle": "*",
+    "dmnlint": "*",
+    "dmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
+    "dmnlint-utils": "*",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",
     "junit-report-builder": "^5.1.1",
@@ -39,13 +43,16 @@
   },
   "keywords": [
     "bpmn",
+    "dmn",
     "lint",
     "cli",
     "linter",
-    "bpmnlint"
+    "bpmnlint",
+    "dmnlint"
   ],
   "files": [
-    "bpmnlint-runner.js"
+    "index.js",
+    "bp3-dynamic-rules"
   ],
   "engines": {
     "node": ">=20"

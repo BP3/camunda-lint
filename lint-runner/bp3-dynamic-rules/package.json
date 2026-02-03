@@ -1,10 +1,11 @@
 {
-  "name": "bpmnlint-plugin-bp3-dynamic-rules",
+  "name": "lint-plugin-bp3-dynamic-rules",
   "version": "0.0.1",
-  "description": "BP3's dynamic rules loader for the bpmnlint",
+  "description": "BP3's dynamic rules loader for both bpmnlint and dmnlint",
   "main": "index.js",
   "keywords": [
     "bpmnlint",
+    "dmnlint",
     "plugin"
   ],
   "scripts": {
@@ -15,6 +16,8 @@
     "@BP3/bpmnlint-plugin-bpmn-rules": "*",
     "bpmnlint": "*",
     "bpmnlint-utils": "*",
+    "dmnlint": "*",
+    "dmnlint-utils": "*",
     "semver": "^7.7.2"
   },
   "files": [
