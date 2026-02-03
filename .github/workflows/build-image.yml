@@ -80,10 +80,12 @@ jobs:
               "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions/$id"
           fi
       - name: Build Docker image of application, tag with branch name
+        env:
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "image-name = ${{ inputs.image-name }}"
           echo "branch-name = ${{ inputs.branch-name}}"
-          docker build -t ${{ inputs.image-name }}:${{ inputs.branch-name }} .
+          docker build --secret id=GH_TOKEN,env=NPM_TOKEN -t ${{ inputs.image-name }}:${{ inputs.branch-name }} .
 
       - name: Push to local registry
         run: |
