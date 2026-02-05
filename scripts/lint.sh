@@ -59,7 +59,7 @@ esac
 if [ $mode_sbom = 1 ]; then
   echo ""
   if [ ! "${SBOM_REPORT_PATH}" ]; then
-    SBOM_REPORT_PATH="/local"
+    SBOM_REPORT_PATH="/app"
     if [ -n "${PROJECT_PATH}" ]; then
       SBOM_REPORT_PATH="${PROJECT_PATH}"
     fi
