@@ -41,8 +41,8 @@ jobs:
         run: |
           npx @cyclonedx/cyclonedx-npm -o camunda-lint-sbom.json
 
-      - name: Show SBOM file content
-        run: cat camunda-lint-sbom.json
+      - name: List generated SBOM file
+        run: ls -l camunda-lint-sbom.json
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
