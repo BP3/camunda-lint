@@ -15,7 +15,7 @@ FROM node:22.14.0-alpine3.21
 # Add the bp3 user and group - using 1001 because node's is already using 1000 - and install the Camunda lint global packages and create /app and set folder ownership
 RUN npm install -g bpmnlint@11.6.0 \
                     dmnlint@0.2.0 \
-                    bpmnlint-plugin-camunda-compat@2.44.0 \
+                    bpmnlint-plugin-camunda-compat@2.44.0 && \
     addgroup --gid 1001 bp3 && \
     adduser --uid 1001 --ingroup bp3 --home /home/bp3user --shell /bin/bash --disabled-password bp3user && \
     mkdir /app  && \
