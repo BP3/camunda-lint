@@ -31,15 +31,11 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Remove package-lock.json
-        run: |
-          rm -f package-lock.json
-
       - name: Install dependencies
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm install
+          npm ci
 
       - name: Generate SBOM
         run: |
