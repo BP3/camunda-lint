@@ -7,7 +7,6 @@
     "*mnlint-runner/bp3-dynamic-rules"
   ],
   "scripts": {
-    "generate-sbom": "cyclonedx-bom",
     "test": "mocha ./test/**/*.js"
   },
   "engines": {
