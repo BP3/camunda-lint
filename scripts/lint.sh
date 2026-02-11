@@ -58,27 +58,7 @@ esac
 
 if [ $mode_sbom = 1 ]; then
   echo ""
-  if [ ! "${SBOM_REPORT_PATH}" ]; then
-    SBOM_REPORT_PATH="/app"
-    if [ -n "${PROJECT_PATH}" ]; then
-      SBOM_REPORT_PATH="${PROJECT_PATH}"
-    fi
-  fi
-  if [ ! "${SBOM_REPORT_NAME}" ]; then
-    SBOM_REPORT_NAME="camunda-lint-sbom"
-  fi
-  SBOM_REPORT_EXT="json"
-  case "${SBOM_REPORT_FORMAT}" in
-    XML)
-      SBOM_REPORT_EXT="xml"
-        ;;
-    *)
-      SBOM_REPORT_FORMAT="JSON"
-      SBOM_REPORT_EXT="json"
-        ;;
-  esac
-
-  SBOM_FILE="${SBOM_REPORT_PATH}/${SBOM_REPORT_NAME}.${SBOM_REPORT_EXT}"
+  SBOM_FILE="/app/camunda-lint-sbom.json"
 
   if [ -f "$SBOM_FILE" ]; then
     log_info "Showing the SBOM file content:"
@@ -90,6 +70,7 @@ if [ $mode_sbom = 1 ]; then
   else
     log_info "SBOM file not found: $SBOM_FILE"
     echo ""
+    exit 1
   fi
 fi
 
