@@ -17,8 +17,6 @@ tmp/
 
 # Local dev files
 lint-runner/lint-report.*
-lint-runner/node_modules/
-lint-runner/bp3-dynamic-rules/node_modules/
 lint-runner/bp3-dynamic-rules/rules/*.js
 
 # Distribution / packaging
@@ -51,5 +49,5 @@ venv.bak/
 *.dmn
 .dmnlintrc*
 
-/node_modules/
+node_modules/
 packages.txt
