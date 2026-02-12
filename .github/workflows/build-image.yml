@@ -26,6 +26,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm ci
+
+      - name: Generate SBOM
+        run: |
+          npx @cyclonedx/cyclonedx-npm -o camunda-lint-sbom.json
+
+      - name: List generated SBOM file
+        run: ls -l camunda-lint-sbom.json
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -64,7 +82,6 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
               "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions/$id"
           fi
-
       - name: Build Docker image of application, tag with branch name
         env:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,3 +114,7 @@ jobs:
       - name: Run Smoke Test
         run: |
           docker run -i --rm -v ${PWD}/test/smoke-test:/project -e PROJECT_PATH=/project ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
+
+      - name: Run SBOM Test
+        run: |
+          docker run -i --rm ${{ inputs.image-name }}:${{ inputs.branch-name }} sbom
