@@ -57,7 +57,8 @@ function showHelp() {
 
     A utility that configures and runs either the bpmn or dmn linter.
 
-    Usage: node runLinter.js --${argumentType}=<bpmn|dmn> --${argumentConfig}=<path to lintrc file> --${argumentFilesToLint}=<path to the files to be linted>
+    Usage: node runLinter.js --${argumentType}=bpmn --${argumentConfig}=.bpmnlintrc --${argumentFilesToLint}=/project/*.bpmn
+           node runLinter.js --${argumentType}=dmn --${argumentConfig}=.dmnlintrc --${argumentFilesToLint}=/project/*.dmn
 
     Required Arguments:
       --${argumentType}=<bpmn|dmn>
