@@ -28,8 +28,7 @@ USER bp3user
 COPY --chown=bp3user:bp3 --chmod=755 .npmrc /home/bp3user/.npmrc
 COPY --chown=bp3user:bp3 --chmod=755 ["docker-entrypoint.sh", "package*.js*", ".npmrc", "camunda-lint-sbom.json", "/app/" ]
 COPY --chown=bp3user:bp3 --chmod=755 scripts/ /app/scripts/
-COPY --chown=bp3user:bp3 --chmod=755 bpmnlint-runner/ /app/bpmnlint-runner/
-COPY --chown=bp3user:bp3 --chmod=755 dmnlint-runner/ /app/dmnlint-runner/
+COPY --chown=bp3user:bp3 --chmod=755 lint-runner/ /app/lint-runner/
 
 WORKDIR /app
 

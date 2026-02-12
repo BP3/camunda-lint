@@ -113,7 +113,11 @@ jobs:
 
       - name: Run Smoke Test
         run: |
-          docker run -i --rm -v ${PWD}/test/smoke-test:/project -e PROJECT_PATH=/project ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
+          docker run -i --rm \
+            -v ${PWD}/test/smoke-test:/project \
+            -e PROJECT_PATH=/project \
+            -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
 
       - name: Run SBOM Test
         run: |

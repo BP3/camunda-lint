@@ -7,7 +7,9 @@
     "*mnlint-runner/bp3-dynamic-rules"
   ],
   "scripts": {
-    "test": "mocha ./test/**/*.js"
+    "test": "mocha ./test/**/*.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "engines": {
     "node": ">=20"

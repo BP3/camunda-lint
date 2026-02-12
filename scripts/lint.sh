@@ -85,7 +85,7 @@ if [ $mode_bpmn = 1 ]; then
   log_info "Initializing the BPMN rules for linting (if needed)"
   log_info "---------------------------------------------------"
   if [ ! -f "${BPMN_PATH}"/.bpmnlintrc ]; then
-    (cd "${BPMN_PATH}"; bpmnlint --init)
+    (cd "${BPMN_PATH}"; npx bpmnlint --init)
   fi
 
   BPMN_LINTER_ARGS=""
@@ -95,7 +95,6 @@ if [ $mode_bpmn = 1 ]; then
     BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --verbose=false"
   fi
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --type=bpmn"
-  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --runnerpath=/app/bpmnlint-runner"
   # BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=${BPMN_PATH}/.bpmnlintrc"
   
   # retrieve and install any plugins that were provided as part of .bpmnlintrc and generates a .bpmnlintrcRevised under the runner path
@@ -103,13 +102,12 @@ if [ $mode_bpmn = 1 ]; then
   log_info "Installing the BPMN lint runner dependencies"
   log_info "---------------------------------------------------"
   node ${SCRIPT_DIR}/installPluginPackages.js ${BPMN_LINTER_ARGS} --config="${BPMN_PATH}"/.bpmnlintrc
-  #--type=bpmn --config="${BPMN_PATH}"/.bpmnlintrc --runnerpath=/app/bpmnlint-runner
   echo ""
   log_info "Running the BPMN linter"
   log_info "---------------------------------------------------"
   # prepare params
   # use the revised file that should have been generated
-  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=/app/bpmnlint-runner/.bpmnlintrcRevised"
+  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=/app/lint-runner/.bpmnlintrcRevised"
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --files=${BPMN_PATH}/**/*.bpmn"
 
   if [ -n "${BPMN_REPORT_FILEPATH}" ]; then
@@ -144,7 +142,7 @@ if [ $mode_dmn = 1 ]; then
   log_info "Initializing the DMN rules for linting (if needed)"
   log_info "---------------------------------------------------"
   if [ ! -f "${DMN_PATH}"/.dmnlintrc ]; then
-    (cd "${DMN_PATH}"; dmnlint --init)
+    (cd "${DMN_PATH}"; npx dmnlint --init)
   fi
 
   DMN_LINTER_ARGS=""
@@ -154,7 +152,6 @@ if [ $mode_dmn = 1 ]; then
     DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --verbose=false"
   fi
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --type=dmn"
-  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --runnerpath=/app/dmnlint-runner"
   # DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=${DMN_PATH}/.dmnlintrc"
 
   # retrieve and install any plugins that were provided as part of .dmnlintrc and generates a .dmnlintrcRevised under the runner path
@@ -162,14 +159,13 @@ if [ $mode_dmn = 1 ]; then
   log_info "Installing the DMN lint runner dependencies"
   log_info "---------------------------------------------------"
   node ${SCRIPT_DIR}/installPluginPackages.js ${DMN_LINTER_ARGS} --config=${DMN_PATH}/.dmnlintrc
-  # --type=dmn --config="${DMN_PATH}"/.dmnlintrc --runnerpath=/app/dmnlint-runner
   echo ""
   log_info "Running the DMN linter"
   log_info "---------------------------------------------------"
 
   # prepare params
   # use the revised file that should have been generated
-  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=/app/dmnlint-runner/.dmnlintrcRevised"
+  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=/app/lint-runner/.dmnlintrcRevised"
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --files=${DMN_PATH}/**/*.dmn"
 
   if [ -n "${DMN_REPORT_FILEPATH}" ]; then
