@@ -58,33 +58,20 @@ esac
 
 if [ $mode_sbom = 1 ]; then
   echo ""
-  if [ ! "${SBOM_REPORT_PATH}" ]; then
-    SBOM_REPORT_PATH="/local"
-    if [ -n "${PROJECT_PATH}" ]; then
-      SBOM_REPORT_PATH="${PROJECT_PATH}"
-    fi
-  fi
-  if [ ! "${SBOM_REPORT_NAME}" ]; then
-    SBOM_REPORT_NAME="camunda-lint-sbom"
-  fi
-  SBOM_REPORT_EXT="json"
-  case "${SBOM_REPORT_FORMAT}" in
-    XML)
-      SBOM_REPORT_EXT="xml"
-        ;;
-    *)
-      SBOM_REPORT_FORMAT="JSON"
-      SBOM_REPORT_EXT="json"
-        ;;
-  esac
+  SBOM_FILE="/app/camunda-lint-sbom.json"
 
-  log_info "Generating the SBOM..."
-  log_info "---------------------------------------------------"
-  log_info "Writing: ${SBOM_REPORT_PATH}/${SBOM_REPORT_NAME}.${SBOM_REPORT_EXT}"
-  cyclonedx-npm /app/package.json -o "${SBOM_REPORT_PATH}/${SBOM_REPORT_NAME}.${SBOM_REPORT_EXT}" --of "${SBOM_REPORT_FORMAT}"
-  echo ""
-  log_info "Done!"
-  echo ""
+  if [ -f "$SBOM_FILE" ]; then
+    log_info "Showing the SBOM file content:"
+    log_info "---------------------------------------------------"
+    cat "$SBOM_FILE"
+    echo ""
+    log_info "Done!"
+    echo ""
+  else
+    log_info "SBOM file not found: $SBOM_FILE"
+    echo ""
+    exit 1
+  fi
 fi
 
 if [ -n "${PROJECT_PATH}" ]; then
