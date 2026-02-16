@@ -6,7 +6,6 @@ const path = require('path');
 const junitReportBuilder = require('junit-report-builder');
 const { execSync } = require('child_process');
 const chalk = require('chalk');
-const Table = require('cli-table3');
 const { logger } = require('../lib/logger');
 
 // Map of linter types to their configurations
@@ -219,7 +218,6 @@ async function lintFiles(files, linter, linterType) {
   const linterConfig = LINTER_CONFIGS[linterType];
   const Moddle = linterConfig.Moddle();
   const moddle = new Moddle();
-  const xmlContentKey = linterType === 'bpmn' ? 'bpmnXML' : 'dmnXML';
   const moddeleName = linterType === 'bpmn' ? 'bpmn-moddle' : 'dmn-moddle';
 
   for (const file of files) {
@@ -274,11 +272,11 @@ async function lintFiles(files, linter, linterType) {
 }
 
 function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath, showConsoleTable, linterType) {
-  console.debug('--- Linting Summary ---');
-  console.debug(`Total Files Linted: ${lintedFiles.length}`);
-  console.debug(`Total Errors: ${chalk.red.bold(totalErrors)}`);
-  console.debug(`Total Warnings: ${chalk.yellow.bold(totalWarnings)}`);
-  console.debug('-----------------------');
+  logger.info('--- Linting Summary ---');
+  logger.info(`Total Files Linted: ${lintedFiles.length}`);
+  logger.info(`Total Errors: ${chalk.red.bold(totalErrors)}`);
+  logger.info(`Total Warnings: ${chalk.yellow.bold(totalWarnings)}`);
+  logger.info('-----------------------');
 
   if (showConsoleTable) {
     if (allIssues.length > 0) {
@@ -293,7 +291,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
         } else if (severity.toLowerCase().includes('info')) {
           severityStyled = chalk.blueBright(`ℹ️  Info`);
         }
-        console.debug(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
+        logger.info(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
       });
     }
   }
@@ -436,17 +434,22 @@ async function main() {
   const { pattern, output: outputPath, format, customRulesPath, customRulesSeverity, installCustomDeps, showConsoleTable } = argv;
 
   logger.debug(
-    `Lint runner arguments parsed: ${JSON.stringify({
-      type: linterType,
-      files: pattern,
-      config: configPath,
-      output: outputPath,
-      format: format,
-      customRulesPath: customRulesPath,
-      customRulesSeverity: customRulesSeverity,
-      installCustomDeps: installCustomDeps,
-      showConsoleTable: showConsoleTable,
-    }, null, 2)}`
+    `Lint runner arguments parsed: 
+${JSON.stringify(
+  {
+    type: linterType,
+    files: pattern,
+    config: configPath,
+    output: outputPath,
+    format: format,
+    customRulesPath: customRulesPath,
+    customRulesSeverity: customRulesSeverity,
+    installCustomDeps: installCustomDeps,
+    showConsoleTable: showConsoleTable,
+  },
+  null,
+  2
+)}`
   );
 
   let dynamicPluginWasPrepared = false;

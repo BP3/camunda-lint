@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 // Get the prefix for this plugin from the package.json
-const { name } = require('./package.json');
 //NOTE: not using the start of string ^ wildcard because in case there's a @publisherName
 const rulePrefix = `bp3-dynamic-rules`;
 
