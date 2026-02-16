@@ -272,11 +272,11 @@ async function lintFiles(files, linter, linterType) {
 }
 
 function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath, showConsoleTable, linterType) {
-  logger.info('--- Linting Summary ---');
-  logger.info(`Total Files Linted: ${lintedFiles.length}`);
-  logger.info(`Total Errors: ${chalk.red.bold(totalErrors)}`);
-  logger.info(`Total Warnings: ${chalk.yellow.bold(totalWarnings)}`);
-  logger.info('-----------------------');
+  console.log('--- Linting Summary ---');
+  console.log(`Total Files Linted: ${lintedFiles.length}`);
+  console.log(`Total Errors: ${chalk.red(chalk.bold(totalErrors))}`);
+  console.log(`Total Warnings: ${chalk.yellow(chalk.bold(totalWarnings))}`);
+  console.log('-----------------------');
 
   if (showConsoleTable) {
     if (allIssues.length > 0) {
@@ -291,7 +291,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
         } else if (severity.toLowerCase().includes('info')) {
           severityStyled = chalk.blueBright(`ℹ️  Info`);
         }
-        logger.info(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
+        console.log(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
       });
     }
   }
