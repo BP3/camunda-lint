@@ -31,8 +31,8 @@ const LINTRC_REVISED_SUFFIX = 'Revised';
 // TODO : const LINTRC_DEFAULT_SUFFIX = 'Default';
 
 const PACKAGE_JSON = 'package.json';
-const LINT_RUNNER_PATH = `/sandbox/bp3/camunda-lint-github/lint-runner/`;
-const SBOM_JSON_FILE = `/sandbox/bp3/camunda-lint-github/camunda-lint-sbom.json`;
+const LINT_RUNNER_PATH = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./lint-runner/`);
+const SBOM_JSON_FILE = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./camunda-lint-sbom.json`);
 
 const emptyLintConfig = {
   extends: [],
