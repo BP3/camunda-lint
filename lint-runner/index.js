@@ -31,7 +31,7 @@ const LINTER_CONFIGS = {
     name: 'dmnlint',
     Linter: () => require('dmnlint').Linter,
     NodeResolver: () => require('dmnlint/lib/resolver/node-resolver'),
-    Moddle: () => require('dmn-moddle').DmnModddle,
+    Moddle: () => require('dmn-moddle').DmnModdle,
     reportTitle: 'DMN Lint Report',
     defaultConfig: {
       extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
