@@ -7,6 +7,7 @@ const junitReportBuilder = require('junit-report-builder');
 const { execSync } = require('child_process');
 const chalk = require('chalk');
 const Table = require('cli-table3');
+const { logger } = require('../lib/logger');
 
 // Map of linter types to their configurations
 const LINTER_CONFIGS = {
@@ -109,24 +110,6 @@ const argv = yargs(hideBin(process.argv))
   .demandCommand(1, 'You must provide a pattern for the files to lint.')
   .help().argv;
 
-// --- Create a local logger and use color coding ---
-const logger = {
-  log: (...args) => {
-    if (argv.verbose) {
-      console.log(chalk.gray('VERBOSE:'), ...args);
-    }
-  },
-  info: (...args) => {
-    console.log(chalk.blueBright.bold('INFO:'), ...args);
-  },
-  warn: (...args) => {
-    console.warn(chalk.yellowBright.bold('WARN:'), ...args);
-  },
-  error: (...args) => {
-    console.error(chalk.redBright.bold('ERROR:'), ...args);
-  },
-};
-
 // --- Helper functions ---
 function exitWithError(message) {
   logger.error(message);
@@ -136,7 +119,7 @@ function exitWithError(message) {
 // --- Prepare the dynamic plugin by copying custom rules and installing their dependencies ---
 function prepareDynamicPlugin(customRulesPath, installDeps, linterType) {
   if (!customRulesPath) {
-    logger.log('Custom rules path not provided. Skipping dynamic plugin generation.');
+    logger.debug('Custom rules path not provided. Skipping dynamic plugin generation.');
     return;
   }
 
@@ -162,7 +145,7 @@ function prepareDynamicPlugin(customRulesPath, installDeps, linterType) {
   fs.writeFileSync(pluginPackageJsonPath, JSON.stringify(pluginPackageJson, null, 2));
 
   // Copy rule files from source to the plugin
-  logger.log(`Copying rules from ${sourceRulesPath} to ${pluginRulesPath}`);
+  logger.debug(`Copying rules from ${sourceRulesPath} to ${pluginRulesPath}`);
   const sourceAllFiles = fs.readdirSync(sourceRulesPath, { recursive: true });
   const sourceRuleFiles = sourceAllFiles.filter((file) => file.endsWith('.js') && !file.split(path.sep).includes('node_modules') && !file.split(path.sep).includes('.git'));
 
@@ -172,7 +155,7 @@ function prepareDynamicPlugin(customRulesPath, installDeps, linterType) {
     fs.mkdirSync(path.dirname(destFile), { recursive: true });
     fs.copyFileSync(sourceFile, destFile);
   });
-  logger.log(`Copied ${sourceRuleFiles.length} rule file(s).`);
+  logger.debug(`Copied ${sourceRuleFiles.length} rule file(s).`);
 
   // Install dependencies if needed
   if (Object.keys(finalDeps).length > 0) {
@@ -192,7 +175,7 @@ function prepareDynamicPlugin(customRulesPath, installDeps, linterType) {
 
 // --- Cleans up the artifacts created by prepareDynamicPlugin ---
 function cleanupDynamicPlugin(doResetPackageJson = false, linterType = 'bpmn') {
-  logger.log('Cleaning up dynamic plugin environment...');
+  logger.debug('Cleaning up dynamic plugin environment...');
   const pluginPath = path.join(__dirname, 'bp3-dynamic-rules');
   const pluginRulesPath = path.join(pluginPath, 'rules');
   const pluginNodeModulesPath = path.join(pluginPath, 'node_modules');
@@ -216,14 +199,14 @@ function cleanupDynamicPlugin(doResetPackageJson = false, linterType = 'bpmn') {
 }
 
 async function findFiles(pattern) {
-  logger.log(`Searching for files matching: "${pattern}"`);
+  logger.debug(`Searching for files matching: "${pattern}"`);
   const normalizedPattern = pattern.replace(/\\/gm, '/');
   const files = await tinyglob(normalizedPattern, { absolute: true, filesOnly: true, dot: true });
 
   if (files.length === 0) {
     logger.warn(`No files found matching the pattern: "${pattern}"`);
   } else {
-    logger.log(`Found ${files.length} files to lint.`);
+    logger.debug(`Found ${files.length} files to lint.`);
   }
   return files;
 }
@@ -240,15 +223,15 @@ async function lintFiles(files, linter, linterType) {
   const moddeleName = linterType === 'bpmn' ? 'bpmn-moddle' : 'dmn-moddle';
 
   for (const file of files) {
-    logger.log(`Linting ${file}...`);
+    logger.debug(`Linting ${file}...`);
     const xmlContent = fs.readFileSync(file, 'utf-8');
     try {
-      logger.log('  - Parsing diagram...');
+      logger.debug('  - Parsing diagram...');
       const { rootElement, warnings: parseWarnings } = await moddle.fromXML(xmlContent);
 
       if (parseWarnings && parseWarnings.length) {
         parseWarnings.forEach((warning) => {
-          logger.log(`    - [import-warning] (${moddeleName}) ${warning.element ? warning.element.id : 'FileLevel'}: ${warning.message}`);
+          logger.debug(`    - [import-warning] (${moddeleName}) ${warning.element ? warning.element.id : 'FileLevel'}: ${warning.message}`);
           allIssues.push({
             file,
             id: warning.element?.id || 'FileLevel',
@@ -260,19 +243,19 @@ async function lintFiles(files, linter, linterType) {
         });
       }
 
-      logger.log('  - Linting diagram...');
+      logger.debug('  - Linting diagram...');
       const report = await linter.lint(rootElement);
 
       for (const [ruleName, issues] of Object.entries(report)) {
         issues.forEach((issue) => {
-          logger.log(`    - [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
+          logger.debug(`    - [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
           if (issue.category?.includes('error')) totalErrors++;
           else totalWarnings++;
           allIssues.push({ file, rule: ruleName, ...issue });
         });
       }
       if (Object.keys(report).length === 0) {
-        logger.log('  No issues found.');
+        logger.debug('  No issues found.');
       }
     } catch (lintError) {
       logger.error(`A critical error occurred while processing ${file}:`, lintError.message);
@@ -291,11 +274,11 @@ async function lintFiles(files, linter, linterType) {
 }
 
 function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath, showConsoleTable, linterType) {
-  console.log('--- Linting Summary ---');
-  console.log(`Total Files Linted: ${lintedFiles.length}`);
-  console.log(`Total Errors: ${chalk.red.bold(totalErrors)}`);
-  console.log(`Total Warnings: ${chalk.yellow.bold(totalWarnings)}`);
-  console.log('-----------------------');
+  console.debug('--- Linting Summary ---');
+  console.debug(`Total Files Linted: ${lintedFiles.length}`);
+  console.debug(`Total Errors: ${chalk.red.bold(totalErrors)}`);
+  console.debug(`Total Warnings: ${chalk.yellow.bold(totalWarnings)}`);
+  console.debug('-----------------------');
 
   if (showConsoleTable) {
     if (allIssues.length > 0) {
@@ -310,7 +293,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
         } else if (severity.toLowerCase().includes('info')) {
           severityStyled = chalk.blueBright(`ℹ️  Info`);
         }
-        console.log(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
+        console.debug(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
       });
     }
   }
@@ -452,7 +435,7 @@ async function main() {
   const configPath = argv.config || configDefault;
   const { pattern, output: outputPath, format, customRulesPath, customRulesSeverity, installCustomDeps, showConsoleTable } = argv;
 
-  logger.log(
+  logger.debug(
     `Lint runner arguments parsed: ${JSON.stringify({
       type: linterType,
       files: pattern,
@@ -463,7 +446,7 @@ async function main() {
       customRulesSeverity: customRulesSeverity,
       installCustomDeps: installCustomDeps,
       showConsoleTable: showConsoleTable,
-    })}`
+    }, null, 2)}`
   );
 
   let dynamicPluginWasPrepared = false;
@@ -486,7 +469,7 @@ async function main() {
     let finalConfig = JSON.parse(JSON.stringify(linterConfig.defaultConfig));
     try {
       const configFilePath = path.resolve(process.cwd(), configPath);
-      logger.log(`Loading configuration from: ${configFilePath}`);
+      logger.debug(`Loading configuration from: ${configFilePath}`);
       const configFileContent = fs.readFileSync(configFilePath, 'utf-8');
       finalConfig = JSON.parse(configFileContent);
     } catch (error) {
@@ -519,9 +502,9 @@ async function main() {
     });
 
     // Enumerate Files
-    logger.log(`Searching for files using the pattern "${pattern}"`);
+    logger.debug(`Searching for files using the pattern "${pattern}"`);
     const files = await findFiles(pattern);
-    logger.log(`Files found: [${files.join(', ')}]`);
+    logger.debug(`Files found: [${files.join(', ')}]`);
     if (files.length === 0) {
       logger.warn('No files found to lint.');
       return;
