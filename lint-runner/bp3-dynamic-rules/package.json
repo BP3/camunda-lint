@@ -18,17 +18,17 @@
     "bpmnlint-utils": "*",
     "dmnlint": "*",
     "dmnlint-utils": "*",
-    "semver": "^7.7.2"
+    "zeebe-bpmn-moddle": "*"
   },
   "files": [
     "rules",
     "index.js"
   ],
   "devDependencies": {
-    "eslint": "^9.36.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
-    "globals": "^16.4.0",
-    "prettier": "^3.6.2"
+    "eslint": "*",
+    "eslint-config-prettier": "*",
+    "eslint-plugin-prettier": "*",
+    "globals": "*",
+    "prettier": "*"
   }
 }

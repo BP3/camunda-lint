@@ -18,7 +18,6 @@
     "@BP3/bpmnlint-plugin-bpmn-rules": "npm:@bp3/bpmnlint-plugin-bpmn-rules",
     "bpmn-moddle": "^9.0.3",
     "bpmnlint": "^11.6.0",
-    "bpmnlint-plugin-bp3global-bpmn-rules": "npm:@BP3/bpmnlint-plugin-bpmn-rules",
     "bpmnlint-utils": "^1.1.1",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",
@@ -26,10 +25,9 @@
     "dmnlint": "^0.2.0",
     "dmnlint-utils": "^0.1.0",
     "junit-report-builder": "^5.1.1",
-    "semver": "^7.7.2",
     "tiny-glob": "^0.2.9",
     "yargs": "^18.0.0",
-    "zeebe-bpmn-moddle": "^1.11.0"
+    "zeebe-bpmn-moddle": "^1.12.0"
   },
   "devDependencies": {
     "chai": "^6.2.1",
@@ -48,6 +46,17 @@
     "bpmnlint-utils": "$bpmnlint-utils",
     "dmn-moddle": "$dmn-moddle",
     "dmnlint": "$dmnlint",
-    "dmnlint-utils": "$dmnlint-utils"
+    "dmnlint-utils": "$dmnlint-utils",
+    "zeebe-bpmn-moddle": "$zeebe-bpmn-moddle",
+    "chalk": "$chalk",
+    "cli-table3": "$cli-table3",
+    "junit-report-builder": "$junit-report-builder",
+    "tiny-glob": "$tiny-glob",
+    "yargs": "$yargs",
+    "eslint": "$eslint",
+    "eslint-config-prettier": "$eslint-config-prettier",
+    "eslint-plugin-prettier": "$eslint-plugin-prettier",
+    "globals": "$globals",
+    "prettier": "$prettier"
   }
 }
