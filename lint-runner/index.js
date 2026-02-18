@@ -6,7 +6,6 @@ const path = require('path');
 const junitReportBuilder = require('junit-report-builder');
 const { execSync } = require('child_process');
 const chalk = require('chalk');
-const Table = require('cli-table3');
 
 // Map of linter types to their configurations
 const LINTER_CONFIGS = {
@@ -236,7 +235,6 @@ async function lintFiles(files, linter, linterType) {
   const linterConfig = LINTER_CONFIGS[linterType];
   const Moddle = linterConfig.Moddle();
   const moddle = new Moddle();
-  const xmlContentKey = linterType === 'bpmn' ? 'bpmnXML' : 'dmnXML';
   const moddeleName = linterType === 'bpmn' ? 'bpmn-moddle' : 'dmn-moddle';
 
   for (const file of files) {
