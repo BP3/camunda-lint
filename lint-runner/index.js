@@ -291,29 +291,39 @@ async function lintFiles(files, linter, linterType) {
 }
 
 function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath, showConsoleTable, linterType) {
-  console.log('--- Linting Summary ---');
-  console.log(`Total Files Linted: ${lintedFiles.length}`);
-  console.log(`Total Errors: ${chalk.red.bold(totalErrors)}`);
-  console.log(`Total Warnings: ${chalk.yellow.bold(totalWarnings)}`);
-  console.log('-----------------------');
+  let reportDetails = "";
 
-  if (showConsoleTable) {
-    if (allIssues.length > 0) {
+    const theme = {
+      error: chalk.red(' ❌ Error'),
+      warning: chalk.yellow(' ⚠️ Warning')
+    };
+
+  if (showConsoleTable && allIssues.length > 0) {
       allIssues.forEach((issue) => {
-        const severity = issue.category || 'unknown';
-        let severityStyled = severity;
+        const isError = issue.category?.toLowerCase().includes('error') || issue.severity === 'error';
 
-        if (severity.toLowerCase().includes('error')) {
-          severityStyled = chalk.red(`❌  Error`);
-        } else if (severity.toLowerCase().includes('warn')) {
-          severityStyled = chalk.yellow(`⚠️  Warning`);
-        } else if (severity.toLowerCase().includes('info')) {
-          severityStyled = chalk.blueBright(`ℹ️  Info`);
+        if (totalErrors > 0) {
+          if (isError) {
+            const label = theme.error;
+            const file = path.basename(issue.file);
+             reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
+          }
+        } else {
+          const label = theme.warning;
+          const file = path.basename(issue.file);
+           reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
         }
-        console.log(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
       });
     }
-  }
+
+ // Footer Summary
+  console.log(chalk.gray('─'.repeat(60)));
+  console.log(
+    `${chalk.bold('LINT RESULTS')} | ` +
+    `Files: ${lintedFiles.length} | ` +
+    `Errors: ${chalk.red.bold(totalErrors)} | ` +
+    `Warnings: ${chalk.yellow.bold(totalWarnings)}`
+  );
 
   const extension = format === 'junit' ? 'xml' : format;
   const finalOutputPath = path.resolve(process.cwd(), `${outputPath}.${extension}`);
@@ -443,7 +453,9 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
   } catch (error) {
     exitWithError(`Error writing report to ${finalOutputPath}: ${error.message}`);
   }
+  return reportDetails;
 }
+
 
 // --- Main Execution Logic ---
 async function main() {
@@ -531,13 +543,14 @@ async function main() {
     const lintResults = await lintFiles(files, linter, linterType);
 
     // Generate Report
-    generateReport(lintResults, files, format, outputPath, showConsoleTable, linterType);
+    const reportList = generateReport(lintResults, files, format, outputPath, showConsoleTable, linterType);
 
     // Final decision on exit code
+    if (lintResults.totalErrors === 0 && lintResults.totalWarnings > 0) {
+      logger.info(`LINT REPORT (Warnings):\n${reportList}`);
+    }
     if (lintResults.totalErrors > 0) {
-      throw new Error(`Found ${lintResults.totalErrors} error(s).`);
-    } else {
-      logger.info('Linting complete. No errors found.');
+      throw new Error(`Found ${lintResults.totalErrors} error(s):\n${reportList}`);
     }
   } catch (err) {
     exitWithError(err.message);
