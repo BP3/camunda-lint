@@ -12,7 +12,11 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    uses: ./.github/workflows/lint.yml
+
   call-workflow-build-image:
+    needs: lint
     uses: ./.github/workflows/build-image.yml
     with:
       username: ${{ github.actor }}
