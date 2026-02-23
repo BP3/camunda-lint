@@ -15,8 +15,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@BP3/bpmnlint-plugin-bpmn-rules": "^0.1.1",
-    "BP3-bpmnlint-plugin-bpmn-rules": "npm:@BP3/bpmnlint-plugin-bpmn-rules",
+    "@BP3/bpmnlint-plugin-bpmn-rules": "npm:@BP3/bpmnlint-plugin-bpmn-rules@latest",
     "bpmn-moddle": "^10.0.0",
     "bpmnlint": "^11.12.0",
     "bpmnlint-plugin-camunda-compat": "npm:bpmnlint-plugin-camunda-compat",
