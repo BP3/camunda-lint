@@ -36,7 +36,7 @@ WORKDIR /app
 # NOTE: can only install globally the @BP3/bpmnlint-plugin-bpmn-rules because it requires the steps above to be done
 RUN --mount=type=secret,id=GH_TOKEN,uid=1001 \
     export GITHUB_TOKEN=$(cat /run/secrets/GH_TOKEN | tr -d '\r\n') && \
-    npm install -g @BP3/bpmnlint-plugin-bpmn-rules && \
+    npm install -g @BP3/bpmnlint-plugin-bpmn-rules@latest && \
     npm install
 
 VOLUME /local
