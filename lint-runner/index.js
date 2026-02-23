@@ -111,9 +111,16 @@ const argv = yargs(hideBin(process.argv))
 
 // --- Create a local logger and use color coding ---
 const logger = {
+  isVerbose: argv.verbose || process.env.VERBOSE === 'true',
+
   log: (...args) => {
     if (argv.verbose) {
       console.log(chalk.gray('VERBOSE:'), ...args);
+    }
+  },
+  debug: (...args) => {
+    if (logger.isVerbose) {
+      console.log(chalk.magenta('DEBUG:'), ...args);
     }
   },
   info: (...args) => {
@@ -236,14 +243,13 @@ async function lintFiles(files, linter, linterType) {
   const linterConfig = LINTER_CONFIGS[linterType];
   const Moddle = linterConfig.Moddle();
   const moddle = new Moddle();
-  const xmlContentKey = linterType === 'bpmn' ? 'bpmnXML' : 'dmnXML';
-  const moddeleName = linterType === 'bpmn' ? 'bpmn-moddle' : 'dmn-moddle';
 
   for (const file of files) {
-    logger.log(`Linting ${file}...`);
-    const xmlContent = fs.readFileSync(file, 'utf-8');
+    const fileName = path.basename(file);
     try {
-      logger.log('  - Parsing diagram...');
+      logger.debug(`Parsing diagram: ${fileName}`);
+      const xmlContent = fs.readFileSync(file, 'utf-8');
+
       const { rootElement, warnings: parseWarnings } = await moddle.fromXML(xmlContent);
 
       if (parseWarnings && parseWarnings.length) {
@@ -263,21 +269,17 @@ async function lintFiles(files, linter, linterType) {
       logger.log('  - Linting diagram...');
       const report = await linter.lint(rootElement);
 
-      for (const [ruleName, issues] of Object.entries(report)) {
-        issues.forEach((issue) => {
-          logger.log(`    - [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
+      Object.entries(report).forEach(([ruleName, issues]) => {
+        issues.forEach(issue => {
           if (issue.category?.includes('error')) totalErrors++;
           else totalWarnings++;
-          allIssues.push({ file, rule: ruleName, ...issue });
+          allIssues.push({ file: fileName, rule: ruleName, ...issue });
         });
-      }
-      if (Object.keys(report).length === 0) {
-        logger.log('  No issues found.');
-      }
+      });
     } catch (lintError) {
-      logger.error(`A critical error occurred while processing ${file}:`, lintError.message);
+      logger.error(`A critical error occurred while processing [${fileName}]:`, lintError.message);
       allIssues.push({
-        file,
+        file: fileName,
         id: 'Fatal',
         message: lintError.message,
         category: 'internal-error',
