@@ -6,15 +6,26 @@ const path = require('path');
 const junitReportBuilder = require('junit-report-builder');
 const { execSync } = require('child_process');
 const chalk = require('chalk');
-const { logger } = require('../lib/logger');
+const { logger } = require('./logger');
+
+const { Linter: BpmnLinter } = require('bpmnlint');
+const BpmnNodeResolver = require('bpmnlint/lib/resolver/node-resolver');
+const { BpmnModdle } = require('bpmn-moddle');
+const { Linter: DmnLinter } = require('dmnlint');
+const DmnNodeResolver = require('dmnlint/lib/resolver/node-resolver');
+const DmnModdle = require('dmn-moddle');
 
 // Map of linter types to their configurations
 const LINTER_CONFIGS = {
   bpmn: {
     name: 'bpmnlint',
-    Linter: () => require('bpmnlint').Linter,
-    NodeResolver: () => require('bpmnlint/lib/resolver/node-resolver'),
-    Moddle: () => require('bpmn-moddle').BpmnModdle,
+    getLinter: (finalConfig) =>
+      new BpmnLinter({
+        config: finalConfig,
+        resolver: new BpmnNodeResolver(),
+      }),
+    getModdle: () => new BpmnModdle(),
+    getModdleName: () => 'bpmn-moddle',
     reportTitle: 'BPMN Lint Report',
     defaultConfig: {
       extends: ['bpmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
@@ -22,16 +33,20 @@ const LINTER_CONFIGS = {
     },
     // prettier-ignore
     defaultDependencies: {
-      "bpmnlint": "^11.6.0",
-      "bpmnlint-utils": "^1.1.1",
-      "@BP3/bpmnlint-plugin-bpmn-rules": "^0.0.4",
+      "bpmnlint": "*",
+      "bpmnlint-utils": "*",
+      "@BP3/bpmnlint-plugin-bpmn-rules": "*",
     },
   },
   dmn: {
     name: 'dmnlint',
-    Linter: () => require('dmnlint').Linter,
-    NodeResolver: () => require('dmnlint/lib/resolver/node-resolver'),
-    Moddle: () => require('dmn-moddle').DmnModdle,
+    getLinter: (finalConfig) =>
+      new DmnLinter({
+        config: finalConfig,
+        resolver: new DmnNodeResolver(),
+      }),
+    getModdle: () => new DmnModdle(),
+    getModdleName: () => 'dmn-moddle',
     reportTitle: 'DMN Lint Report',
     defaultConfig: {
       extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
@@ -39,8 +54,8 @@ const LINTER_CONFIGS = {
     },
     // prettier-ignore
     defaultDependencies: {
-      "dmnlint": "^0.2.0",
-      "dmnlint-utils": "^0.1.0",
+      "dmnlint": "*",
+      "dmnlint-utils": "*",
     },
   },
 };
@@ -216,9 +231,8 @@ async function lintFiles(files, linter, linterType) {
   let totalWarnings = 0;
 
   const linterConfig = LINTER_CONFIGS[linterType];
-  const Moddle = linterConfig.Moddle();
-  const moddle = new Moddle();
-  const moddeleName = linterType === 'bpmn' ? 'bpmn-moddle' : 'dmn-moddle';
+  const moddle = linterConfig.getModdle();
+  const moddleName = linterConfig.getModdleName();
 
   for (const file of files) {
     logger.debug(`Linting ${file}...`);
@@ -229,13 +243,13 @@ async function lintFiles(files, linter, linterType) {
 
       if (parseWarnings && parseWarnings.length) {
         parseWarnings.forEach((warning) => {
-          logger.debug(`    - [import-warning] (${moddeleName}) ${warning.element ? warning.element.id : 'FileLevel'}: ${warning.message}`);
+          logger.debug(`    - [import-warning] (${moddleName}) ${warning.element ? warning.element.id : 'FileLevel'}: ${warning.message}`);
           allIssues.push({
             file,
             id: warning.element?.id || 'FileLevel',
             message: warning.message,
             category: 'import-warning',
-            rule: moddeleName,
+            rule: moddleName,
           });
           totalWarnings++;
         });
@@ -496,13 +510,15 @@ ${JSON.stringify(
     }
 
     // Load the appropriate linter and resolver
-    const Linter = linterConfig.Linter();
-    const NodeResolver = linterConfig.NodeResolver();
+    // const Linter = linterConfig.Linter();
+    // const NodeResolver = linterConfig.NodeResolver();
 
-    const linter = new Linter({
-      config: finalConfig,
-      resolver: new NodeResolver(),
-    });
+    logger.debug(`Initializing Linter for ${linterType} with config=${JSON.stringify(finalConfig, null, 2)}`);
+    // const linter = new Linter({
+    //   config: finalConfig,
+    //   resolver: new NodeResolver(),
+    // });
+    const linter = linterConfig.getLinter(finalConfig);
 
     // Enumerate Files
     logger.debug(`Searching for files using the pattern "${pattern}"`);

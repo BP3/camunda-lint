@@ -15,12 +15,13 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@BP3/bpmnlint-plugin-bpmn-rules": "npm:@bp3/bpmnlint-plugin-bpmn-rules",
-    "bpmn-moddle": "^9.0.3",
-    "bpmnlint": "^11.6.0",
+    "@BP3/bpmnlint-plugin-bpmn-rules": "^0.0.7",
+    "BP3-bpmnlint-plugin-bpmn-rules": "npm:@BP3/bpmnlint-plugin-bpmn-rules",
+    "bpmn-moddle": "^10.0.0",
+    "bpmnlint": "^11.12.0",
+    "bpmnlint-plugin-camunda-compat": "npm:bpmnlint-plugin-camunda-compat",
     "bpmnlint-utils": "^1.1.1",
     "chalk": "^4.1.2",
-    "cli-table3": "^0.6.5",
     "dmn-moddle": "^11.0.0",
     "dmnlint": "^0.2.0",
     "dmnlint-utils": "^0.1.0",

@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const process = require('process');
 const { execSync } = require('child_process');
-const { logger } = require('../lib/logger');
+const { logger } = require('./logger.js');
 
 // Constants
 const modeLint = 'lint';
@@ -27,12 +27,17 @@ const modeHelp = 'help';
 const BPMN = 'BPMN';
 const DMN = 'DMN';
 
+// Globally installed plugins :: plugins shouldn't be dependencies, but it might be necessary to install them nonetheless
+const GLOBAL_PLUGINS = ['@BP3/bpmnlint-plugin-bpmn-rules'];
+
 const LINTRC_REVISED_SUFFIX = 'Revised';
-// TODO : const LINTRC_DEFAULT_SUFFIX = 'Default';
+// TODO :: Should we externalize the default configs into their own files? :: const LINTRC_DEFAULT_SUFFIX = 'Default';
 
 const PACKAGE_JSON = 'package.json';
-const LINT_RUNNER_PATH = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./lint-runner/`);
+// const APP_PATH = '/app';
+const LINT_RUNNER_PATH = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./`); // './lint-runner/'
 const SBOM_JSON_FILE = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./camunda-lint-sbom.json`);
+const lintRunnerPath = path.resolve(LINT_RUNNER_PATH, 'lint-runner.js');
 
 const emptyLintConfig = {
   extends: [],
@@ -71,7 +76,7 @@ Available Commands:
   lint               Apply lint to BPMN + DMN file
   bpmnlint           Apply lint to just the BPMN files
   dmnlint            Apply lint to just the DMN files
-  sbom               Output the SBOM
+  sbom               Generate the SBOM for the linters
 
 The configuration options for the commands are defined in environment variables
 as this is intended to run as part of a CI/CD pipeline.
@@ -149,7 +154,6 @@ function getPluginDetails(packageName, lintPrefix) {
   return result;
 }
 
-// TODO : Assess whether to update the whole hierarchy of package.json files!
 // Prepare the config and dependencies for the bpmnlint runner
 function prepareLintRunner(linterType, lintrcFullpath) {
   let revisedLintConfig;
@@ -190,6 +194,13 @@ function prepareLintRunner(linterType, lintrcFullpath) {
     let packageJsonFilepath = path.resolve(process.cwd(), LINT_RUNNER_PATH, PACKAGE_JSON);
     let currentPackageJson = JSON.parse(fs.readFileSync(packageJsonFilepath));
     for (var idx = 0; idx < additionalDependencies.length; ++idx) {
+      // Skip global installed plugins
+      if (GLOBAL_PLUGINS.indexOf(additionalDependencies[idx].dependencyName) > -1) {
+        logger.debug(`Ignoring global dependency: ${additionalDependencies[idx].dependencyName}`);
+        continue;
+      }
+      // Adding a dependency
+      logger.debug(`Adding to install the dependency: ${additionalDependencies[idx].dependencyName}`);
       currentPackageJson.dependencies[additionalDependencies[idx].dependencyName] = additionalDependencies[idx].dependencyValue;
     }
     fs.writeFileSync(packageJsonFilepath, JSON.stringify(currentPackageJson, null, 2));
@@ -267,10 +278,6 @@ function lint(linterType, projectPath) {
   logger.debug(`Running linter with params: ${JSON.stringify(linterArgs, null, 2)}`);
   // runLinter(linterArgs);
 
-  // Resolve the lint runner path
-  //const lintRunnerDir = path.resolve(__dirname, '..', LINT_RUNNER_PATH);
-  const lintRunnerPath = path.resolve(LINT_RUNNER_PATH, 'index.js');
-
   // TODO : Review this: + (linterArgs[argumentRulesPath] && linterArgs[argumentInstallCustomDeps] ? ` --install-custom-deps` : ``)
   // TODO : This also requires further validation : + (linterArgs[argumentRulesPath]? ` --install-custom-deps` : ``)
   let cliCommand =
@@ -287,8 +294,9 @@ function lint(linterType, projectPath) {
   cliCommand = `node ${lintRunnerPath} "${linterArgs[argumentFilesToLint]}" ${cliCommand}`;
 
   try {
-    logger.debug(`Running '${cliCommand}' from '${process.cwd()}'`);
-    execSync(cliCommand, { cwd: path.resolve(process.cwd(), LINT_RUNNER_PATH), stdio: 'inherit' });
+    let basePath = path.resolve(process.cwd(), LINT_RUNNER_PATH);
+    logger.debug(`Running '${cliCommand}' from '${basePath}'`);
+    execSync(cliCommand, { cwd: basePath, stdio: 'inherit' });
   } catch (err) {
     showErrorAndHelpMessageAndExit(`
 There was an error while running the linter.

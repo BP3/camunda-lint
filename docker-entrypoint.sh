@@ -25,5 +25,5 @@ if [ -n "$CI" ]; then
 else
   # Otherwise we are running outside CI/CD, so execute the command line wrapper script directly
   SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
-  node "${SCRIPT_DIR}"/scripts/lint.js "$@"
+  node "${SCRIPT_DIR}"/lint.js "$@"
 fi
