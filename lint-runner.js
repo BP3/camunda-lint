@@ -10,7 +10,7 @@ const { logger } = require('./logger');
 
 const { Linter: BpmnLinter } = require('bpmnlint');
 const BpmnNodeResolver = require('bpmnlint/lib/resolver/node-resolver');
-const { BpmnModdle } = require('bpmn-moddle');
+const BpmnModdle = require('bpmn-moddle');
 const { Linter: DmnLinter } = require('dmnlint');
 const DmnNodeResolver = require('dmnlint/lib/resolver/node-resolver');
 const DmnModdle = require('dmn-moddle');

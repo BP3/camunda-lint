@@ -28,7 +28,7 @@ const BPMN = 'BPMN';
 const DMN = 'DMN';
 
 // Globally installed plugins :: plugins shouldn't be dependencies, but it might be necessary to install them nonetheless
-const GLOBAL_PLUGINS = ['@BP3/bpmnlint-plugin-bpmn-rules'];
+const BUNDLED_PLUGINS = ['@BP3/bpmnlint-plugin-bpmn-rules'];
 
 const LINTRC_REVISED_SUFFIX = 'Revised';
 // TODO :: Should we externalize the default configs into their own files? :: const LINTRC_DEFAULT_SUFFIX = 'Default';
@@ -146,7 +146,7 @@ function getPluginDetails(packageName, lintPrefix) {
     // prepare the output
     result = {
       configName: `${configName}${ruleSet}`,
-      dependencyName: `${configName.indexOf(`${lintPrefix}lint-plugin-`) < 0 ? `${lintPrefix}lint-plugin-` : ''}${configName.replace('plugin:', '')}`,
+      dependencyName: dependencyWithoutRuleSet.replace('plugin:', ''), // `${configName.indexOf(`${lintPrefix}lint-plugin-`) < 0 ? `${lintPrefix}lint-plugin-` : ''}${configName.replace('plugin:', '')}`,
       dependencyValue: dependencyWithoutRuleSet.replace('plugin:', 'npm:'),
       npmReference: dependencyWithoutRuleSet.replace('plugin:', ''),
     };
@@ -195,7 +195,7 @@ function prepareLintRunner(linterType, lintrcFullpath) {
     let currentPackageJson = JSON.parse(fs.readFileSync(packageJsonFilepath));
     for (var idx = 0; idx < additionalDependencies.length; ++idx) {
       // Skip global installed plugins
-      if (GLOBAL_PLUGINS.indexOf(additionalDependencies[idx].dependencyName) > -1) {
+      if (BUNDLED_PLUGINS.includes(additionalDependencies[idx].dependencyName)) {
         logger.debug(`Ignoring global dependency: ${additionalDependencies[idx].dependencyName}`);
         continue;
       }
