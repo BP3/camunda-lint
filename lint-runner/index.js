@@ -270,7 +270,7 @@ async function lintFiles(files, linter, linterType) {
       const report = await linter.lint(rootElement);
 
       Object.entries(report).forEach(([ruleName, issues]) => {
-        issues.forEach(issue => {
+        issues.forEach((issue) => {
           if (issue.category?.includes('error')) totalErrors++;
           else totalWarnings++;
           allIssues.push({ file: fileName, rule: ruleName, ...issue });
@@ -293,39 +293,34 @@ async function lintFiles(files, linter, linterType) {
 }
 
 function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath, showConsoleTable, linterType) {
-  let reportDetails = "";
+  let reportDetails = '';
 
-    const theme = {
-      error: chalk.red(' ❌ Error'),
-      warning: chalk.yellow(' ⚠️ Warning')
-    };
+  const theme = {
+    error: chalk.red(' ❌ Error'),
+    warning: chalk.yellow(' ⚠️ Warning'),
+  };
 
   if (showConsoleTable && allIssues.length > 0) {
-      allIssues.forEach((issue) => {
-        const isError = issue.category?.toLowerCase().includes('error') || issue.severity === 'error';
+    allIssues.forEach((issue) => {
+      const isError = issue.category?.toLowerCase().includes('error') || issue.severity === 'error';
 
-        if (totalErrors > 0) {
-          if (isError) {
-            const label = theme.error;
-            const file = path.basename(issue.file);
-             reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
-          }
-        } else {
-          const label = theme.warning;
+      if (totalErrors > 0) {
+        if (isError) {
+          const label = theme.error;
           const file = path.basename(issue.file);
-           reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
+          reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
         }
-      });
-    }
+      } else {
+        const label = theme.warning;
+        const file = path.basename(issue.file);
+        reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
+      }
+    });
+  }
 
- // Footer Summary
+  // Footer Summary
   console.log(chalk.gray('─'.repeat(60)));
-  console.log(
-    `${chalk.bold('LINT RESULTS')} | ` +
-    `Files: ${lintedFiles.length} | ` +
-    `Errors: ${chalk.red.bold(totalErrors)} | ` +
-    `Warnings: ${chalk.yellow.bold(totalWarnings)}`
-  );
+  console.log(`${chalk.bold('LINT RESULTS')} | ` + `Files: ${lintedFiles.length} | ` + `Errors: ${chalk.red.bold(totalErrors)} | ` + `Warnings: ${chalk.yellow.bold(totalWarnings)}`);
 
   const extension = format === 'junit' ? 'xml' : format;
   const finalOutputPath = path.resolve(process.cwd(), `${outputPath}.${extension}`);
@@ -457,7 +452,6 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
   }
   return reportDetails;
 }
-
 
 // --- Main Execution Logic ---
 async function main() {
