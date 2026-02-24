@@ -42,7 +42,6 @@
     "prettier": "^3.6.2"
   },
   "overrides": {
-    "@BP3/bpmnlint-plugin-bpmn-rules": "$@BP3/bpmnlint-plugin-bpmn-rules",
     "bpmn-moddle": "$bpmn-moddle",
     "bpmnlint": "$bpmnlint",
     "bpmnlint-plugin-camunda-compat": "$bpmnlint-plugin-camunda-compat",

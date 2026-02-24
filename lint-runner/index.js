@@ -6,7 +6,6 @@ const path = require('path');
 const junitReportBuilder = require('junit-report-builder');
 const { execSync } = require('child_process');
 const chalk = require('chalk');
-const Table = require('cli-table3');
 
 // Map of linter types to their configurations
 const LINTER_CONFIGS = {
@@ -23,15 +22,14 @@ const LINTER_CONFIGS = {
     // prettier-ignore
     defaultDependencies: {
       "bpmnlint": "^11.6.0",
-      "bpmnlint-utils": "^1.1.1",
-      "@BP3/bpmnlint-plugin-bpmn-rules": "^0.0.4",
+      "bpmnlint-utils": "^1.1.1"
     },
   },
   dmn: {
     name: 'dmnlint',
     Linter: () => require('dmnlint').Linter,
     NodeResolver: () => require('dmnlint/lib/resolver/node-resolver'),
-    Moddle: () => require('dmn-moddle').DmnModddle,
+    Moddle: () => require('dmn-moddle').DmnModdle,
     reportTitle: 'DMN Lint Report',
     defaultConfig: {
       extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
@@ -243,6 +241,7 @@ async function lintFiles(files, linter, linterType) {
   const linterConfig = LINTER_CONFIGS[linterType];
   const Moddle = linterConfig.Moddle();
   const moddle = new Moddle();
+  const moddeleName = linterType === 'bpmn' ? 'bpmn-moddle' : 'dmn-moddle';
 
   for (const file of files) {
     const fileName = path.basename(file);
