@@ -33,9 +33,8 @@ const LINTER_CONFIGS = {
     },
     // prettier-ignore
     defaultDependencies: {
-      "bpmnlint": "*",
-      "bpmnlint-utils": "*",
-      "@BP3/bpmnlint-plugin-bpmn-rules": "*",
+      "bpmnlint": "^11.6.0",
+      "bpmnlint-utils": "^1.1.1"
     },
   },
   dmn: {
