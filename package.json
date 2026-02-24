@@ -23,7 +23,6 @@
     "bpmnlint-plugin-camunda-compat": "^2.48.1",
     "bpmnlint-utils": "^1.1.1",
     "chalk": "^4.1.2",
-    "cli-table3": "^0.6.5",
     "dmn-moddle": "^11.0.0",
     "dmnlint": "^0.2.0",
     "dmnlint-utils": "^0.1.0",
@@ -44,10 +43,20 @@
   "overrides": {
     "bpmn-moddle": "$bpmn-moddle",
     "bpmnlint": "$bpmnlint",
-    "bpmnlint-plugin-camunda-compat": "$bpmnlint-plugin-camunda-compat",
     "bpmnlint-utils": "$bpmnlint-utils",
     "dmn-moddle": "$dmn-moddle",
     "dmnlint": "$dmnlint",
-    "dmnlint-utils": "$dmnlint-utils"
+    "dmnlint-utils": "$dmnlint-utils",
+    "zeebe-bpmn-moddle": "$zeebe-bpmn-moddle",
+    "chalk": "$chalk",
+    "cli-table3": "$cli-table3",
+    "junit-report-builder": "$junit-report-builder",
+    "tiny-glob": "$tiny-glob",
+    "yargs": "$yargs",
+    "eslint": "$eslint",
+    "eslint-config-prettier": "$eslint-config-prettier",
+    "eslint-plugin-prettier": "$eslint-plugin-prettier",
+    "globals": "$globals",
+    "prettier": "$prettier"
   }
 }
