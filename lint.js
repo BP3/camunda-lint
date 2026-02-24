@@ -131,7 +131,7 @@ ${helpMessage}
 
 /*************************************************************************/
 // Extract the details from a possible plugin name in the lintrc file to setup dependencies correctly
-function getPluginDetails(packageName, lintPrefix) {
+function getPluginDetails(packageName) { //, lintPrefix
   let result = null;
   // assuming the correctness of the lintrc file, the currPackageName should be something like "plugin:pluginName/ruleset" at this time
   if (packageName != null && packageName.indexOf('plugin:') == 0) {
@@ -170,7 +170,7 @@ function prepareLintRunner(linterType, lintrcFullpath) {
       revisedLintConfig.extends = [revisedLintConfig.extends];
     } else if (revisedLintConfig.extends.length > 0) {
       for (var idx = 0; idx < revisedLintConfig.extends.length; ++idx) {
-        const currentPluginDetails = getPluginDetails(revisedLintConfig.extends[idx], linterType.toLowerCase());
+        const currentPluginDetails = getPluginDetails(revisedLintConfig.extends[idx]); //, linterType.toLowerCase()
         // if it's a plugin, prepare the appropriate dependencies
         if (currentPluginDetails != null) {
           additionalDependencies.push(currentPluginDetails);
