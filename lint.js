@@ -131,7 +131,7 @@ ${helpMessage}
 
 /*************************************************************************/
 // Extract the details from a possible plugin name in the lintrc file to setup dependencies correctly
-function getPluginDetails(packageName) { //, lintPrefix
+function getPluginDetails(packageName) {
   let result = null;
   // assuming the correctness of the lintrc file, the currPackageName should be something like "plugin:pluginName/ruleset" at this time
   if (packageName != null && packageName.indexOf('plugin:') == 0) {
@@ -146,7 +146,7 @@ function getPluginDetails(packageName) { //, lintPrefix
     // prepare the output
     result = {
       configName: `${configName}${ruleSet}`,
-      dependencyName: dependencyWithoutRuleSet.replace('plugin:', ''), // `${configName.indexOf(`${lintPrefix}lint-plugin-`) < 0 ? `${lintPrefix}lint-plugin-` : ''}${configName.replace('plugin:', '')}`,
+      dependencyName: dependencyWithoutRuleSet.replace('plugin:', ''),
       dependencyValue: dependencyWithoutRuleSet.replace('plugin:', 'npm:'),
       npmReference: dependencyWithoutRuleSet.replace('plugin:', ''),
     };
