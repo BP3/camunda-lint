@@ -10,8 +10,8 @@
     "test": "mocha ./test/**/*.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test:lint": "node ./lint-runner/index.js --type=bpmn --config=./.bpmnlintrc --format=html \"./bpmn-diagrams/*.bpmn\"",
-    "test:lint:debug": "VERBOSE=true node ./lint-runner/index.js --type=bpmn \"./bpmn-diagrams/*.bpmn\""
+    "test:lint": "node ./lint-runner.js --type=bpmn --config=./.bpmnlintrc --format=html \"./bpmn-diagrams/*.bpmn\"",
+    "test:lint:debug": "VERBOSE=true node ./lint-runner.js --type=bpmn \"./bpmn-diagrams/*.bpmn\""
   },
   "engines": {
     "node": ">=20"
