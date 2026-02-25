@@ -141,11 +141,6 @@ function exitWithError(message) {
   process.exit(1);
 }
 
-async function findFiles(pattern) {
-  const normalizedPattern = pattern.replace(/\\/gm, '/');
-  return await tinyglob(normalizedPattern, { absolute: true, filesOnly: true });
-}
-
 // --- Prepare the dynamic plugin by copying custom rules and installing their dependencies ---
 function prepareDynamicPlugin(customRulesPath, installDeps, linterType) {
   if (!customRulesPath) {
