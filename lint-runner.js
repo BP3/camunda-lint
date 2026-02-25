@@ -322,7 +322,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
   }
 
   const extension = format === 'junit' ? 'xml' : format;
-  const finalOutputPath = path.resolve(process.cwd(), `${outputPath}.${extension}`);
+  const finalOutputPath = path.resolve(process.cwd(), `${outputPath}${outputPath.indexOf(extension) < 0 ? `.${extension}` : ``}`);
   let reportContent;
 
   try {
