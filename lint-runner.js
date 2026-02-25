@@ -321,7 +321,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
         const label = theme.warning;
         const file = path.basename(issue.file);
         reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
-        }
+      }
     });
   }
 
