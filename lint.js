@@ -229,6 +229,7 @@ function lint(linterType, projectPath) {
   let lintrcFilename = `.${lintExtension}lintrc`;
   let lintrcRevisedFilename = `${lintrcFilename}${LINTRC_REVISED_SUFFIX}`;
   let lintrcFullpath = path.join(projectPath, lintrcFilename);
+  let isBpmnLinterType = linterType == BPMN;
 
   // initialize the lintrc file if needed
   logger.info(`Initializing the ${linterType} rules for linting (if needed)`);
@@ -256,14 +257,14 @@ function lint(linterType, projectPath) {
   linterArgs[argumentConfig] = path.join(LINT_RUNNER_PATH, lintrcRevisedFilename);
   linterArgs[argumentFilesToLint] = `${projectPath}/**/*.${lintExtension}`;
 
-  if (!isStringNullOrEmpty(process.env.BPMN_REPORT_FILEPATH)) {
-    linterArgs[argumentOutputPath] = process.env.BPMN_REPORT_FILEPATH;
+  if ((isBpmnLinterType && !isStringNullOrEmpty(process.env.BPMN_REPORT_FILEPATH)) || (!isBpmnLinterType && !isStringNullOrEmpty(process.env.DMN_REPORT_FILEPATH))) {
+    linterArgs[argumentOutputPath] = isBpmnLinterType ? process.env.BPMN_REPORT_FILEPATH : process.env.DMN_REPORT_FILEPATH;
   }
 
   linterArgs[argumentFormat] = process.env.REPORT_FORMAT || 'json';
 
-  if (!isStringNullOrEmpty(process.env.BPMN_RULES_PATH)) {
-    linterArgs[argumentRulesPath] = process.env.BPMN_RULES_PATH;
+  if ((isBpmnLinterType && !isStringNullOrEmpty(process.env.BPMN_RULES_PATH)) || (!isBpmnLinterType && !isStringNullOrEmpty(process.env.DMN_RULES_PATH))) {
+    linterArgs[argumentRulesPath] = isBpmnLinterType ? process.env.BPMN_RULES_PATH : process.env.DMN_RULES_PATH;
     linterArgs[argumentRulesSeverity] = 'warn';
   }
 
@@ -276,7 +277,6 @@ function lint(linterType, projectPath) {
   }
 
   logger.debug(`Running linter with params: ${JSON.stringify(linterArgs, null, 2)}`);
-  // runLinter(linterArgs);
 
   // TODO : Review this: + (linterArgs[argumentRulesPath] && linterArgs[argumentInstallCustomDeps] ? ` --install-custom-deps` : ``)
   // TODO : This also requires further validation : + (linterArgs[argumentRulesPath]? ` --install-custom-deps` : ``)
@@ -305,56 +305,63 @@ ${err}
   }
 }
 
-// main run
-let modeArgument = null;
-if (process.argv.length < 3) {
-  showHelpMessageAndExit('No parameter provided');
-} else {
-  modeArgument = process.argv[2];
-  switch (modeArgument.toLowerCase()) {
-    case modeLint:
-      isModeBpmn = true;
-      isModeDmn = true;
-      break;
-    case modeBpmnlint:
-      isModeBpmn = true;
-      break;
-    case modeDmnlint:
-      isModeDmn = true;
-      break;
-    case modeSBOM:
-      isModeSbom = true;
-      break;
-    case modeHelp:
-      isShowHelp = true;
-      break;
-    default:
-      break;
-  }
-}
-
-if (!isModeBpmn && !isModeDmn && !isModeSbom) {
-  showHelpMessageAndExit(isShowHelp ? null : modeArgument);
-}
-
-if (isModeSbom) {
-  if (fs.existsSync(SBOM_JSON_FILE)) {
-    // stream the file to the output
-    let sbomFile = fs.createReadStream(SBOM_JSON_FILE);
-    sbomFile.on('open', () => {
-      sbomFile.pipe(process.stdout);
-    });
+try {
+  // main run
+  let modeArgument = null;
+  if (process.argv.length < 3) {
+    showHelpMessageAndExit('No parameter provided');
   } else {
-    logger.info(`SBOM file not found: ${SBOM_JSON_FILE}`);
+    modeArgument = process.argv[2];
+    switch (modeArgument.toLowerCase()) {
+      case modeLint:
+        isModeBpmn = true;
+        isModeDmn = true;
+        break;
+      case modeBpmnlint:
+        isModeBpmn = true;
+        break;
+      case modeDmnlint:
+        isModeDmn = true;
+        break;
+      case modeSBOM:
+        isModeSbom = true;
+        break;
+      case modeHelp:
+        isShowHelp = true;
+        break;
+      default:
+        break;
+    }
   }
-}
 
-if (isModeBpmn) {
-  logger.debug(`Running linter for ${BPMN} with path: ${process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath}`);
-  lint(BPMN, process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath);
-}
+  if (!isModeBpmn && !isModeDmn && !isModeSbom) {
+    showHelpMessageAndExit(isShowHelp ? null : modeArgument);
+  }
 
-if (isModeDmn) {
-  logger.debug(`Running linter for ${DMN} with path: ${process.env.DMN_PATH || process.env.PROJECT_PATH || bpmnPath}`);
-  lint(DMN, process.env.DMN_PATH || process.env.PROJECT_PATH || dmnPath);
+  if (isModeSbom) {
+    if (fs.existsSync(SBOM_JSON_FILE)) {
+      // stream the file to the output
+      let sbomFile = fs.createReadStream(SBOM_JSON_FILE);
+      sbomFile.on('open', () => {
+        sbomFile.pipe(process.stdout);
+      });
+    } else {
+      logger.info(`SBOM file not found: ${SBOM_JSON_FILE}`);
+    }
+  }
+
+  if (isModeBpmn) {
+    logger.debug(`Running linter for ${BPMN} with path: ${process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath}`);
+    lint(BPMN, process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath);
+  }
+
+  if (isModeDmn) {
+    logger.debug(`Running linter for ${DMN} with path: ${process.env.DMN_PATH || process.env.PROJECT_PATH || bpmnPath}`);
+    lint(DMN, process.env.DMN_PATH || process.env.PROJECT_PATH || dmnPath);
+  }
+} catch (err) {
+  showErrorAndHelpMessageAndExit(`
+There was an error while running the linter.
+${err}
+  `);
 }

@@ -1,3 +1,15 @@
+/*================================================================================
+ =
+ = Licensed Materials - Property of BP3 Global
+ =
+ =  bpmnlint-plugin-bpmn-rules
+ =
+ = Copyright © BP3 Global Inc. 2026. All Rights Reserved.
+ = This software is subject to copyright protection under
+ = the laws of the United States, United Kingdom and other countries.
+ =
+ =================================================================================*/
+
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 const tinyglob = require('tiny-glob');
