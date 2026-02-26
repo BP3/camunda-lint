@@ -30,9 +30,6 @@ const logger = {
   error: (...args) => {
     console.error(chalk.redBright.bold('ERROR:'), ...args);
   },
-  log: (...args) => {
-    console.log(...args);
-  },
 };
 
 module.exports = {
