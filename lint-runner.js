@@ -275,7 +275,7 @@ async function lintFiles(files, linter, linterType) {
 
       Object.entries(report).forEach(([ruleName, issues]) => {
         issues.forEach((issue) => {
-          logger.debug(`    - [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
+          logger.debug(`- [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
           if (issue.category?.toLowerCase().includes('error')) totalErrors++;
           else totalWarnings++;
 
