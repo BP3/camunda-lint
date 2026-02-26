@@ -321,8 +321,8 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
   }
 
   // Footer Summary
-  console.log(chalk.gray('─'.repeat(60)));
-  console.log(`${chalk.bold('LINT RESULTS')} | ` + `Files: ${lintedFiles.length} | ` + `Errors: ${chalk.red.bold(totalErrors)} | ` + `Warnings: ${chalk.yellow.bold(totalWarnings)}`);
+  logger.log(chalk.gray('-'.repeat(60)));
+  logger.log(`${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.red.bold(totalErrors)} | Warnings: ${chalk.yellow.bold(totalWarnings)}`);
 
   const extension = format === 'junit' ? 'xml' : format;
   const finalOutputPath = path.resolve(process.cwd(), `${outputPath}.${extension}`);
