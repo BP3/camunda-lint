@@ -1,3 +1,15 @@
+/*================================================================================
+ =
+ = Licensed Materials - Property of BP3 Global
+ =
+ =  bpmnlint-plugin-bpmn-rules
+ =
+ = Copyright © BP3 Global Inc. 2026. All Rights Reserved.
+ = This software is subject to copyright protection under
+ = the laws of the United States, United Kingdom and other countries.
+ =
+ =================================================================================*/
+
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 const tinyglob = require('tiny-glob');
@@ -14,50 +26,6 @@ const BpmnModdle = require('bpmn-moddle');
 const { Linter: DmnLinter } = require('dmnlint');
 const DmnNodeResolver = require('dmnlint/lib/resolver/node-resolver');
 const DmnModdle = require('dmn-moddle');
-
-// Map of linter types to their configurations
-const LINTER_CONFIGS = {
-  bpmn: {
-    name: 'bpmnlint',
-    getLinter: (finalConfig) =>
-      new BpmnLinter({
-        config: finalConfig,
-        resolver: new BpmnNodeResolver(),
-      }),
-    getModdle: () => new BpmnModdle(),
-    getModdleName: () => 'bpmn-moddle',
-    reportTitle: 'BPMN Lint Report',
-    defaultConfig: {
-      extends: ['bpmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
-      rules: {},
-    },
-    // prettier-ignore
-    defaultDependencies: {
-      "bpmnlint": "^11.6.0",
-      "bpmnlint-utils": "^1.1.1"
-    },
-  },
-  dmn: {
-    name: 'dmnlint',
-    getLinter: (finalConfig) =>
-      new DmnLinter({
-        config: finalConfig,
-        resolver: new DmnNodeResolver(),
-      }),
-    getModdle: () => new DmnModdle(),
-    getModdleName: () => 'dmn-moddle',
-    reportTitle: 'DMN Lint Report',
-    defaultConfig: {
-      extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
-      rules: {},
-    },
-    // prettier-ignore
-    defaultDependencies: {
-      "dmnlint": "*",
-      "dmnlint-utils": "*",
-    },
-  },
-};
 
 // --- Define and parse command-line arguments using yargs ---
 const argv = yargs(hideBin(process.argv))
@@ -122,6 +90,50 @@ const argv = yargs(hideBin(process.argv))
   })
   .demandCommand(1, 'You must provide a pattern for the files to lint.')
   .help().argv;
+
+// Map of linter types to their configurations
+const LINTER_CONFIGS = {
+  bpmn: {
+    name: 'bpmnlint',
+    getLinter: (finalConfig) =>
+      new BpmnLinter({
+        config: finalConfig,
+        resolver: new BpmnNodeResolver(),
+      }),
+    getModdle: () => new BpmnModdle(),
+    getModdleName: () => 'bpmn-moddle',
+    reportTitle: 'BPMN Lint Report',
+    defaultConfig: {
+      extends: ['bpmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
+      rules: {},
+    },
+    // prettier-ignore
+    defaultDependencies: {
+      "bpmnlint": "^11.6.0",
+      "bpmnlint-utils": "^1.1.1"
+    },
+  },
+  dmn: {
+    name: 'dmnlint',
+    getLinter: (finalConfig) =>
+      new DmnLinter({
+        config: finalConfig,
+        resolver: new DmnNodeResolver(),
+      }),
+    getModdle: () => new DmnModdle(),
+    getModdleName: () => 'dmn-moddle',
+    reportTitle: 'DMN Lint Report',
+    defaultConfig: {
+      extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
+      rules: {},
+    },
+    // prettier-ignore
+    defaultDependencies: {
+      "dmnlint": "*",
+      "dmnlint-utils": "*",
+    },
+  },
+};
 
 // --- Helper functions ---
 function exitWithError(message) {
@@ -234,17 +246,18 @@ async function lintFiles(files, linter, linterType) {
   const moddleName = linterConfig.getModdleName();
 
   for (const file of files) {
-    logger.debug(`Linting ${file}...`);
-    const xmlContent = fs.readFileSync(file, 'utf-8');
+    const fileName = path.basename(file);
     try {
-      logger.debug('  - Parsing diagram...');
+      logger.debug(`- Parsing diagram: ${fileName}`);
+      const xmlContent = fs.readFileSync(file, 'utf-8');
+
       const { rootElement, warnings: parseWarnings } = await moddle.fromXML(xmlContent);
 
       if (parseWarnings && parseWarnings.length) {
         parseWarnings.forEach((warning) => {
           logger.debug(`    - [import-warning] (${moddleName}) ${warning.element ? warning.element.id : 'FileLevel'}: ${warning.message}`);
           allIssues.push({
-            file,
+            file: fileName,
             id: warning.element?.id || 'FileLevel',
             message: warning.message,
             category: 'import-warning',
@@ -252,26 +265,27 @@ async function lintFiles(files, linter, linterType) {
           });
           totalWarnings++;
         });
+        if (Object.keys(report).length === 0) {
+          logger.debug('  No issues found.');
+        }
       }
 
-      logger.debug('  - Linting diagram...');
+      logger.info(` - Linting diagram: ${fileName}...`);
       const report = await linter.lint(rootElement);
 
-      for (const [ruleName, issues] of Object.entries(report)) {
+      Object.entries(report).forEach(([ruleName, issues]) => {
         issues.forEach((issue) => {
-          logger.debug(`    - [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
-          if (issue.category?.includes('error')) totalErrors++;
+          logger.debug(`- [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
+          if (issue.category?.toLowerCase().includes('error')) totalErrors++;
           else totalWarnings++;
-          allIssues.push({ file, rule: ruleName, ...issue });
+
+          allIssues.push({ file: fileName, rule: ruleName, ...issue });
         });
-      }
-      if (Object.keys(report).length === 0) {
-        logger.debug('  No issues found.');
-      }
+      });
     } catch (lintError) {
-      logger.error(`A critical error occurred while processing ${file}:`, lintError.message);
+      logger.error(`A critical error occurred while processing [${fileName}]:`, lintError.message);
       allIssues.push({
-        file,
+        file: fileName,
         id: 'Fatal',
         message: lintError.message,
         category: 'internal-error',
@@ -285,29 +299,30 @@ async function lintFiles(files, linter, linterType) {
 }
 
 function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath, showConsoleTable, linterType) {
-  console.log('--- Linting Summary ---');
-  console.log(`Total Files Linted: ${lintedFiles.length}`);
-  console.log(`Total Errors: ${chalk.red(chalk.bold(totalErrors))}`);
-  console.log(`Total Warnings: ${chalk.yellow(chalk.bold(totalWarnings))}`);
-  console.log('-----------------------');
+  let reportDetails = '';
 
-  if (showConsoleTable) {
-    if (allIssues.length > 0) {
-      allIssues.forEach((issue) => {
-        const severity = issue.category || 'unknown';
-        let severityStyled = severity;
+  const theme = {
+    error: chalk.red(' ❌ Error'),
+    warning: chalk.yellow(' ⚠️ Warning'),
+  };
 
-        if (severity.toLowerCase().includes('error')) {
-          severityStyled = chalk.red(`❌  Error`);
-        } else if (severity.toLowerCase().includes('warn')) {
-          severityStyled = chalk.yellow(`⚠️  Warning`);
-        } else if (severity.toLowerCase().includes('info')) {
-          severityStyled = chalk.blueBright(`ℹ️  Info`);
-        }
-        console.log(`${severityStyled}, ${issue.file}, ${issue.id || 'N/A'}, ${issue.rule}, ${issue.message}`);
-      });
-    }
+  if (showConsoleTable && allIssues.length > 0) {
+    allIssues.forEach((issue) => {
+      const isError = issue.category?.toLowerCase().includes('error') || issue.severity === 'error';
+      const label = isError ? theme.error : theme.warning;
+      const file = path.basename(issue.file);
+      const output = isError ? totalErrors > 0 : totalErrors === 0;
+
+      if (output) {
+        reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
+      }
+    });
   }
+
+  // Footer Summary
+  logger.info(`
+${chalk.gray('-'.repeat(60))}
+${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.red.bold(totalErrors)} | Warnings: ${chalk.yellow.bold(totalWarnings)}`);
 
   const extension = format === 'junit' ? 'xml' : format;
   const finalOutputPath = path.resolve(process.cwd(), `${outputPath}.${extension}`);
@@ -437,6 +452,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
   } catch (error) {
     exitWithError(`Error writing report to ${finalOutputPath}: ${error.message}`);
   }
+  return reportDetails;
 }
 
 // --- Main Execution Logic ---
@@ -532,13 +548,13 @@ ${JSON.stringify(
     const lintResults = await lintFiles(files, linter, linterType);
 
     // Generate Report
-    generateReport(lintResults, files, format, outputPath, showConsoleTable, linterType);
+    const reportList = generateReport(lintResults, files, format, outputPath, showConsoleTable, linterType);
 
     // Final decision on exit code
     if (lintResults.totalErrors > 0) {
-      throw new Error(`Found ${lintResults.totalErrors} error(s).`);
+      throw new Error(`Found ${lintResults.totalErrors} error(s):\n${reportList}`);
     } else {
-      logger.info('Linting complete. No errors found.');
+      logger.info(`LINT REPORT (Warnings):\n${reportList}`);
     }
   } catch (err) {
     exitWithError(err.message);
