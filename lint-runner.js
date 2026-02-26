@@ -265,6 +265,9 @@ async function lintFiles(files, linter, linterType) {
           });
           totalWarnings++;
         });
+        if (Object.keys(report).length === 0) {
+          logger.debug('  No issues found.');
+        }
       }
 
       logger.info(` - Linting diagram: ${fileName}...`);
@@ -272,6 +275,7 @@ async function lintFiles(files, linter, linterType) {
 
       Object.entries(report).forEach(([ruleName, issues]) => {
         issues.forEach((issue) => {
+          logger.debug(`    - [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
           if (issue.category?.toLowerCase().includes('error')) totalErrors++;
           else totalWarnings++;
 
@@ -305,16 +309,11 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
   if (showConsoleTable && allIssues.length > 0) {
     allIssues.forEach((issue) => {
       const isError = issue.category?.toLowerCase().includes('error') || issue.severity === 'error';
+      const label = isError ? theme.error : theme.warning;
+      const file = path.basename(issue.file);
+      const output = isError ? totalErrors > 0 : totalErrors === 0;
 
-      if (totalErrors > 0) {
-        if (isError) {
-          const label = theme.error;
-          const file = path.basename(issue.file);
-          reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
-        }
-      } else {
-        const label = theme.warning;
-        const file = path.basename(issue.file);
+      if (output) {
         reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
       }
     });
@@ -551,11 +550,10 @@ ${JSON.stringify(
     const reportList = generateReport(lintResults, files, format, outputPath, showConsoleTable, linterType);
 
     // Final decision on exit code
-    if (lintResults.totalErrors === 0 && lintResults.totalWarnings > 0) {
-      logger.info(`LINT REPORT (Warnings):\n${reportList}`);
-    }
     if (lintResults.totalErrors > 0) {
       throw new Error(`Found ${lintResults.totalErrors} error(s):\n${reportList}`);
+    } else {
+      logger.info(`LINT REPORT (Warnings):\n${reportList}`);
     }
   } catch (err) {
     exitWithError(err.message);
