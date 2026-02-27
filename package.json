@@ -7,7 +7,8 @@
     "*mnlint-runner/bp3-dynamic-rules"
   ],
   "scripts": {
-    "test": "mocha ./test/**/*.js",
+    "test": "mocha ./test/**/*.spec.js",
+    "test:integration": "mocha ./test/integration/**/*.spec.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
@@ -17,6 +18,7 @@
   "dependencies": {
     "bp3-dynamic-rules": "file:bp3-dynamic-rules",
     "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
+    "dmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
     "bpmn-moddle": "^10.0.0",
     "bpmnlint": "^11.12.0",
     "bpmnlint-utils": "^1.1.1",
