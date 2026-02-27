@@ -10,7 +10,9 @@
     "test": "mocha ./test/**/*.spec.js",
     "test:integration": "mocha ./test/integration/**/*.spec.js",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test:lint": "node ./lint-runner.js --type=bpmn --config=./.bpmnlintrc --format=html \"**/*.bpmn\"",
+    "test:lint:debug": "VERBOSE=true node ./lint-runner.js --type=bpmn \"**/*.bpmn\""
   },
   "engines": {
     "node": ">=20"
