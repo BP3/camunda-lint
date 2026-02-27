@@ -325,7 +325,7 @@ ${chalk.gray('-'.repeat(60))}
 ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.red.bold(totalErrors)} | Warnings: ${chalk.yellow.bold(totalWarnings)}`);
 
   const extension = format === 'junit' ? 'xml' : format;
-  const finalOutputPath = path.resolve(process.cwd(), `${outputPath}.${extension}`);
+  const finalOutputPath = path.resolve(process.cwd(), `${outputPath}${outputPath.indexOf(extension) < 0 ? `.${extension}` : ``}`);
   let reportContent;
 
   try {

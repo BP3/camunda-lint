@@ -7,7 +7,8 @@
     "*mnlint-runner/bp3-dynamic-rules"
   ],
   "scripts": {
-    "test": "mocha ./test/**/*.js",
+    "test": "mocha ./test/**/*.spec.js",
+    "test:integration": "mocha ./test/integration/**/*.spec.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test:lint": "node ./lint-runner.js --type=bpmn --config=./.bpmnlintrc --format=html \"**/*.bpmn\"",
@@ -17,11 +18,14 @@
     "node": ">=20"
   },
   "dependencies": {
-    "bpmn-moddle": "^9.0.4",
+    "bp3-dynamic-rules": "file:bp3-dynamic-rules",
+    "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
+    "dmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
+    "bpmn-moddle": "^10.0.0",
     "bpmnlint": "^11.12.0",
     "bpmnlint-utils": "^1.1.1",
     "chalk": "^4.1.2",
-    "dmn-moddle": "^11.0.0",
+    "dmn-moddle": "^12.0.1",
     "dmnlint": "^0.2.0",
     "dmnlint-utils": "^0.1.0",
     "junit-report-builder": "^5.1.1",
