@@ -18,6 +18,8 @@
 # Further more, this link shows an example based on those requirements which this script is based upon:
 #   https://stackoverflow.com/questions/70401876/gitlab-runner-doesnt-run-entrypoint-scripts-in-dockerfile
 
+npm ls
+
 # The CI variable is a boolean that is set to true if we are running in a CI/CD environment.
 if [ -n "$CI" ]; then
   # If we are then we execute a shell and the script block commands are piped in
