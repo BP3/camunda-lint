@@ -101,6 +101,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '>=22.14.0'
+          check-latest: true
+
+      - name: Install dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm install
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
