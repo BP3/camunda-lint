@@ -113,22 +113,6 @@ ${helpMessage}
   }
 }
 
-function showErrorAndHelpMessageAndExit(errorMessage) {
-  if (!isStringNullOrEmpty(errorMessage)) {
-    logger.error(`
-*******************************************************************************
-
-${errorMessage}
-
-*******************************************************************************
-${helpMessage}
-`);
-    process.exit(1);
-  } else {
-    logger.info(`${helpMessage}`);
-  }
-}
-
 /*************************************************************************/
 // Extract the details from a possible plugin name in the lintrc file to setup dependencies correctly
 function getPluginDetails(packageName) {
@@ -297,11 +281,9 @@ function lint(linterType, projectPath) {
     let basePath = path.resolve(process.cwd(), LINT_RUNNER_PATH);
     logger.debug(`Running '${cliCommand}' from '${basePath}'`);
     execSync(cliCommand, { cwd: basePath, stdio: 'inherit' });
-  } catch (err) {
-    showErrorAndHelpMessageAndExit(`
-There was an error while running the linter.
-${err}
-    `);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -349,12 +331,24 @@ if (isModeSbom) {
   }
 }
 
+let overallSuccess = true;
+
 if (isModeBpmn) {
-  logger.debug(`Running linter for ${BPMN} with path: ${process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath}`);
-  lint(BPMN, process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath);
+  const bpmnTarget = process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath;
+  logger.debug(`Running linter for ${BPMN} with path: ${bpmnTarget}`);
+  const success = lint(BPMN, bpmnTarget);
+  if (!success) overallSuccess = false;
 }
 
 if (isModeDmn) {
-  logger.debug(`Running linter for ${DMN} with path: ${process.env.DMN_PATH || process.env.PROJECT_PATH || bpmnPath}`);
-  lint(DMN, process.env.DMN_PATH || process.env.PROJECT_PATH || dmnPath);
+  const dmnTarget = process.env.DMN_PATH || process.env.PROJECT_PATH || dmnPath;
+  logger.debug(`Running linter for ${DMN} with path: ${dmnTarget}`);
+  const success = lint(DMN, dmnTarget);
+  if (!success) overallSuccess = false;
+}
+
+if (!overallSuccess) {
+  process.exit(1);
+} else {
+  logger.info('Linting completed successfully.');
 }
