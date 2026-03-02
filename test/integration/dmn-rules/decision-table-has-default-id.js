@@ -17,7 +17,7 @@ const { is } = require('bpmnlint-utils');
  */
 module.exports = function () {
   function check(node, reporter) {
-    if (is(node, 'dmn:DecisionTable') && (new RegExp('^DecisionTable_\\d\\w{6}$', 'i')).test(node.id)) {
+    if (is(node, 'dmn:DecisionTable') && /^DecisionTable_\d\w{6}$/i.test(node.id)) {
       reporter.report(node.id, `${node.id}: The decision table ${node.name} has a default id.`);
     }
   }
