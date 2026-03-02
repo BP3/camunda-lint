@@ -22,10 +22,10 @@ const { logger } = require('./logger');
 
 const { Linter: BpmnLinter } = require('bpmnlint');
 const BpmnNodeResolver = require('bpmnlint/lib/resolver/node-resolver');
-const BpmnModdle = require('bpmn-moddle');
+const { BpmnModdle } = require('bpmn-moddle');
 const { Linter: DmnLinter } = require('dmnlint');
 const DmnNodeResolver = require('dmnlint/lib/resolver/node-resolver');
-const DmnModdle = require('dmn-moddle');
+const { DmnModdle } = require('dmn-moddle');
 
 // --- Define and parse command-line arguments using yargs ---
 const argv = yargs(hideBin(process.argv))
@@ -109,8 +109,8 @@ const LINTER_CONFIGS = {
     },
     // prettier-ignore
     defaultDependencies: {
-      "bpmnlint": "^11.6.0",
-      "bpmnlint-utils": "^1.1.1"
+      "bpmnlint": "*",
+      "bpmnlint-utils": "*"
     },
   },
   dmn: {
@@ -503,7 +503,24 @@ ${JSON.stringify(
       const configFilePath = path.resolve(process.cwd(), configPath);
       logger.debug(`Loading configuration from: ${configFilePath}`);
       const configFileContent = fs.readFileSync(configFilePath, 'utf-8');
-      finalConfig = JSON.parse(configFileContent);
+      // Need to merge objects here, not override :: finalConfig = JSON.parse(configFileContent);
+      let configFromFile = JSON.parse(configFileContent);
+      Object.keys(configFromFile).forEach((key) => {
+        let sourceValue = configFromFile[key];
+        if (finalConfig[key] != null && sourceValue != null) {
+          // extends can be provided as a string, otherwise we're handling either arrays or objects
+          if (typeof sourceValue === 'string' && !finalConfig[key].includes(sourceValue)) {
+            // extends can be a string
+            finalConfig[key].push(sourceValue);
+          } else if (Array.isArray(finalConfig[key])) {
+            finalConfig[key] = Array.from(new Set([...finalConfig[key], ...sourceValue]));
+          } else if (typeof finalConfig[key] === 'object') {
+            finalConfig[key] = Object.assign(finalConfig[key], sourceValue);
+          }
+        } else {
+          finalConfig[key] = sourceValue;
+        }
+      });
     } catch (error) {
       exitWithError(`Could not load or parse the configuration file at "${configPath}": ${error.message}`);
     }
@@ -511,7 +528,7 @@ ${JSON.stringify(
     // Override severities for custom rules if specified
     if (customRulesPath) {
       // make sure that the dynamic plugin is added to the config when loading the linter
-      if (finalConfig?.extends?.indexOf('plugin:bp3-dynamic-rules') < 0) {
+      if (finalConfig?.extends?.indexOf('plugin:bp3-dynamic-rules/all') < 0) {
         finalConfig.extends.push('plugin:bp3-dynamic-rules/all');
       }
       // make sure that each rule has a default severity if one was provided
