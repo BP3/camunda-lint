@@ -12,9 +12,13 @@
 
 FROM node:22.14.0-alpine3.21
 
+# Use arg to specify versions at build time with fallback default values
+ARG BPMNLINTVER=11.12.0 \
+    DMNLINTVER=0.2.0
+
 # Add the bp3 user and group - using 1001 because node's is already using 1000 - and install the Camunda lint global packages and create /app and set folder ownership
-RUN npm install -g bpmnlint@11.12.0 \
-                    dmnlint@0.2.0 && \
+RUN npm install -g bpmnlint@${BPMNLINTVER} \
+                    dmnlint@${DMNLINTVER} && \
     addgroup --gid 1001 bp3 && \
     adduser --uid 1001 --ingroup bp3 --home /home/bp3user --shell /bin/bash --disabled-password bp3user && \
     mkdir /app  && \
