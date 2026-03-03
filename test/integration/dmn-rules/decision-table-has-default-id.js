@@ -13,7 +13,7 @@
 const { is } = require('bpmnlint-utils');
 
 /**
- * Rule that reports whether there are manual tasks in the process.
+ * This rule is an implementation example and only meant to support the integration tests
  */
 module.exports = function () {
   function check(node, reporter) {

@@ -66,7 +66,7 @@ describe('Integration Tests', function () {
   // SBOM
   // *****************************************************************
   performContainerTest('SBOM', { timeout: 30000, hasOutput: true }, 'sbom', null, (resultContext) => {
-    it('Should output valid JSON', function () {
+    it('Output should be valid JSON', function () {
       expect(() => JSON.parse(resultContext.stdout)).to.not.throw();
     });
 
