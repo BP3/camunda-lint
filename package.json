@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test:lint": "node ./lint-runner.js --type=bpmn --config=./.bpmnlintrc --format=html \"**/*.bpmn\"",
-    "test:lint:debug": "VERBOSE=true node ./lint-runner.js --type=bpmn \"**/*.bpmn\""
+    "test:lint:debug": "VERBOSE=true node ./lint-runner.js --type=bpmn \"**/*.bpmn\"",
+    "sbom": "npx @cyclonedx/cyclonedx-npm -o camunda-lint-sbom.json"
   },
   "engines": {
     "node": ">=20"

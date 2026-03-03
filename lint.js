@@ -357,6 +357,6 @@ if (isModeDmn) {
 
 if (!overallSuccess) {
   process.exit(1);
-} else {
+} else if (!isModeSbom) {
   logger.info('Linting completed successfully.');
 }
