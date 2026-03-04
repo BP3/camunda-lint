@@ -27,6 +27,54 @@ const { Linter: DmnLinter } = require('dmnlint');
 const DmnNodeResolver = require('dmnlint/lib/resolver/node-resolver');
 const DmnModdle = require('dmn-moddle');
 
+// Map of linter types to their configurations
+const LINTER_CONFIGS = {
+  bpmn: {
+    name: 'bpmnlint',
+    getLinter: (finalConfig) =>
+      new BpmnLinter({
+        config: finalConfig,
+        resolver: new BpmnNodeResolver(),
+      }),
+    getModdle: () => new BpmnModdle(),
+    getModdleName: () => 'bpmn-moddle',
+    reportTitle: 'BPMN Lint Report',
+    defaultConfig: {
+      extends: ['bpmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
+      rules: {
+        'label-required': 'warn',
+        'camunda-compat/implementation': 'warn',
+        'camunda-compat/subscription': 'warn',
+      },
+    },
+    // prettier-ignore
+    defaultDependencies: {
+      "bpmnlint": "^11.6.0",
+      "bpmnlint-utils": "^1.1.1"
+    },
+  },
+  dmn: {
+    name: 'dmnlint',
+    getLinter: (finalConfig) =>
+      new DmnLinter({
+        config: finalConfig,
+        resolver: new DmnNodeResolver(),
+      }),
+    getModdle: () => new DmnModdle(),
+    getModdleName: () => 'dmn-moddle',
+    reportTitle: 'DMN Lint Report',
+    defaultConfig: {
+      extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
+      rules: {},
+    },
+    // prettier-ignore
+    defaultDependencies: {
+      "dmnlint": "*",
+      "dmnlint-utils": "*",
+    },
+  },
+};
+
 // --- Define and parse command-line arguments using yargs ---
 const argv = yargs(hideBin(process.argv))
   .usage('Usage: $0 <pattern> [options]')
@@ -90,50 +138,6 @@ const argv = yargs(hideBin(process.argv))
   })
   .demandCommand(1, 'You must provide a pattern for the files to lint.')
   .help().argv;
-
-// Map of linter types to their configurations
-const LINTER_CONFIGS = {
-  bpmn: {
-    name: 'bpmnlint',
-    getLinter: (finalConfig) =>
-      new BpmnLinter({
-        config: finalConfig,
-        resolver: new BpmnNodeResolver(),
-      }),
-    getModdle: () => new BpmnModdle(),
-    getModdleName: () => 'bpmn-moddle',
-    reportTitle: 'BPMN Lint Report',
-    defaultConfig: {
-      extends: ['bpmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
-      rules: {},
-    },
-    // prettier-ignore
-    defaultDependencies: {
-      "bpmnlint": "^11.6.0",
-      "bpmnlint-utils": "^1.1.1"
-    },
-  },
-  dmn: {
-    name: 'dmnlint',
-    getLinter: (finalConfig) =>
-      new DmnLinter({
-        config: finalConfig,
-        resolver: new DmnNodeResolver(),
-      }),
-    getModdle: () => new DmnModdle(),
-    getModdleName: () => 'dmn-moddle',
-    reportTitle: 'DMN Lint Report',
-    defaultConfig: {
-      extends: ['dmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
-      rules: {},
-    },
-    // prettier-ignore
-    defaultDependencies: {
-      "dmnlint": "*",
-      "dmnlint-utils": "*",
-    },
-  },
-};
 
 // --- Helper functions ---
 function exitWithError(message) {
