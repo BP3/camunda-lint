@@ -16,6 +16,7 @@ SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 #. "${SCRIPT_DIR}"/functions.sh
 . "${SCRIPT_DIR}"/logger.sh
 
+<<<<<<< HEAD
 # Echo colors
 ColorOff="\033[0m"    # Text Reset
 Blue="\033[0;34m"     # Blue
@@ -25,6 +26,8 @@ Red="\033[0;31m"      # Red
 Green="\033[0;32m"    # Green
 Yellow="\033[0;33m"   # Yellow
 
+=======
+>>>>>>> d2d50ff2c76389c0459026261ddb2215c9a00064
 # Run modes
 mode_bpmn=0
 mode_dmn=0
@@ -67,26 +70,9 @@ esac
 
 if [ $mode_sbom = 1 ]; then
   echo ""
-  if [ ! "${SBOM_REPORT_PATH}" ]; then
-    SBOM_REPORT_PATH="/local"
-    if [ -n "${PROJECT_PATH}" ]; then
-      SBOM_REPORT_PATH="${PROJECT_PATH}"
-    fi
-  fi
-  if [ ! "${SBOM_REPORT_NAME}" ]; then
-    SBOM_REPORT_NAME="camunda-lint-sbom"
-  fi
-  SBOM_REPORT_EXT="json"
-  case "${SBOM_REPORT_FORMAT}" in
-    XML)
-      SBOM_REPORT_EXT="xml"
-        ;;
-    *)
-      SBOM_REPORT_FORMAT="JSON"
-      SBOM_REPORT_EXT="json"
-        ;;
-  esac
+  SBOM_FILE="/app/camunda-lint-sbom.json"
 
+<<<<<<< HEAD
   log_info "Generating the SBOM..."
   log_info "---------------------------------------------------"
   log_info "Writing: ${SBOM_REPORT_PATH}/${SBOM_REPORT_NAME}.${SBOM_REPORT_EXT}"
@@ -94,6 +80,20 @@ if [ $mode_sbom = 1 ]; then
   echo ""
   log_info "Done!"
   echo ""
+=======
+  if [ -f "$SBOM_FILE" ]; then
+    log_info "Showing the SBOM file content:"
+    log_info "---------------------------------------------------"
+    cat "$SBOM_FILE"
+    echo ""
+    log_info "Done!"
+    echo ""
+  else
+    log_info "SBOM file not found: $SBOM_FILE"
+    echo ""
+    exit 1
+  fi
+>>>>>>> d2d50ff2c76389c0459026261ddb2215c9a00064
 fi
 
 if [ -n "${PROJECT_PATH}" ]; then
@@ -104,6 +104,7 @@ fi
 if [ $mode_bpmn = 1 ]; then
   echo ""
   # initialize the folder to run the linter if it has not been initialized for bpmnlint
+<<<<<<< HEAD
   BPMN_LINTRC_PATH="${BPMN_PATH}/.bpmnlintrc"
   if [ ! -f "${BPMN_PATH}"/.bpmnlintrc ]; then
     log_info "Initializing the BPMN rules for linting"
@@ -117,6 +118,12 @@ if [ $mode_bpmn = 1 ]; then
       log_info "Using recommended rules."
     fi
     log_info "Done!"
+=======
+  log_info "Initializing the BPMN rules for linting (if needed)"
+  log_info "---------------------------------------------------"
+  if [ ! -f "${BPMN_PATH}"/.bpmnlintrc ]; then
+    (cd "${BPMN_PATH}"; npx bpmnlint --init)
+>>>>>>> d2d50ff2c76389c0459026261ddb2215c9a00064
   fi
 
   BPMN_LINTER_ARGS=""
@@ -126,21 +133,24 @@ if [ $mode_bpmn = 1 ]; then
     BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --verbose=false"
   fi
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --type=bpmn"
-  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --runnerpath=/app/bpmnlint-runner"
   # BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=${BPMN_PATH}/.bpmnlintrc"
   
   # retrieve and install any plugins that were provided as part of .bpmnlintrc and generates a .bpmnlintrcRevised under the runner path
   echo ""
   log_info "Installing the BPMN lint runner dependencies"
   log_info "---------------------------------------------------"
+<<<<<<< HEAD
   node ${SCRIPT_DIR}/installPluginPackages.js ${BPMN_LINTER_ARGS} --config="${BPMN_LINTRC_PATH}"
   #--type=bpmn --config="${BPMN_PATH}"/.bpmnlintrc --runnerpath=/app/bpmnlint-runner
+=======
+  node ${SCRIPT_DIR}/installPluginPackages.js ${BPMN_LINTER_ARGS} --config="${BPMN_PATH}"/.bpmnlintrc
+>>>>>>> d2d50ff2c76389c0459026261ddb2215c9a00064
   echo ""
   log_info "Running the BPMN linter"
   log_info "---------------------------------------------------"
   # prepare params
   # use the revised file that should have been generated
-  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=/app/bpmnlint-runner/.bpmnlintrcRevised"
+  BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --config=/app/lint-runner/.bpmnlintrcRevised"
   BPMN_LINTER_ARGS="${BPMN_LINTER_ARGS} --files=${BPMN_PATH}/**/*.bpmn"
 
   if [ -n "${BPMN_REPORT_FILEPATH}" ]; then
@@ -172,6 +182,7 @@ fi
 if [ $mode_dmn = 1 ]; then
   echo ""
   # initialize the folder to run the linter if it has not been initialized for dmnlint
+<<<<<<< HEAD
   DMN_LINTRC_PATH="${DMN_PATH}/.dmnlintrc"
   if [ ! -f "${DMN_PATH}"/.dmnlintrc ]; then
       log_info "Initializing the DMN rules for linting"
@@ -185,6 +196,12 @@ if [ $mode_dmn = 1 ]; then
         log_info "Using recommended rules."
       fi
       log_info "Done!"
+=======
+  log_info "Initializing the DMN rules for linting (if needed)"
+  log_info "---------------------------------------------------"
+  if [ ! -f "${DMN_PATH}"/.dmnlintrc ]; then
+    (cd "${DMN_PATH}"; npx dmnlint --init)
+>>>>>>> d2d50ff2c76389c0459026261ddb2215c9a00064
   fi
 
   DMN_LINTER_ARGS=""
@@ -194,22 +211,25 @@ if [ $mode_dmn = 1 ]; then
     DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --verbose=false"
   fi
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --type=dmn"
-  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --runnerpath=/app/dmnlint-runner"
   # DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=${DMN_PATH}/.dmnlintrc"
 
   # retrieve and install any plugins that were provided as part of .dmnlintrc and generates a .dmnlintrcRevised under the runner path
   echo ""
   log_info "Installing the DMN lint runner dependencies"
   log_info "---------------------------------------------------"
+<<<<<<< HEAD
   node ${SCRIPT_DIR}/installPluginPackages.js ${DMN_LINTER_ARGS} --config=${DMN_LINTRC_PATH}
   # --type=dmn --config="${DMN_PATH}"/.dmnlintrc --runnerpath=/app/dmnlint-runner
+=======
+  node ${SCRIPT_DIR}/installPluginPackages.js ${DMN_LINTER_ARGS} --config=${DMN_PATH}/.dmnlintrc
+>>>>>>> d2d50ff2c76389c0459026261ddb2215c9a00064
   echo ""
   log_info "Running the DMN linter"
   log_info "---------------------------------------------------"
 
   # prepare params
   # use the revised file that should have been generated
-  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=/app/dmnlint-runner/.dmnlintrcRevised"
+  DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --config=/app/lint-runner/.dmnlintrcRevised"
   DMN_LINTER_ARGS="${DMN_LINTER_ARGS} --files=${DMN_PATH}/**/*.dmn"
 
   if [ -n "${DMN_REPORT_FILEPATH}" ]; then
