@@ -13,29 +13,22 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-<<<<<<< HEAD:bpmnlint-runner/bp3-dynamic-rules/package.json
-    "@bp3global/bpmnlint-plugin-bpmn-rules": "*",
     "bpmnlint": "*",
     "bpmnlint-plugin-camunda-compat": "*",
     "bpmnlint-utils": "*",
-=======
-    "@BP3/bpmnlint-plugin-bpmn-rules": "*",
-    "bpmnlint": "*",
-    "bpmnlint-utils": "*",
     "dmnlint": "*",
     "dmnlint-utils": "*",
->>>>>>> d2d50ff2c76389c0459026261ddb2215c9a00064:lint-runner/bp3-dynamic-rules/package.json
-    "semver": "^7.7.2"
+    "zeebe-bpmn-moddle": "*"
   },
   "files": [
     "rules",
     "index.js"
   ],
   "devDependencies": {
-    "eslint": "^9.36.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
-    "globals": "^16.4.0",
-    "prettier": "^3.6.2"
+    "eslint": "*",
+    "eslint-config-prettier": "*",
+    "eslint-plugin-prettier": "*",
+    "globals": "*",
+    "prettier": "*"
   }
 }
