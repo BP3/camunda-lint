@@ -10,14 +10,18 @@
  =
  =================================================================================*/
 
+//*************************************************************************
 // Dependencies
+//*************************************************************************
 const fs = require('fs');
 const path = require('path');
 const process = require('process');
 const { execSync } = require('child_process');
 const { logger } = require('./logger.js');
 
+//*************************************************************************
 // Constants
+//*************************************************************************
 const modeLint = 'lint';
 const modeBpmnlint = 'bpmnlint';
 const modeDmnlint = 'dmnlint';
@@ -27,14 +31,12 @@ const modeHelp = 'help';
 const BPMN = 'BPMN';
 const DMN = 'DMN';
 
-// Globally installed plugins :: plugins shouldn't be dependencies, but it might be necessary to install them nonetheless
+// bundled plugins :: plugins shouldn't be dependencies, but it might be necessary to install them nonetheless
 const BUNDLED_PLUGINS = ['@BP3/bpmnlint-plugin-bpmn-rules'];
 
 const LINTRC_REVISED_SUFFIX = 'Revised';
-// TODO :: Should we externalize the default configs into their own files? :: const LINTRC_DEFAULT_SUFFIX = 'Default';
 
 const PACKAGE_JSON = 'package.json';
-// const APP_PATH = '/app';
 const LINT_RUNNER_PATH = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./`); // './lint-runner/'
 const SBOM_JSON_FILE = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./camunda-lint-sbom.json`);
 const lintRunnerPath = path.resolve(LINT_RUNNER_PATH, 'lint-runner.js');
@@ -83,7 +85,9 @@ as this is intended to run as part of a CI/CD pipeline.
 See https://github.com/BP3/camunda-lint for more details.
 `;
 
-// variables
+//*************************************************************************
+// Variables
+//*************************************************************************
 let isModeBpmn = false;
 let isModeDmn = false;
 let isModeSbom = false;
@@ -92,7 +96,12 @@ let isShowHelp = false;
 let bpmnPath = './';
 let dmnPath = './';
 
-//helper functions
+let modeArgument = null;
+let overallSuccess = true;
+
+//*************************************************************************
+// Helper functions
+//*************************************************************************
 function isStringNullOrEmpty(value) {
   return value == null || value.trim() == '';
 }
@@ -113,7 +122,6 @@ ${helpMessage}
   }
 }
 
-/*************************************************************************/
 // Extract the details from a possible plugin name in the lintrc file to setup dependencies correctly
 function getPluginDetails(packageName) {
   let result = null;
@@ -205,14 +213,15 @@ function prepareLintRunner(linterType, lintrcFullpath) {
     logger.error('Plugin installation failed!\n');
   }
 }
-/*************************************************************************/
 
+// run the linter
 function lint(linterType, projectPath) {
   let linterArgs = {};
   let lintExtension = linterType.toLowerCase();
   let lintrcFilename = `.${lintExtension}lintrc`;
   let lintrcRevisedFilename = `${lintrcFilename}${LINTRC_REVISED_SUFFIX}`;
   let lintrcFullpath = path.join(projectPath, lintrcFilename);
+  let isBpmnLinterType = linterType == BPMN;
 
   // initialize the lintrc file if needed
   logger.info(`Initializing the ${linterType} rules for linting (if needed)`);
@@ -240,14 +249,14 @@ function lint(linterType, projectPath) {
   linterArgs[argumentConfig] = path.join(LINT_RUNNER_PATH, lintrcRevisedFilename);
   linterArgs[argumentFilesToLint] = `${projectPath}/**/*.${lintExtension}`;
 
-  if (!isStringNullOrEmpty(process.env.BPMN_REPORT_FILEPATH)) {
-    linterArgs[argumentOutputPath] = process.env.BPMN_REPORT_FILEPATH;
+  if ((isBpmnLinterType && !isStringNullOrEmpty(process.env.BPMN_REPORT_FILEPATH)) || (!isBpmnLinterType && !isStringNullOrEmpty(process.env.DMN_REPORT_FILEPATH))) {
+    linterArgs[argumentOutputPath] = isBpmnLinterType ? process.env.BPMN_REPORT_FILEPATH : process.env.DMN_REPORT_FILEPATH;
   }
 
   linterArgs[argumentFormat] = process.env.REPORT_FORMAT || 'json';
 
-  if (!isStringNullOrEmpty(process.env.BPMN_RULES_PATH)) {
-    linterArgs[argumentRulesPath] = process.env.BPMN_RULES_PATH;
+  if ((isBpmnLinterType && !isStringNullOrEmpty(process.env.BPMN_RULES_PATH)) || (!isBpmnLinterType && !isStringNullOrEmpty(process.env.DMN_RULES_PATH))) {
+    linterArgs[argumentRulesPath] = isBpmnLinterType ? process.env.BPMN_RULES_PATH : process.env.DMN_RULES_PATH;
     linterArgs[argumentRulesSeverity] = 'warn';
   }
 
@@ -260,10 +269,7 @@ function lint(linterType, projectPath) {
   }
 
   logger.debug(`Running linter with params: ${JSON.stringify(linterArgs, null, 2)}`);
-  // runLinter(linterArgs);
 
-  // TODO : Review this: + (linterArgs[argumentRulesPath] && linterArgs[argumentInstallCustomDeps] ? ` --install-custom-deps` : ``)
-  // TODO : This also requires further validation : + (linterArgs[argumentRulesPath]? ` --install-custom-deps` : ``)
   let cliCommand =
     ` --type=${linterArgs[argumentType].toLowerCase()}` +
     ` --config=${linterArgs[argumentConfig]}` +
@@ -287,8 +293,9 @@ function lint(linterType, projectPath) {
   }
 }
 
-// main run
-let modeArgument = null;
+//*************************************************************************
+// Main run
+//*************************************************************************
 if (process.argv.length < 3) {
   showHelpMessageAndExit('No parameter provided');
 } else {
@@ -328,27 +335,28 @@ if (isModeSbom) {
     });
   } else {
     logger.info(`SBOM file not found: ${SBOM_JSON_FILE}`);
+    overallSuccess = false;
   }
 }
-
-let overallSuccess = true;
 
 if (isModeBpmn) {
   const bpmnTarget = process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath;
   logger.debug(`Running linter for ${BPMN} with path: ${bpmnTarget}`);
-  const success = lint(BPMN, bpmnTarget);
-  if (!success) overallSuccess = false;
+  if (!lint(BPMN, bpmnTarget)) {
+    overallSuccess = false;
+  }
 }
 
 if (isModeDmn) {
   const dmnTarget = process.env.DMN_PATH || process.env.PROJECT_PATH || dmnPath;
   logger.debug(`Running linter for ${DMN} with path: ${dmnTarget}`);
-  const success = lint(DMN, dmnTarget);
-  if (!success) overallSuccess = false;
+  if (!lint(DMN, dmnTarget)) {
+    overallSuccess = false;
+  }
 }
 
 if (!overallSuccess) {
   process.exit(1);
-} else {
+} else if (!isModeSbom) {
   logger.info('Linting completed successfully.');
 }

@@ -22,10 +22,10 @@ const { logger } = require('./logger');
 
 const { Linter: BpmnLinter } = require('bpmnlint');
 const BpmnNodeResolver = require('bpmnlint/lib/resolver/node-resolver');
-const BpmnModdle = require('bpmn-moddle');
+const { BpmnModdle } = require('bpmn-moddle');
 const { Linter: DmnLinter } = require('dmnlint');
 const DmnNodeResolver = require('dmnlint/lib/resolver/node-resolver');
-const DmnModdle = require('dmn-moddle');
+const { DmnModdle } = require('dmn-moddle');
 
 // --- Define and parse command-line arguments using yargs ---
 const argv = yargs(hideBin(process.argv))
@@ -109,8 +109,8 @@ const LINTER_CONFIGS = {
     },
     // prettier-ignore
     defaultDependencies: {
-      "bpmnlint": "^11.6.0",
-      "bpmnlint-utils": "^1.1.1"
+      "bpmnlint": "*",
+      "bpmnlint-utils": "*"
     },
   },
   dmn: {
@@ -303,13 +303,18 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
 
   const theme = {
     error: chalk.red(' ❌ Error'),
+    warn: chalk.yellow(' ⚠️ Warning'),
     warning: chalk.yellow(' ⚠️ Warning'),
+    info: chalk.blueBright(` ℹ️ Info`),
   };
 
   if (showConsoleTable && allIssues.length > 0) {
     allIssues.forEach((issue) => {
+      //default to info if not specified
+      const issueType = issue.category?.toLowerCase() || 'info';
       const isError = issue.category?.toLowerCase().includes('error') || issue.severity === 'error';
-      const label = isError ? theme.error : theme.warning;
+      //DEPRECATED: const label = isError ? theme.error : theme.warning;
+      const label = theme[issueType] || theme.info;
       const file = path.basename(issue.file);
       const output = isError ? totalErrors > 0 : totalErrors === 0;
 
@@ -317,6 +322,8 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
         reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
       }
     });
+  } else {
+    reportDetails = '\n No issues found!\n';
   }
 
   // Footer Summary
@@ -325,7 +332,7 @@ ${chalk.gray('-'.repeat(60))}
 ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.red.bold(totalErrors)} | Warnings: ${chalk.yellow.bold(totalWarnings)}`);
 
   const extension = format === 'junit' ? 'xml' : format;
-  const finalOutputPath = path.resolve(process.cwd(), `${linterType}-${outputPath}.${extension}`);
+  const finalOutputPath = path.resolve(process.cwd(), `${outputPath}${outputPath.indexOf(linterType) < 0 ? `-${linterType}` : ``}${outputPath.indexOf(extension) < 0 ? `.${extension}` : ``}`);
   let reportContent;
 
   try {
@@ -342,7 +349,7 @@ ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.r
       case 'json':
         reportContent = JSON.stringify(
           {
-            summary: { totalFiles: lintedFiles.length, totalErrors, totalWarnings },
+            summary: { totalFiles: lintedFiles.length, totalIssues: allIssues.length, totalErrors },
             issues: allIssues,
           },
           null,
@@ -365,9 +372,11 @@ ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.r
                 th { background-color: #f2f2f2; font-weight: 600; }
                 tbody tr:nth-child(even) { background-color: #f9f9f9; }
                 tbody tr:hover { background-color: #f1f1f1; }
-                .severity-error { color: #c00; font-weight: bold; }
-                .severity-warning { color: #d97400; font-weight: bold; }
-                .icon { margin-right: 8px; font-size: 1.2em; vertical-align: middle; }
+                .icon { width: 16px; height: 16px; margin-right: 6px; vertical-align: text-bottom; fill: currentColor; }
+                .severity-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600; line-height: 1; border: 1px solid transparent; }
+                .severity-warning { background-color: #fff7ed; color: #c2410c; border-color: #fdba74; }
+                .severity-error { background-color: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
+                .severity-info { background-color: #eff6ff; color: #1e40af; border-color: #93c5fd; }
                 .file-path { font-family: monospace; font-size: 0.9em; color: #555; }
               </style>
             </head>
@@ -376,8 +385,8 @@ ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.r
               <div class="summary">
                 <h2>Summary</h2>
                 <p><strong>Total Files Linted:</strong> ${lintedFiles.length}</p>
+                <p><strong>Total Issues:</strong> ${allIssues.length}</p>
                 <p><strong>Total Errors:</strong> ${totalErrors}</p>
-                <p><strong>Total Warnings:</strong> ${totalWarnings}</p>
               </div>
               <h2>All Issues (${allIssues.length})</h2>
               ${
@@ -400,13 +409,19 @@ ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.r
                         let icon = '';
                         let severityClass = '';
                         if (severity.toLowerCase().includes('error')) {
-                          icon = '<span class="icon">❌</span>';
+                          // DEPRECATED: '<span class="icon">❌</span>';
+                          icon = `<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>`;
                           severityClass = 'severity-error';
                           severity = 'Error';
                         } else if (severity.toLowerCase().includes('warn')) {
-                          icon = '<span class="icon">⚠️</span>';
+                          // DEPRECATED: icon = '<span class="icon">⚠️</span>';
+                          icon = `<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L1 21h22L12 2zm1 14h-2v2h2v-2zm0-6h-2v4h2v-4z"/></svg>`;
                           severityClass = 'severity-warning';
                           severity = 'Warning';
+                        } else if (severity.toLowerCase().includes('info')) {
+                          icon = `<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`;
+                          severityClass = 'severity-info';
+                          severity = 'Info';
                         }
                         return `
                             <tr>
@@ -503,7 +518,24 @@ ${JSON.stringify(
       const configFilePath = path.resolve(process.cwd(), configPath);
       logger.debug(`Loading configuration from: ${configFilePath}`);
       const configFileContent = fs.readFileSync(configFilePath, 'utf-8');
-      finalConfig = JSON.parse(configFileContent);
+      // Need to merge objects here, not override :: finalConfig = JSON.parse(configFileContent);
+      let configFromFile = JSON.parse(configFileContent);
+      Object.keys(configFromFile).forEach((key) => {
+        let sourceValue = configFromFile[key];
+        if (finalConfig[key] != null && sourceValue != null) {
+          // extends can be provided as a string, otherwise we're handling either arrays or objects
+          if (typeof sourceValue === 'string' && !finalConfig[key].includes(sourceValue)) {
+            // extends can be a string
+            finalConfig[key].push(sourceValue);
+          } else if (Array.isArray(finalConfig[key])) {
+            finalConfig[key] = Array.from(new Set([...finalConfig[key], ...sourceValue]));
+          } else if (typeof finalConfig[key] === 'object') {
+            finalConfig[key] = Object.assign(finalConfig[key], sourceValue);
+          }
+        } else {
+          finalConfig[key] = sourceValue;
+        }
+      });
     } catch (error) {
       exitWithError(`Could not load or parse the configuration file at "${configPath}": ${error.message}`);
     }
@@ -511,7 +543,7 @@ ${JSON.stringify(
     // Override severities for custom rules if specified
     if (customRulesPath) {
       // make sure that the dynamic plugin is added to the config when loading the linter
-      if (finalConfig?.extends?.indexOf('plugin:bp3-dynamic-rules') < 0) {
+      if (finalConfig?.extends?.indexOf('plugin:bp3-dynamic-rules/all') < 0) {
         finalConfig.extends.push('plugin:bp3-dynamic-rules/all');
       }
       // make sure that each rule has a default severity if one was provided
@@ -554,7 +586,7 @@ ${JSON.stringify(
     if (lintResults.totalErrors > 0) {
       throw new Error(`Found ${lintResults.totalErrors} error(s):\n${reportList}`);
     } else {
-      logger.info(`LINT REPORT (Warnings):\n${reportList}`);
+      logger.info(`LINT REPORT:\n${reportList}`);
     }
   } catch (err) {
     exitWithError(err.message);
