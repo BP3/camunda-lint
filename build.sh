@@ -42,7 +42,7 @@ echo "--- Building $IMAGE_TAG ---"
 
 # Perform npm install to populate the package-lock.json
 echo "Install dependencies..."
-call npm install
+npm install
 
 # Generate SBOM
 echo "Generating SBOM..."
