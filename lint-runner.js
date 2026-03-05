@@ -372,9 +372,11 @@ ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.r
                 th { background-color: #f2f2f2; font-weight: 600; }
                 tbody tr:nth-child(even) { background-color: #f9f9f9; }
                 tbody tr:hover { background-color: #f1f1f1; }
-                .severity-error { color: #c00; font-weight: bold; }
-                .severity-warning { color: #d97400; font-weight: bold; }
-                .icon { margin-right: 8px; font-size: 1.2em; vertical-align: middle; }
+                .icon { width: 16px; height: 16px; margin-right: 6px; vertical-align: text-bottom; fill: currentColor; }
+                .severity-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600; line-height: 1; border: 1px solid transparent; }
+                .severity-warning { background-color: #fff7ed; color: #c2410c; border-color: #fdba74; }
+                .severity-error { background-color: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
+                .severity-info { background-color: #eff6ff; color: #1e40af; border-color: #93c5fd; }
                 .file-path { font-family: monospace; font-size: 0.9em; color: #555; }
               </style>
             </head>
@@ -383,8 +385,8 @@ ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.r
               <div class="summary">
                 <h2>Summary</h2>
                 <p><strong>Total Files Linted:</strong> ${lintedFiles.length}</p>
+                <p><strong>Total Issues:</strong> ${allIssues.length}</p>
                 <p><strong>Total Errors:</strong> ${totalErrors}</p>
-                <p><strong>Total Warnings:</strong> ${totalWarnings}</p>
               </div>
               <h2>All Issues (${allIssues.length})</h2>
               ${
@@ -407,13 +409,19 @@ ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.r
                         let icon = '';
                         let severityClass = '';
                         if (severity.toLowerCase().includes('error')) {
-                          icon = '<span class="icon">❌</span>';
+                          // DEPRECATED: '<span class="icon">❌</span>';
+                          icon = `<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>`;
                           severityClass = 'severity-error';
                           severity = 'Error';
                         } else if (severity.toLowerCase().includes('warn')) {
-                          icon = '<span class="icon">⚠️</span>';
+                          // DEPRECATED: icon = '<span class="icon">⚠️</span>';
+                          icon = `<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L1 21h22L12 2zm1 14h-2v2h2v-2zm0-6h-2v4h2v-4z"/></svg>`;
                           severityClass = 'severity-warning';
                           severity = 'Warning';
+                        } else if (severity.toLowerCase().includes('info')) {
+                          icon = `<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`;
+                          severityClass = 'severity-info';
+                          severity = 'Info';
                         }
                         return `
                             <tr>
