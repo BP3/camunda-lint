@@ -66,6 +66,7 @@
     "mocha": {
       "serialize-javascript": "7.0.3"
     },
-    "trim-newlines": "5.0.0"
+    "trim-newlines": "5.0.0",
+    "ajv": "8.18.0"
   }
 }
