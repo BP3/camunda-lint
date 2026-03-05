@@ -303,13 +303,18 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
 
   const theme = {
     error: chalk.red(' ❌ Error'),
+    warn: chalk.yellow(' ⚠️ Warning'),
     warning: chalk.yellow(' ⚠️ Warning'),
+    info: chalk.blueBright(` ℹ️ Info`),
   };
 
   if (showConsoleTable && allIssues.length > 0) {
     allIssues.forEach((issue) => {
+      //default to info if not specified
+      const issueType = issue.category?.toLowerCase() || 'info';
       const isError = issue.category?.toLowerCase().includes('error') || issue.severity === 'error';
-      const label = isError ? theme.error : theme.warning;
+      //DEPRECATED: const label = isError ? theme.error : theme.warning;
+      const label = theme[issueType] || theme.info;
       const file = path.basename(issue.file);
       const output = isError ? totalErrors > 0 : totalErrors === 0;
 
@@ -317,6 +322,8 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
         reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
       }
     });
+  } else {
+    reportDetails = '\n No issues found!\n';
   }
 
   // Footer Summary
@@ -325,7 +332,7 @@ ${chalk.gray('-'.repeat(60))}
 ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.red.bold(totalErrors)} | Warnings: ${chalk.yellow.bold(totalWarnings)}`);
 
   const extension = format === 'junit' ? 'xml' : format;
-  const finalOutputPath = path.resolve(process.cwd(), `${linterType}-${outputPath}${outputPath.indexOf(extension) < 0 ? `.${extension}` : ``}`);
+  const finalOutputPath = path.resolve(process.cwd(), `${outputPath}${outputPath.indexOf(linterType) < 0 ? `-${linterType}` : ``}${outputPath.indexOf(extension) < 0 ? `.${extension}` : ``}`);
   let reportContent;
 
   try {
@@ -571,7 +578,7 @@ ${JSON.stringify(
     if (lintResults.totalErrors > 0) {
       throw new Error(`Found ${lintResults.totalErrors} error(s):\n${reportList}`);
     } else {
-      logger.info(`LINT REPORT (Warnings):\n${reportList}`);
+      logger.info(`LINT REPORT:\n${reportList}`);
     }
   } catch (err) {
     exitWithError(err.message);
