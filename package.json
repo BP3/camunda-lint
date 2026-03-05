@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
+    "bp3-dynamic-rules",
+    "lint-runner",
     "*mnlint-runner",
     "*mnlint-runner/bp3-dynamic-rules"
   ],
@@ -60,6 +62,10 @@
     "eslint-config-prettier": "$eslint-config-prettier",
     "eslint-plugin-prettier": "$eslint-plugin-prettier",
     "globals": "$globals",
-    "prettier": "$prettier"
+    "prettier": "$prettier",
+    "mocha": {
+      "serialize-javascript": "7.0.3"
+    },
+    "trim-newlines": "5.0.0"
   }
 }
