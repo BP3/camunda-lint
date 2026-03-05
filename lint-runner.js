@@ -349,7 +349,7 @@ ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.r
       case 'json':
         reportContent = JSON.stringify(
           {
-            summary: { totalFiles: lintedFiles.length, totalErrors, totalWarnings },
+            summary: { totalFiles: lintedFiles.length, totalIssues: allIssues.length, totalErrors },
             issues: allIssues,
           },
           null,
