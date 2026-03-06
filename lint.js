@@ -67,7 +67,6 @@ const argumentFormat = 'format';
 const argumentRulesPath = 'rulespath';
 const argumentRulesSeverity = 'rulesseverity';
 const argumentConsoleTable = 'consoletable';
-const argumentVerbose = 'verbose';
 
 const helpMessage = `
 A CI/CD automation wrapper for linting a Camunda 8 Web Modeler project.
@@ -243,8 +242,7 @@ function lint(linterType, projectPath) {
   logger.info('---------------------------------------------------');
   // prepare runner arguments
   linterArgs[argumentType] = linterType;
-  linterArgs[argumentVerbose] = String(process.env.VERBOSE || 'false').toLowerCase() != 'false';
-
+  
   // use the revised file that should have been generated
   linterArgs[argumentConfig] = path.join(LINT_RUNNER_PATH, lintrcRevisedFilename);
   linterArgs[argumentFilesToLint] = `${projectPath}/**/*.${lintExtension}`;
@@ -273,7 +271,6 @@ function lint(linterType, projectPath) {
   let cliCommand =
     ` --type=${linterArgs[argumentType].toLowerCase()}` +
     ` --config=${linterArgs[argumentConfig]}` +
-    (linterArgs[argumentVerbose] && linterArgs[argumentVerbose] == 'false' ? `` : ` --verbose`) +
     (linterArgs[argumentConsoleTable] && linterArgs[argumentConsoleTable] == 'false' ? ` --show-console-table=false` : ` --show-console-table`) +
     (linterArgs[argumentOutputPath] ? ` --output=${path.resolve(process.cwd(), linterArgs[argumentOutputPath])}` : ``) +
     ` --format=${linterArgs[argumentFormat]}` +
