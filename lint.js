@@ -242,7 +242,7 @@ function lint(linterType, projectPath) {
   logger.info('---------------------------------------------------');
   // prepare runner arguments
   linterArgs[argumentType] = linterType;
-  
+
   // use the revised file that should have been generated
   linterArgs[argumentConfig] = path.join(LINT_RUNNER_PATH, lintrcRevisedFilename);
   linterArgs[argumentFilesToLint] = `${projectPath}/**/*.${lintExtension}`;
