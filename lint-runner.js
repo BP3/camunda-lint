@@ -76,12 +76,6 @@ const argv = yargs(hideBin(process.argv))
     default: false,
     describe: 'If a custom rules directory has a package.json, automatically run "npm install". Use with caution in untrusted environments.',
   })
-  .option('verbose', {
-    alias: 'v',
-    type: 'boolean',
-    description: 'Enable detailed logging for each step',
-    default: false,
-  })
   .option('show-console-table', {
     alias: 'table',
     type: 'boolean',
