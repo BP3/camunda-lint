@@ -10,14 +10,18 @@
  =
  =================================================================================*/
 
+//*************************************************************************
 // Dependencies
+//*************************************************************************
 const fs = require('fs');
 const path = require('path');
 const process = require('process');
 const { execSync } = require('child_process');
 const { logger } = require('./logger.js');
 
+//*************************************************************************
 // Constants
+//*************************************************************************
 const modeLint = 'lint';
 const modeBpmnlint = 'bpmnlint';
 const modeDmnlint = 'dmnlint';
@@ -28,14 +32,12 @@ const modeHelp = 'help';
 const BPMN = 'BPMN';
 const DMN = 'DMN';
 
-// Globally installed plugins :: plugins shouldn't be dependencies, but it might be necessary to install them nonetheless
+// bundled plugins :: plugins shouldn't be dependencies, but it might be necessary to install them nonetheless
 const BUNDLED_PLUGINS = ['@BP3/bpmnlint-plugin-bpmn-rules'];
 
 const LINTRC_REVISED_SUFFIX = 'Revised';
-// TODO :: Should we externalize the default configs into their own files? :: const LINTRC_DEFAULT_SUFFIX = 'Default';
 
 const PACKAGE_JSON = 'package.json';
-// const APP_PATH = '/app';
 const LINT_RUNNER_PATH = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./`); // './lint-runner/'
 const SBOM_JSON_FILE = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./camunda-lint-sbom.json`);
 const lintRunnerPath = path.resolve(LINT_RUNNER_PATH, 'lint-runner.js');
@@ -67,7 +69,6 @@ const argumentFormat = 'format';
 const argumentRulesPath = 'rulespath';
 const argumentRulesSeverity = 'rulesseverity';
 const argumentConsoleTable = 'consoletable';
-const argumentVerbose = 'verbose';
 
 const helpMessage = `
 A CI/CD automation wrapper for linting a Camunda 8 Web Modeler project.
@@ -85,7 +86,9 @@ as this is intended to run as part of a CI/CD pipeline.
 See https://github.com/BP3/camunda-lint for more details.
 `;
 
-// variables
+//*************************************************************************
+// Variables
+//*************************************************************************
 let isModeBpmn = false;
 let isModeDmn = false;
 let isModeSbom = false;
@@ -95,7 +98,12 @@ let isModeDependencyVer = false;
 let bpmnPath = './';
 let dmnPath = './';
 
-//helper functions
+let modeArgument = null;
+let overallSuccess = true;
+
+//*************************************************************************
+// Helper functions
+//*************************************************************************
 function isStringNullOrEmpty(value) {
   return value == null || value.trim() == '';
 }
@@ -116,23 +124,6 @@ ${helpMessage}
   }
 }
 
-function showErrorAndHelpMessageAndExit(errorMessage) {
-  if (!isStringNullOrEmpty(errorMessage)) {
-    logger.error(`
-*******************************************************************************
-
-${errorMessage}
-
-*******************************************************************************
-${helpMessage}
-`);
-    process.exit(1);
-  } else {
-    logger.info(`${helpMessage}`);
-  }
-}
-
-/*************************************************************************/
 // Extract the details from a possible plugin name in the lintrc file to setup dependencies correctly
 function getPluginDetails(packageName) {
   let result = null;
@@ -224,14 +215,15 @@ function prepareLintRunner(linterType, lintrcFullpath) {
     logger.error('Plugin installation failed!\n');
   }
 }
-/*************************************************************************/
 
+// run the linter
 function lint(linterType, projectPath) {
   let linterArgs = {};
   let lintExtension = linterType.toLowerCase();
   let lintrcFilename = `.${lintExtension}lintrc`;
   let lintrcRevisedFilename = `${lintrcFilename}${LINTRC_REVISED_SUFFIX}`;
   let lintrcFullpath = path.join(projectPath, lintrcFilename);
+  let isBpmnLinterType = linterType == BPMN;
 
   // initialize the lintrc file if needed
   logger.info(`Initializing the ${linterType} rules for linting (if needed)`);
@@ -253,20 +245,19 @@ function lint(linterType, projectPath) {
   logger.info('---------------------------------------------------');
   // prepare runner arguments
   linterArgs[argumentType] = linterType;
-  linterArgs[argumentVerbose] = String(process.env.VERBOSE || 'false').toLowerCase() != 'false';
 
   // use the revised file that should have been generated
   linterArgs[argumentConfig] = path.join(LINT_RUNNER_PATH, lintrcRevisedFilename);
   linterArgs[argumentFilesToLint] = `${projectPath}/**/*.${lintExtension}`;
 
-  if (!isStringNullOrEmpty(process.env.BPMN_REPORT_FILEPATH)) {
-    linterArgs[argumentOutputPath] = process.env.BPMN_REPORT_FILEPATH;
+  if ((isBpmnLinterType && !isStringNullOrEmpty(process.env.BPMN_REPORT_FILEPATH)) || (!isBpmnLinterType && !isStringNullOrEmpty(process.env.DMN_REPORT_FILEPATH))) {
+    linterArgs[argumentOutputPath] = isBpmnLinterType ? process.env.BPMN_REPORT_FILEPATH : process.env.DMN_REPORT_FILEPATH;
   }
 
   linterArgs[argumentFormat] = process.env.REPORT_FORMAT || 'json';
 
-  if (!isStringNullOrEmpty(process.env.BPMN_RULES_PATH)) {
-    linterArgs[argumentRulesPath] = process.env.BPMN_RULES_PATH;
+  if ((isBpmnLinterType && !isStringNullOrEmpty(process.env.BPMN_RULES_PATH)) || (!isBpmnLinterType && !isStringNullOrEmpty(process.env.DMN_RULES_PATH))) {
+    linterArgs[argumentRulesPath] = isBpmnLinterType ? process.env.BPMN_RULES_PATH : process.env.DMN_RULES_PATH;
     linterArgs[argumentRulesSeverity] = 'warn';
   }
 
@@ -279,14 +270,10 @@ function lint(linterType, projectPath) {
   }
 
   logger.debug(`Running linter with params: ${JSON.stringify(linterArgs, null, 2)}`);
-  // runLinter(linterArgs);
 
-  // TODO : Review this: + (linterArgs[argumentRulesPath] && linterArgs[argumentInstallCustomDeps] ? ` --install-custom-deps` : ``)
-  // TODO : This also requires further validation : + (linterArgs[argumentRulesPath]? ` --install-custom-deps` : ``)
   let cliCommand =
     ` --type=${linterArgs[argumentType].toLowerCase()}` +
     ` --config=${linterArgs[argumentConfig]}` +
-    (linterArgs[argumentVerbose] && linterArgs[argumentVerbose] == 'false' ? `` : ` --verbose`) +
     (linterArgs[argumentConsoleTable] && linterArgs[argumentConsoleTable] == 'false' ? ` --show-console-table=false` : ` --show-console-table`) +
     (linterArgs[argumentOutputPath] ? ` --output=${path.resolve(process.cwd(), linterArgs[argumentOutputPath])}` : ``) +
     ` --format=${linterArgs[argumentFormat]}` +
@@ -300,11 +287,9 @@ function lint(linterType, projectPath) {
     let basePath = path.resolve(process.cwd(), LINT_RUNNER_PATH);
     logger.debug(`Running '${cliCommand}' from '${basePath}'`);
     execSync(cliCommand, { cwd: basePath, stdio: 'inherit' });
-  } catch (err) {
-    showErrorAndHelpMessageAndExit(`
-There was an error while running the linter.
-${err}
-    `);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -313,24 +298,24 @@ ${err}
 function generateDependencyVersions() {
   try {
     const packageJsonPath = path.resolve(LINT_RUNNER_PATH, PACKAGE_JSON);
-    
+
     if (!fs.existsSync(packageJsonPath)) {
       logger.error(`package.json not found at ${packageJsonPath}`);
       return;
     }
 
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    
+
     // Get installed versions using npm ls
     let installedVersions = {};
     try {
-      const npmLsOutput = execSync('npm ls --json --depth=0', { 
+      const npmLsOutput = execSync('npm ls --json --depth=0', {
         cwd: LINT_RUNNER_PATH,
-        encoding: 'utf8'
+        encoding: 'utf8',
       });
       const npmLsData = JSON.parse(npmLsOutput);
       installedVersions = npmLsData.dependencies || {};
-    } catch (err) {
+    } catch {
       logger.warn('Could not retrieve installed versions via npm ls');
     }
 
@@ -343,20 +328,20 @@ function generateDependencyVersions() {
 
     // Process dependencies
     if (packageJson.dependencies) {
-      Object.keys(packageJson.dependencies).forEach(dep => {
+      Object.keys(packageJson.dependencies).forEach((dep) => {
         dependencyInfo.dependencies[dep] = {
           requested: packageJson.dependencies[dep],
-          installed: installedVersions[dep]?.version || 'not installed'
+          installed: installedVersions[dep]?.version || 'not installed',
         };
       });
     }
 
     // Process devDependencies
     if (packageJson.devDependencies) {
-      Object.keys(packageJson.devDependencies).forEach(dep => {
+      Object.keys(packageJson.devDependencies).forEach((dep) => {
         dependencyInfo.devDependencies[dep] = {
           requested: packageJson.devDependencies[dep],
-          installed: installedVersions[dep]?.version || 'not installed'
+          installed: installedVersions[dep]?.version || 'not installed',
         };
       });
     }
@@ -364,18 +349,15 @@ function generateDependencyVersions() {
     // Write to file
     fs.writeFileSync(DEP_VER_JSON_FILE, JSON.stringify(dependencyInfo, null, 2));
     logger.info(`Dependency versions written to ${DEP_VER_JSON_FILE}`);
-    
   } catch (err) {
     logger.error(`Error generating dependency versions: ${err}`);
   }
-}
-
-/*************************************************************************/
+};
 
 
-
-// main run
-let modeArgument = null;
+//*************************************************************************
+// Main run
+//*************************************************************************
 if (process.argv.length < 3) {
   showHelpMessageAndExit('No parameter provided');
 } else {
@@ -396,7 +378,7 @@ if (process.argv.length < 3) {
       break;
     case modeVer:
       isModeDependencyVer = true;
-      break;  
+      break;
     case modeHelp:
       isShowHelp = true;
       break;
@@ -418,17 +400,24 @@ if (isModeSbom) {
     });
   } else {
     logger.info(`SBOM file not found: ${SBOM_JSON_FILE}`);
+    overallSuccess = false;
   }
 }
 
 if (isModeBpmn) {
-  logger.debug(`Running linter for ${BPMN} with path: ${process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath}`);
-  lint(BPMN, process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath);
+  const bpmnTarget = process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath;
+  logger.debug(`Running linter for ${BPMN} with path: ${bpmnTarget}`);
+  if (!lint(BPMN, bpmnTarget)) {
+    overallSuccess = false;
+  }
 }
 
 if (isModeDmn) {
-  logger.debug(`Running linter for ${DMN} with path: ${process.env.DMN_PATH || process.env.PROJECT_PATH || bpmnPath}`);
-  lint(DMN, process.env.DMN_PATH || process.env.PROJECT_PATH || dmnPath);
+  const dmnTarget = process.env.DMN_PATH || process.env.PROJECT_PATH || dmnPath;
+  logger.debug(`Running linter for ${DMN} with path: ${dmnTarget}`);
+  if (!lint(DMN, dmnTarget)) {
+    overallSuccess = false;
+  }
 }
 
 if (isModeDependencyVer) {
@@ -442,5 +431,12 @@ if (isModeDependencyVer) {
     });
   } else {
     logger.info(`Dependency versions file not found: ${DEP_VER_JSON_FILE}`);
+    overallSuccess = false;
   }
+}
+
+if (!overallSuccess) {
+  process.exit(1);
+} else if (!isModeSbom) {
+  logger.info('Linting completed successfully.');
 }
