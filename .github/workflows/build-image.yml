@@ -128,7 +128,6 @@ jobs:
         run: |
           docker run -i --rm \
             -v ${PWD}/test/smoke-test:/project \
-            -e PROJECT_PATH=/project \
             ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
 
       - name: Run Integration Tests
