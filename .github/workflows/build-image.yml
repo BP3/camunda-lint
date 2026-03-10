@@ -127,7 +127,7 @@ jobs:
       - name: Run Smoke Test
         run: |
           docker run -i --rm \
-            -v ${PWD}/test/smoke-test:/project \
+            --mount type=bind,src=${PWD}/test/smoke-test,dst=/project \
             ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
 
       - name: Run Integration Tests

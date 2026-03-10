@@ -250,6 +250,8 @@ function lint(linterType, projectPath) {
 
   if ((isBpmnLinterType && !isStringNullOrEmpty(process.env.BPMN_REPORT_FILEPATH)) || (!isBpmnLinterType && !isStringNullOrEmpty(process.env.DMN_REPORT_FILEPATH))) {
     linterArgs[argumentOutputPath] = isBpmnLinterType ? process.env.BPMN_REPORT_FILEPATH : process.env.DMN_REPORT_FILEPATH;
+  } else {
+    linterArgs[argumentOutputPath] = path.join(WORKING_DIR, `${isBpmnLinterType ? BPMN.toLowerCase() : DMN.toLowerCase()}-lint-report`);
   }
 
   linterArgs[argumentFormat] = process.env.REPORT_FORMAT || 'json';
