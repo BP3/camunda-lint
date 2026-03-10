@@ -323,7 +323,7 @@ function generateDependencyVersions() {
     const dependencyInfo = {
       timestamp: new Date().toISOString(),
       dependencies: {},
-      devDependencies: {}
+      devDependencies: {},
     };
 
     // Process dependencies
@@ -352,8 +352,7 @@ function generateDependencyVersions() {
   } catch (err) {
     logger.error(`Error generating dependency versions: ${err}`);
   }
-};
-
+}
 
 //*************************************************************************
 // Main run
