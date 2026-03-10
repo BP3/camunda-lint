@@ -26,6 +26,7 @@ const modeLint = 'lint';
 const modeBpmnlint = 'bpmnlint';
 const modeDmnlint = 'dmnlint';
 const modeSBOM = 'sbom';
+const modeVer = 'ver';
 const modeHelp = 'help';
 
 const BPMN = 'BPMN';
@@ -40,6 +41,7 @@ const PACKAGE_JSON = 'package.json';
 const LINT_RUNNER_PATH = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./`); // './lint-runner/'
 const SBOM_JSON_FILE = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./camunda-lint-sbom.json`);
 const lintRunnerPath = path.resolve(LINT_RUNNER_PATH, 'lint-runner.js');
+const DEP_VER_JSON_FILE = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./camunda-lint-dependency-versions.json`);
 
 const emptyLintConfig = {
   extends: [],
@@ -91,6 +93,7 @@ let isModeBpmn = false;
 let isModeDmn = false;
 let isModeSbom = false;
 let isShowHelp = false;
+let isModeDependencyVer = false;
 
 let bpmnPath = './';
 let dmnPath = './';
@@ -290,6 +293,67 @@ function lint(linterType, projectPath) {
   }
 }
 
+/*************************************************************************/
+
+function generateDependencyVersions() {
+  try {
+    const packageJsonPath = path.resolve(LINT_RUNNER_PATH, PACKAGE_JSON);
+
+    if (!fs.existsSync(packageJsonPath)) {
+      logger.error(`package.json not found at ${packageJsonPath}`);
+      return;
+    }
+
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+    // Get installed versions using npm ls
+    let installedVersions = {};
+    try {
+      const npmLsOutput = execSync('npm ls --json --depth=0', {
+        cwd: LINT_RUNNER_PATH,
+        encoding: 'utf8',
+      });
+      const npmLsData = JSON.parse(npmLsOutput);
+      installedVersions = npmLsData.dependencies || {};
+    } catch {
+      logger.warn('Could not retrieve installed versions via npm ls');
+    }
+
+    // Build dependency info
+    const dependencyInfo = {
+      timestamp: new Date().toISOString(),
+      dependencies: {},
+      devDependencies: {},
+    };
+
+    // Process dependencies
+    if (packageJson.dependencies) {
+      Object.keys(packageJson.dependencies).forEach((dep) => {
+        dependencyInfo.dependencies[dep] = {
+          requested: packageJson.dependencies[dep],
+          installed: installedVersions[dep]?.version || 'not installed',
+        };
+      });
+    }
+
+    // Process devDependencies
+    if (packageJson.devDependencies) {
+      Object.keys(packageJson.devDependencies).forEach((dep) => {
+        dependencyInfo.devDependencies[dep] = {
+          requested: packageJson.devDependencies[dep],
+          installed: installedVersions[dep]?.version || 'not installed',
+        };
+      });
+    }
+
+    // Write to file
+    fs.writeFileSync(DEP_VER_JSON_FILE, JSON.stringify(dependencyInfo, null, 2));
+    logger.info(`Dependency versions written to ${DEP_VER_JSON_FILE}`);
+  } catch (err) {
+    logger.error(`Error generating dependency versions: ${err}`);
+  }
+}
+
 //*************************************************************************
 // Main run
 //*************************************************************************
@@ -311,6 +375,9 @@ if (process.argv.length < 3) {
     case modeSBOM:
       isModeSbom = true;
       break;
+    case modeVer:
+      isModeDependencyVer = true;
+      break;
     case modeHelp:
       isShowHelp = true;
       break;
@@ -319,7 +386,7 @@ if (process.argv.length < 3) {
   }
 }
 
-if (!isModeBpmn && !isModeDmn && !isModeSbom) {
+if (!isModeBpmn && !isModeDmn && !isModeSbom && !isModeDependencyVer) {
   showHelpMessageAndExit(isShowHelp ? null : modeArgument);
 }
 
@@ -348,6 +415,21 @@ if (isModeDmn) {
   const dmnTarget = process.env.DMN_PATH || process.env.PROJECT_PATH || dmnPath;
   logger.debug(`Running linter for ${DMN} with path: ${dmnTarget}`);
   if (!lint(DMN, dmnTarget)) {
+    overallSuccess = false;
+  }
+}
+
+if (isModeDependencyVer) {
+  generateDependencyVersions();
+
+  if (fs.existsSync(DEP_VER_JSON_FILE)) {
+    // stream the file to the output
+    let dVerFile = fs.createReadStream(DEP_VER_JSON_FILE);
+    dVerFile.on('open', () => {
+      dVerFile.pipe(process.stdout);
+    });
+  } else {
+    logger.info(`Dependency versions file not found: ${DEP_VER_JSON_FILE}`);
     overallSuccess = false;
   }
 }

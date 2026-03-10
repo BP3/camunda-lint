@@ -83,13 +83,27 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
               "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions/$id"
           fi
+
       - name: Build Docker image of application, tag with branch name
         env:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "image-name = ${{ inputs.image-name }}"
           echo "branch-name = ${{ inputs.branch-name}}"
-          docker build --secret id=GH_TOKEN,env=NPM_TOKEN -t ${{ inputs.image-name }}:${{ inputs.branch-name }} .
+          docker build \
+                --secret id=GH_TOKEN,env=NPM_TOKEN \
+                --build-arg BPMNLINT_VER="${{ vars.BPMNLINT_VER }}" \
+                --build-arg BPMNLINT_UTILS_VER="${{ vars.BPMNLINT_UTILS_VER }}" \
+                --build-arg BPMN_MODDLE_VER="${{ vars.BPMN_MODDLE_VER }}" \
+                --build-arg ZEEBE_BPMN_MODDLE_VER="${{ vars.ZEEBE_BPMN_MODDLE_VER }}" \
+                --build-arg DMNLINT_VER="${{ vars.DMNLINT_VER }}" \
+                --build-arg DMNLINT_UTILS_VER="${{ vars.DMNLINT_UTILS_VER }}" \
+                --build-arg DMN_MODDLE_VER="${{ vars.DMN_MODDLE_VER }}" \
+                -t ${{ inputs.image-name }}:${{ inputs.branch-name }} .
+
+      - name: View the installed packages and versions
+        run: |
+          docker run -i --rm ${{ inputs.image-name }}:${{ inputs.branch-name }} ver
 
       - name: Push to local registry
         run: |
