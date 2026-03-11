@@ -101,6 +101,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '>=22.14.0'
+          check-latest: true
+
+      - name: Install dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm install
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -119,6 +131,13 @@ jobs:
             -e PROJECT_PATH=/project \
             ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
 
-      - name: Run SBOM Test
+      - name: Run Integration Tests
+        env:
+          IMAGE_NAME: ${{ inputs.image-name }}
+          BRANCH_NAME: ${{ inputs.branch-name }}
         run: |
-          docker run -i --rm ${{ inputs.image-name }}:${{ inputs.branch-name }} sbom
+          npm run test:integration
+
+#      - name: Run SBOM Test
+#        run: |
+#          docker run -i --rm ${{ inputs.image-name }}:${{ inputs.branch-name }} sbom
