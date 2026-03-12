@@ -237,7 +237,7 @@ async function findFiles(pattern) {
 async function lintFiles(files, linter, linterType) {
   const allIssues = [];
   let totalErrors = 0;
-  let totalWarnings = 0;
+  let totalIssues = 0;
 
   const linterConfig = LINTER_CONFIGS[linterType];
   const moddle = linterConfig.getModdle();
@@ -261,7 +261,7 @@ async function lintFiles(files, linter, linterType) {
             category: 'import-warning',
             rule: moddleName,
           });
-          totalWarnings++;
+          totalIssues++;
         });
         if (Object.keys(report).length === 0) {
           logger.debug('  No issues found.');
@@ -274,8 +274,8 @@ async function lintFiles(files, linter, linterType) {
       Object.entries(report).forEach(([ruleName, issues]) => {
         issues.forEach((issue) => {
           logger.debug(`- [${issue.category}] (${ruleName}) ${issue.id || 'N/A'}: ${issue.message}`);
+          totalIssues++;
           if (issue.category?.toLowerCase().includes('error')) totalErrors++;
-          else totalWarnings++;
 
           allIssues.push({ file: fileName, rule: ruleName, ...issue });
         });
@@ -293,7 +293,7 @@ async function lintFiles(files, linter, linterType) {
     }
   }
 
-  return { allIssues, totalErrors, totalWarnings };
+  return { allIssues, totalErrors, totalWarnings: totalIssues };
 }
 
 function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, format, outputPath, showConsoleTable, linterType) {
@@ -310,12 +310,10 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
     allIssues.forEach((issue) => {
       //default to info if not specified
       const issueType = issue.category?.toLowerCase() || 'info';
-      const isError = issue.category?.toLowerCase().includes('error') || issue.severity === 'error';
-      //DEPRECATED: const label = isError ? theme.error : theme.warning;
+      const isError = issue.category === 'error' || issue.category?.toLowerCase().includes('error');
       const label = theme[issueType] || theme.info;
       const file = path.basename(issue.file);
       const output = isError ? totalErrors > 0 : totalErrors === 0;
-
       if (output) {
         reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
       }
@@ -330,7 +328,10 @@ ${chalk.gray('-'.repeat(60))}
 ${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.red.bold(totalErrors)} | Warnings: ${chalk.yellow.bold(totalWarnings)}`);
 
   const extension = format === 'junit' ? 'xml' : format;
-  const finalOutputPath = path.resolve(process.cwd(), `${outputPath}${outputPath.indexOf(linterType) < 0 ? `-${linterType}` : ``}${outputPath.indexOf(extension) < 0 ? `.${extension}` : ``}`);
+  const finalOutputPath = path.resolve(
+    process.cwd(),
+    `${outputPath}${outputPath.toLowerCase().indexOf(linterType) < 0 ? `-${linterType}` : ``}${outputPath.indexOf(extension) < 0 ? `.${extension}` : ``}`
+  );
   let reportContent;
 
   try {
