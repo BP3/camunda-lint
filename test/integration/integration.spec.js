@@ -99,7 +99,7 @@ describe('Integration Tests', function () {
   // *****************************************************************
   // bpmnlint
   // *****************************************************************
-  performContainerTest('bpmnlint', { timeout: 30000, hasOutput: true }, 'bpmnlint', [`--mount type=bind,src=${__dirname},dst=/project`, '-e PROJECT_PATH=/project'], (resultContext) => {
+  performContainerTest('bpmnlint', { timeout: 30000, hasOutput: true }, 'bpmnlint', [`--mount type=bind,src=${__dirname},dst=/project`], (resultContext) => {
     it('should run without errors', function () {
       expect(resultContext.error).to.be.null;
     });
@@ -114,7 +114,7 @@ describe('Integration Tests', function () {
     'bpmnlint with custom rules',
     { timeout: 30000, hasOutput: true },
     'bpmnlint',
-    [`--mount type=bind,src=${__dirname},dst=/project`, '-e PROJECT_PATH=/project', `-e BPMN_RULES_PATH=/project/bpmn-rules`],
+    [`--mount type=bind,src=${__dirname},dst=/project`, `-e BPMN_RULES_PATH=/project/bpmn-rules`],
     (resultContext) => {
       it('should run without errors', function () {
         expect(resultContext.error).to.be.null;
@@ -127,7 +127,7 @@ describe('Integration Tests', function () {
   // *****************************************************************
   // dmnlint
   // *****************************************************************
-  performContainerTest('dmnlint', { timeout: 30000, hasOutput: true }, 'dmnlint', [`--mount type=bind,src=${__dirname},dst=/project`, '-e PROJECT_PATH=/project'], (resultContext) => {
+  performContainerTest('dmnlint', { timeout: 30000, hasOutput: true }, 'dmnlint', [`--mount type=bind,src=${__dirname},dst=/project`], (resultContext) => {
     it('should run without errors', function () {
       expect(resultContext.error).to.be.null;
     });
@@ -142,7 +142,7 @@ describe('Integration Tests', function () {
     'dmnlint with custom rules',
     { timeout: 30000, hasOutput: true },
     'dmnlint',
-    [`--mount type=bind,src=${__dirname},dst=/project`, '-e PROJECT_PATH=/project', `-e DMN_RULES_PATH=/project/dmn-rules`],
+    [`--mount type=bind,src=${__dirname},dst=/project`, `-e DMN_RULES_PATH=/project/dmn-rules`],
     (resultContext) => {
       it('should run without errors', function () {
         expect(resultContext.error).to.be.null;
@@ -155,7 +155,7 @@ describe('Integration Tests', function () {
   // *****************************************************************
   // lint
   // *****************************************************************
-  performContainerTest('lint', { timeout: 30000, hasOutput: true }, 'lint', [`--mount type=bind,src=${__dirname},dst=/project`, '-e PROJECT_PATH=/project'], (resultContext) => {
+  performContainerTest('lint', { timeout: 30000, hasOutput: true }, 'lint', [`--mount type=bind,src=${__dirname},dst=/project`], (resultContext) => {
     it('should run without errors', function () {
       expect(resultContext.error).to.be.null;
     });
@@ -174,7 +174,7 @@ describe('Integration Tests', function () {
     'lint with custom bpmn rules',
     { timeout: 30000, hasOutput: true },
     'lint',
-    [`--mount type=bind,src=${__dirname},dst=/project`, '-e PROJECT_PATH=/project', `-e BPMN_RULES_PATH=/project/bpmn-rules`],
+    [`--mount type=bind,src=${__dirname},dst=/project`, `-e BPMN_RULES_PATH=/project/bpmn-rules`],
     (resultContext) => {
       it('should run without errors', function () {
         expect(resultContext.error).to.be.null;
@@ -195,7 +195,7 @@ describe('Integration Tests', function () {
     'lint with custom dmn rules',
     { timeout: 30000, hasOutput: true },
     'lint',
-    [`--mount type=bind,src=${__dirname},dst=/project`, '-e PROJECT_PATH=/project', `-e DMN_RULES_PATH=/project/dmn-rules`],
+    [`--mount type=bind,src=${__dirname},dst=/project`, `-e DMN_RULES_PATH=/project/dmn-rules`],
     (resultContext) => {
       it('should run without errors', function () {
         expect(resultContext.error).to.be.null;
@@ -216,7 +216,7 @@ describe('Integration Tests', function () {
     'lint with custom bpmn and dmn rules',
     { timeout: 30000, hasOutput: true },
     'lint',
-    [`--mount type=bind,src=${__dirname},dst=/project`, '-e PROJECT_PATH=/project', `-e BPMN_RULES_PATH=/project/bpmn-rules`, `-e DMN_RULES_PATH=/project/dmn-rules`],
+    [`--mount type=bind,src=${__dirname},dst=/project`, `-e BPMN_RULES_PATH=/project/bpmn-rules`, `-e DMN_RULES_PATH=/project/dmn-rules`],
     (resultContext) => {
       it('should run without errors', function () {
         expect(resultContext.error).to.be.null;

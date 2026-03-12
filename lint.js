@@ -36,6 +36,7 @@ const BUNDLED_PLUGINS = ['@BP3/bpmnlint-plugin-bpmn-rules'];
 
 const LINTRC_REVISED_SUFFIX = 'Revised';
 
+const WORKING_DIR = process.cwd();
 const PACKAGE_JSON = 'package.json';
 const LINT_RUNNER_PATH = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./`); // './lint-runner/'
 const SBOM_JSON_FILE = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./camunda-lint-sbom.json`);
@@ -92,8 +93,8 @@ let isModeDmn = false;
 let isModeSbom = false;
 let isShowHelp = false;
 
-let bpmnPath = './';
-let dmnPath = './';
+// let bpmnPath = './';
+// let dmnPath = './';
 
 let modeArgument = null;
 let overallSuccess = true;
@@ -249,6 +250,8 @@ function lint(linterType, projectPath) {
 
   if ((isBpmnLinterType && !isStringNullOrEmpty(process.env.BPMN_REPORT_FILEPATH)) || (!isBpmnLinterType && !isStringNullOrEmpty(process.env.DMN_REPORT_FILEPATH))) {
     linterArgs[argumentOutputPath] = isBpmnLinterType ? process.env.BPMN_REPORT_FILEPATH : process.env.DMN_REPORT_FILEPATH;
+  } else {
+    linterArgs[argumentOutputPath] = path.join(WORKING_DIR, `${isBpmnLinterType ? BPMN.toLowerCase() : DMN.toLowerCase()}-lint-report`);
   }
 
   linterArgs[argumentFormat] = process.env.REPORT_FORMAT || 'json';
@@ -337,7 +340,7 @@ if (isModeSbom) {
 }
 
 if (isModeBpmn) {
-  const bpmnTarget = process.env.BPMN_PATH || process.env.PROJECT_PATH || bpmnPath;
+  const bpmnTarget = WORKING_DIR;
   logger.debug(`Running linter for ${BPMN} with path: ${bpmnTarget}`);
   if (!lint(BPMN, bpmnTarget)) {
     overallSuccess = false;
@@ -345,7 +348,7 @@ if (isModeBpmn) {
 }
 
 if (isModeDmn) {
-  const dmnTarget = process.env.DMN_PATH || process.env.PROJECT_PATH || dmnPath;
+  const dmnTarget = WORKING_DIR;
   logger.debug(`Running linter for ${DMN} with path: ${dmnTarget}`);
   if (!lint(DMN, dmnTarget)) {
     overallSuccess = false;
