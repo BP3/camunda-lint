@@ -1,0 +1,93 @@
+name: Lint Camunda Project
+
+on:
+  pull_request:
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  using-docker-run:
+    name: Lint with Docker run
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # NOTE: Add your own linting here, example below...
+      # - name: Super-Linter
+      #   uses: super-linter/super-linter/slim@v8.5.0
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     VALIDATE_ALL_CODEBASE: false
+      #     VALIDATE_MARKDOWN: true
+      #     VALIDATE_YAML: true
+      #     VALIDATE_TERRAFORM_FMT: true
+      #     VALIDATE_TERRAFORM_TFLINT: true
+      #     LINTER_RULES_PATH: .github/linters
+      #     SUPPRESS_POSSUM: true
+      #     SUPPRESS_OUTPUT_ON_SUCCESS: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ inputs.username }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the image
+        run: |
+          docker pull ${{ inputs.image-name }}:${{ inputs.branch-name }}
+
+      - name: camunda-lint
+        run: |
+          docker run -i --rm \
+            --mount type=bind,src=${PWD},dst=/project \
+            -e PROJECT_PATH=/project \
+            ghcr.io/bp3/camunda-lint:main \
+            lint
+
+  using-local-github-action:
+    name: Lint with Github Action
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+      statuses: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ inputs.username }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run local camunda-lint-action
+        uses: ./
+        with:
+          command: 'lint'
