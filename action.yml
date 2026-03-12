@@ -36,7 +36,7 @@ runs:
   using: 'docker'
   image: 'docker://ghcr.io/bp3/camunda-lint:main'
   # Use the local entrypoint so we can structure the parameters we get as inputs
-  entrypoint: './action-entrypoint.sh'
+  entrypoint: 'action-entrypoint.sh'
   # Optional: Pass the inputs as an array of arguments to the Docker container
   # args:
   #   - ${{ inputs.command }}
