@@ -99,7 +99,11 @@ const LINTER_CONFIGS = {
     reportTitle: 'BPMN Lint Report',
     defaultConfig: {
       extends: ['bpmnlint:recommended', 'plugin:bp3-dynamic-rules/all'],
-      rules: {},
+      rules: {
+        'label-required': 'warn',
+        // 'camunda-compat/implementation': 'warn',
+        'camunda-compat/subscription': 'warn',
+      },
     },
     // prettier-ignore
     defaultDependencies: {
