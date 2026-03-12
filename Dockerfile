@@ -12,12 +12,12 @@
 
 FROM node:22.14.0-alpine3.21
 
+# This creates /app and sets it as the working directory
+WORKDIR /app
+
 # Add the bp3 user and group - using 1001 because node's is already using 1000 - and install the Camunda lint global packages and create /app and set folder ownership
-RUN npm install -g bpmnlint@11.12.0 \
-                    dmnlint@0.2.0 && \
-    addgroup --gid 1001 bp3 && \
+RUN addgroup --gid 1001 bp3 && \
     adduser --uid 1001 --ingroup bp3 --home /home/bp3user --shell /bin/bash --disabled-password bp3user && \
-    mkdir /app  && \
     chown -R bp3user:bp3 /usr/local/lib/node_modules && \
     chown -R bp3user:bp3 /usr/local/bin && \
     chown -R bp3user:bp3 /app
@@ -28,8 +28,6 @@ COPY --chown=bp3user:bp3 --chmod=755 .npmrc /home/bp3user/.npmrc
 COPY --chown=bp3user:bp3 --chmod=755 ["docker-entrypoint.sh", "l*.js", "package*.js*", ".npmrc", "camunda-lint-sbom.json", "/app/" ]
 COPY --chown=bp3user:bp3 --chmod=755 bp3-dynamic-rules/ /app/bp3-dynamic-rules/
 
-WORKDIR /app
-
 # As this is now a node workspace, this installs all the dependencies for child folders also
 # NOTE: can only perform the installations for the @BP3/bpmnlint-plugin-bpmn-rules because it requires the steps above to be done
 RUN --mount=type=secret,id=GH_TOKEN,uid=1001 \
@@ -37,8 +35,7 @@ RUN --mount=type=secret,id=GH_TOKEN,uid=1001 \
     npm install @BP3/bpmnlint-plugin-bpmn-rules@latest && \
     npm install
 
-VOLUME /local
-WORKDIR /local
+WORKDIR /project
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["help"]
