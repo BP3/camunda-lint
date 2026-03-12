@@ -10,10 +10,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: lint-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
   using-docker-run:
     name: Lint with Docker run
@@ -54,13 +50,12 @@ jobs:
 
       - name: Pull the image
         run: |
-          docker pull ${{ inputs.image-name }}:${{ inputs.branch-name }}
+          docker pull ghcr.io/bp3/camunda-lint:main
 
       - name: camunda-lint
         run: |
           docker run -i --rm \
             --mount type=bind,src=${PWD},dst=/project \
-            -e PROJECT_PATH=/project \
             ghcr.io/bp3/camunda-lint:main \
             lint
 
