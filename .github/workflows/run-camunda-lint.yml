@@ -77,6 +77,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Pull the image
+        run: |
+          docker pull ghcr.io/bp3/camunda-lint:main
+
       - name: Run local camunda-lint-action
         uses: ./
         with:
