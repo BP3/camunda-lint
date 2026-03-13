@@ -82,6 +82,6 @@ jobs:
           docker pull ghcr.io/bp3/camunda-lint:main
 
       - name: Run local camunda-lint-action
-        uses: ./
+        uses: BP3/camunda-lint-action@main
         with:
           command: 'lint'
