@@ -1,0 +1,47 @@
+# action.yml
+name: 'camunda-lint-action'
+description: 'Runs camunda-lint, a bpmnlint and dmnlint wrapper tool.'
+author: 'BP-3'
+
+# Define the inputs your Action will accept
+# These will be available as INPUT_<my-variable-name-in-caps>
+inputs:
+  command:
+    description: 'Whether to run bpmnlint or dmnlint or both, options are: lint (default) | bpmnlint | dmnlint'
+    required: true
+    default: 'lint'
+  report-format:
+    description: 'The format of the lint report files, options are: html | junit | json (default)'
+    required: false
+    default: 'json'
+  bpmn-report-filename:
+    description: 'The filename for the bpmn report'
+    required: false
+    default: './bpmn-lint-report'
+  dmn-report-filename:
+    description: 'The filename for the dmn report'  
+    required: false
+    default: './dmn-lint-report'
+  bpmn-rules-path:
+    description: 'Path to the bpmn rules to add to the linter'
+    required: false
+    # default: '##'
+  dmn-rules-path:
+    description: 'Path to the dmn rules to add to the linter'
+    required: false
+    # default: '##'
+
+# Define how the Action runs
+runs:
+  using: 'docker'
+  image: 'docker://ghcr.io/bp3/camunda-lint:main'
+  # Use the local entrypoint so we can structure the parameters we get as inputs
+  entrypoint: 'action-entrypoint.sh'
+  # Optional: Pass the inputs as an array of arguments to the Docker container
+  # args:
+  #   - ${{ inputs.command }}
+  #   - ${{ inputs.report-format }}
+  #   - ${{ inputs.bpmn-report-filename }}
+  #   - ${{ inputs.dmn-report-filename }}
+  #   - ${{ inputs.bpmn-rules-path }}
+  #   - ${{ inputs.dmn-rules-path }}

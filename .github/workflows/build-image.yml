@@ -24,13 +24,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '>=22.14.0'
-          check-latest: true
 
       - name: Install dependencies
         env:
@@ -46,7 +47,7 @@ jobs:
         run: ls -l camunda-lint-sbom.json
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ inputs.username }}
@@ -99,7 +100,7 @@ jobs:
     needs: build-image
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -114,7 +115,7 @@ jobs:
           npm install
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ inputs.username }}

@@ -1,0 +1,89 @@
+name: Lint Camunda Project
+
+on:
+  pull_request:
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  using-docker-run:
+    name: Lint with Docker run
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # NOTE: Add your own linting here, example below...
+      # - name: Super-Linter
+      #   uses: super-linter/super-linter/slim@v8.5.0
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     VALIDATE_ALL_CODEBASE: false
+      #     VALIDATE_MARKDOWN: true
+      #     VALIDATE_YAML: true
+      #     VALIDATE_TERRAFORM_FMT: true
+      #     VALIDATE_TERRAFORM_TFLINT: true
+      #     LINTER_RULES_PATH: .github/linters
+      #     SUPPRESS_POSSUM: true
+      #     SUPPRESS_OUTPUT_ON_SUCCESS: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the image
+        run: |
+          docker pull ghcr.io/bp3/camunda-lint:main
+
+      - name: camunda-lint
+        run: |
+          docker run -i --rm \
+            --mount type=bind,src=${PWD},dst=/project \
+            ghcr.io/bp3/camunda-lint:main \
+            lint
+
+  using-local-github-action:
+    name: Lint with Github Action
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # - name: Login to GitHub Container Registry
+      #   uses: docker/login-action@v4
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Pull the image
+      #   run: |
+      #     docker pull ghcr.io/bp3/camunda-lint:main
+
+      - name: Run local camunda-lint-action
+        uses: BP3/camunda-lint-action@main
+        with:
+          command: 'lint'
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
