@@ -22,15 +22,15 @@
   },
   "dependencies": {
     "bp3-dynamic-rules": "file:bp3-dynamic-rules",
-    "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
-    "dmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
     "bpmn-moddle": "^10.0.0",
-    "bpmnlint": "^11.12.0",
-    "bpmnlint-plugin-camunda-compat": "^2.48.1",
+    "bpmnlint": "^11.12.1",
+    "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
+    "bpmnlint-plugin-camunda-compat": "^2.49.0",
     "bpmnlint-utils": "^1.1.1",
     "chalk": "^4.1.2",
     "dmn-moddle": "^12.0.1",
     "dmnlint": "^0.2.0",
+    "dmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
     "dmnlint-utils": "^0.1.0",
     "junit-report-builder": "^5.1.1",
     "tiny-glob": "^0.2.9",
@@ -65,8 +65,7 @@
     "globals": "$globals",
     "prettier": "$prettier",
     "mocha": {
-      "serialize-javascript": "7.0.3"
-    },
-    "glob": "13.0.6"
+      "serialize-javascript": "7.0.5"
+    }
   }
 }
