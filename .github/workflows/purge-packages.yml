@@ -1,0 +1,48 @@
+name: Purge old package versions
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # weekly, Sunday 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Log what would be deleted, without deleting it'
+        type: boolean
+        default: true
+
+# The cleanup action is not safe to run in parallel against the same package.
+concurrency:
+  group: purge-packages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Purge old versions of the container package
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: bp3
+          packages: camunda-lint
+
+          # main is load-bearing - release.yml pulls it to cut every release.
+          use-regex: true
+          exclude-tags: '^(main|latest|built-test|v?[0-9]+\.[0-9]+\.[0-9]+.*)$'
+
+          # Keep the 15 newest branch-build images, delete the rest. Excluded
+          # tags above do not consume these slots.
+          keep-n-tagged: 15
+
+          # Reclaim digests orphaned when a branch tag was moved to a new build.
+          delete-untagged: true
+          delete-ghost-images: true
+
+          validate: true
+          # Undefined on the schedule trigger, so the cron deletes for real
+          # while a manual run defaults to a preview.
+          dry-run: ${{ inputs.dry-run == true }}
