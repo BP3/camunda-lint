@@ -23,7 +23,7 @@ function performBpmnChecks(resultContext) {
   });
 
   it('BPMN: should have warnings about bpmn diagram: process has an empty name', function () {
-    expect(resultContext.stdout).to.contain('Process has a empty name.');
+    expect(resultContext.stdout).to.contain('Process has an empty name.');
   });
 }
 
@@ -37,7 +37,7 @@ function performBpmnChecksWithCustomRule(resultContext) {
   });
 
   it('BPMN: should have warnings about bpmn diagram: process has an empty name', function () {
-    expect(resultContext.stdout).to.contain('Process has a empty name.');
+    expect(resultContext.stdout).to.contain('Process has an empty name.');
   });
 
   it('BPMN: should have warnings about bpmn diagram: the activity is a manual task', function () {
