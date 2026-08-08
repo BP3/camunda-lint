@@ -25,8 +25,11 @@ ARG BPMNLINT_VER=11.12.0 \
 WORKDIR /app
 
 # Add the bp3 user and group - using 1001 because node's is already using 1000 - and install the Camunda lint global packages and create /app and set folder ownership
-RUN addgroup --gid 1001 bp3 && \
+RUN npm install -g bpmnlint@11.12.0 \
+                    dmnlint@0.2.0 && \
+    addgroup --gid 1001 bp3 && \
     adduser --uid 1001 --ingroup bp3 --home /home/bp3user --shell /bin/bash --disabled-password bp3user && \
+    mkdir /app  && \
     chown -R bp3user:bp3 /usr/local/lib/node_modules && \
     chown -R bp3user:bp3 /usr/local/bin && \
     chown -R bp3user:bp3 /app

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "schedule:weekly"],
+  "timezone": "Europe/London",
+  "labels": ["dependencies"],
+  "minimumReleaseAge": "3 days",
+  "prConcurrentLimit": 4,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"]
+  },
+  "postUpdateOptions": [
+    "npmDedupe"
+  ],
+  "npm": {
+    "enabled": true
+  },
+  "docker": {
+    "enabled": true,
+    "pinDigests": false
+  },
+  "github-actions": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "groupName": "BPMN/DMN & Camunda tooling",
+      "matchDatasources": ["npm"],
+      "matchPackageNames": [
+        "bpmn-moddle",
+        "bpmnlint",
+        "bpmnlint-plugin-camunda-compat",
+        "bpmnlint-utils",
+        "dmn-moddle",
+        "dmnlint",
+        "dmnlint-utils",
+        "zeebe-bpmn-moddle"
+      ]
+    },
+    {
+      "groupName": "Lint & format tooling",
+      "matchDatasources": ["npm"],
+      "matchPackageNames": [
+        "eslint",
+        "eslint-config-prettier",
+        "eslint-plugin-prettier",
+        "prettier",
+        "globals"
+      ]
+    },
+    {
+      "groupName": "Test tooling",
+      "matchDatasources": ["npm"],
+      "matchPackageNames": [
+        "mocha",
+        "chai"
+      ]
+    },
+    {
+      "description": "Local workspace packages are never fetched externally - make sure Renovate never tries to touch them",
+      "matchPackageNames": [
+        "bp3-dynamic-rules",
+        "bpmnlint-plugin-bp3-dynamic-rules",
+        "dmnlint-plugin-bp3-dynamic-rules"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Node major bumps in the Dockerfile need a deliberate look (alpine base, engines field, CI image) - keep these as PRs rather than automerging",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["node"],
+      "matchUpdateTypes": ["major"],
+      "labels": ["dependencies", "needs-review"]
+    },
+    {
+      "description": "Low-risk patch/minor devDependency bumps can automerge once CI (branch-build/lint) is green",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "platformAutomerge": true
+    }
+  ]
+}

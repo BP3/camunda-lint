@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "bpmnlint": "*",
+    "bpmnlint-plugin-camunda-compat": "*",
     "bpmnlint-utils": "*",
     "dmnlint": "*",
     "dmnlint-utils": "*",

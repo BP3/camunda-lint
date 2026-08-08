@@ -22,12 +22,30 @@ on:
 jobs:
   build-image:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
+      # Branch names may contain characters a Docker tag cannot (most commonly '/'),
+      # so map them onto the tag grammar: [a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}
+      - name: Derive image tag from branch name
+        id: tag
+        env:
+          RAW_BRANCH: ${{ inputs.branch-name }}
+        run: |
+          tag=$(printf '%s' "$RAW_BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/-/g; s/^[^a-zA-Z0-9_]+//')
+          tag=${tag:0:128}
+          if [ -z "$tag" ]; then tag=branch; fi
+          echo "Branch '$RAW_BRANCH' -> image tag '$tag'"
+          # Both writes are needed: GITHUB_OUTPUT crosses to the test-image job,
+          # GITHUB_ENV serves the remaining steps in this job.
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "IMAGE_TAG=$tag" >> "$GITHUB_ENV"
+
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '>=22.14.0'
           check-latest: true
@@ -46,7 +64,7 @@ jobs:
         run: ls -l camunda-lint-sbom.json
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ inputs.username }}
@@ -67,7 +85,7 @@ jobs:
             exit 0
           fi
 
-          id=$(jq -r ".[] | select(.metadata.container.tags | index(\"${{ inputs.branch-name }}\")) | .id" "${json_response_file}")
+          id=$(jq -r --arg tag "$IMAGE_TAG" '.[] | select(.metadata.container.tags | index($tag)) | .id' "${json_response_file}")
 
           if [ "$id" != "" ]; then
             # First call is just to see the result
@@ -87,9 +105,10 @@ jobs:
       - name: Build Docker image of application, tag with branch name
         env:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ inputs.image-name }}
         run: |
-          echo "image-name = ${{ inputs.image-name }}"
-          echo "branch-name = ${{ inputs.branch-name}}"
+          echo "image-name = $IMAGE"
+          echo "image-tag = $IMAGE_TAG"
           docker build \
                 --secret id=GH_TOKEN,env=NPM_TOKEN \
                 --build-arg BPMNLINT_VER="${{ vars.BPMNLINT_VER }}" \
@@ -99,24 +118,29 @@ jobs:
                 --build-arg DMNLINT_VER="${{ vars.DMNLINT_VER }}" \
                 --build-arg DMNLINT_UTILS_VER="${{ vars.DMNLINT_UTILS_VER }}" \
                 --build-arg DMN_MODDLE_VER="${{ vars.DMN_MODDLE_VER }}" \
-                -t ${{ inputs.image-name }}:${{ inputs.branch-name }} .
+                -t "$IMAGE:$IMAGE_TAG" .
 
       - name: View the installed packages and versions
         run: |
-          docker run -i --rm ${{ inputs.image-name }}:${{ inputs.branch-name }} ver
+          docker run -i --rm $IMAGE:$IMAGE_TAG ver
 
       - name: Push to local registry
+        env:
+          IMAGE: ${{ inputs.image-name }}
         run: |
-          docker push ${{ inputs.image-name }}:${{ inputs.branch-name }}
+          docker push "$IMAGE:$IMAGE_TAG"
   test-image:
     runs-on: ubuntu-latest
     needs: build-image
+    env:
+      # Derived once in build-image; job-level env makes it visible to every step below.
+      IMAGE_TAG: ${{ needs.build-image.outputs.tag }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '>=22.14.0'
           check-latest: true
@@ -128,30 +152,35 @@ jobs:
           npm install
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ inputs.username }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull the image
+        env:
+          IMAGE: ${{ inputs.image-name }}
         run: |
-          docker pull ${{ inputs.image-name }}:${{ inputs.branch-name }}
+          docker pull "$IMAGE:$IMAGE_TAG"
 
       - name: Run Smoke Test
+        env:
+          IMAGE: ${{ inputs.image-name }}
         run: |
           docker run -i --rm \
-            -v ${PWD}/test/smoke-test:/project \
-            -e PROJECT_PATH=/project \
-            ${{ inputs.image-name }}:${{ inputs.branch-name }} lint
+            --mount type=bind,src=${PWD}/test/smoke-test,dst=/project \
+            "$IMAGE:$IMAGE_TAG" lint
 
       - name: Run Integration Tests
         env:
           IMAGE_NAME: ${{ inputs.image-name }}
-          BRANCH_NAME: ${{ inputs.branch-name }}
+          BRANCH_NAME: ${{ env.IMAGE_TAG }}
         run: |
           npm run test:integration
 
 #      - name: Run SBOM Test
+#        env:
+#          IMAGE: ${{ inputs.image-name }}
 #        run: |
-#          docker run -i --rm ${{ inputs.image-name }}:${{ inputs.branch-name }} sbom
+#          docker run -i --rm "$IMAGE:$IMAGE_TAG" sbom

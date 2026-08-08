@@ -1,0 +1,4 @@
+{
+  "extends": ["dmnlint:recommended", "plugin:bp3-dynamic-rules/all"],
+  "rules": {}
+}
