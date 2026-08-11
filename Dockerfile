@@ -10,7 +10,7 @@
 #
 ############################################################################
 
-FROM node:22.14.0-alpine3.21
+FROM node:24.11.1-alpine3.21
 
 # This creates /app and sets it as the working directory
 WORKDIR /app
