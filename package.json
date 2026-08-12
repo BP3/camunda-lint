@@ -27,7 +27,7 @@
     "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
     "bpmnlint-plugin-camunda-compat": "^2.49.0",
     "bpmnlint-utils": "^1.1.1",
-    "chalk": "^4.1.2",
+    "chalk": "^6.0.0",
     "dmn-moddle": "^12.0.1",
     "dmnlint": "^0.2.0",
     "dmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
