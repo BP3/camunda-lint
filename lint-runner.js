@@ -17,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const junitReportBuilder = require('junit-report-builder');
 const { execSync } = require('child_process');
-const chalk = require('chalk');
+const { styleText } = require('util');
 const { logger } = require('./logger');
 
 const { Linter: BpmnLinter } = require('bpmnlint');
@@ -300,10 +300,10 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
   let reportDetails = '';
 
   const theme = {
-    error: chalk.red(' ❌ Error'),
-    warn: chalk.yellow(' ⚠️ Warning'),
-    warning: chalk.yellow(' ⚠️ Warning'),
-    info: chalk.blueBright(` ℹ️ Info`),
+    error: styleText('red', ' ❌ Error'),
+    warn: styleText('yellow', ' ⚠️ Warning'),
+    warning: styleText('yellow', ' ⚠️ Warning'),
+    info: styleText('blueBright', ` ℹ️ Info`),
   };
 
   if (showConsoleTable && allIssues.length > 0) {
@@ -315,7 +315,7 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
       const file = path.basename(issue.file);
       const output = isError ? totalErrors > 0 : totalErrors === 0;
       if (output) {
-        reportDetails += `${label} ${chalk.cyan(file)} › ${issue.id || 'N/A'}: ${issue.message} ${chalk.gray(`(${issue.rule})`)}\n`;
+        reportDetails += `${label} ${styleText('cyan', file)} › ${issue.id || 'N/A'}: ${issue.message} ${styleText('gray', `(${issue.rule})`)}\n`;
       }
     });
   } else {
@@ -324,8 +324,8 @@ function generateReport({ allIssues, totalErrors, totalWarnings }, lintedFiles, 
 
   // Footer Summary
   logger.info(`
-${chalk.gray('-'.repeat(60))}
-${chalk.bold('LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${chalk.red.bold(totalErrors)} | Warnings: ${chalk.yellow.bold(totalWarnings)}`);
+${styleText('gray', '-'.repeat(60))}
+${styleText('bold', 'LINT RESULTS')} | Files: ${lintedFiles.length} | Errors: ${styleText(['red', 'bold'], String(totalErrors))} | Warnings: ${styleText(['yellow', 'bold'], String(totalWarnings))}`);
 
   const extension = format === 'junit' ? 'xml' : format;
   const finalOutputPath = path.resolve(
