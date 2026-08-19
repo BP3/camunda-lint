@@ -12,7 +12,7 @@
  =
  =================================================================================*/
 
-const chalk = require('chalk');
+const { styleText } = require('util');
 const process = require('process');
 
 const LOG_LEVELS = {
@@ -36,22 +36,22 @@ function isLogLevelEnabled(logLevel) {
 const logger = {
   debug: (...args) => {
     if (isLogLevelEnabled(LOG_LEVELS.debug)) {
-      console.log(chalk.gray('DEBUG:'), ...args);
+      console.log(styleText('gray', 'DEBUG:'), ...args);
     }
   },
   info: (...args) => {
     if (isLogLevelEnabled(LOG_LEVELS.info)) {
-      console.log(chalk.blueBright.bold('INFO:'), ...args);
+      console.log(styleText(['blueBright', 'bold'], 'INFO:'), ...args);
     }
   },
   warn: (...args) => {
     if (isLogLevelEnabled(LOG_LEVELS.warn)) {
-      console.warn(chalk.yellowBright.bold('WARN:'), ...args);
+      console.warn(styleText(['yellowBright', 'bold'], 'WARN:', { stream: process.stderr }), ...args);
     }
   },
   error: (...args) => {
     if (isLogLevelEnabled(LOG_LEVELS.error)) {
-      console.error(chalk.redBright.bold('ERROR:'), ...args);
+      console.error(styleText(['redBright', 'bold'], 'ERROR:', { stream: process.stderr }), ...args);
     }
   },
 };

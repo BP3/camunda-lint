@@ -18,7 +18,7 @@
     "sbom": "npx @cyclonedx/cyclonedx-npm -o camunda-lint-sbom.json"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.15.0"
   },
   "dependencies": {
     "bp3-dynamic-rules": "file:bp3-dynamic-rules",
@@ -27,7 +27,6 @@
     "bpmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
     "bpmnlint-plugin-camunda-compat": "^2.49.0",
     "bpmnlint-utils": "^1.1.1",
-    "chalk": "^4.1.2",
     "dmn-moddle": "^12.0.1",
     "dmnlint": "^0.2.0",
     "dmnlint-plugin-bp3-dynamic-rules": "file:bp3-dynamic-rules",
@@ -54,7 +53,6 @@
     "dmnlint": "$dmnlint",
     "dmnlint-utils": "$dmnlint-utils",
     "zeebe-bpmn-moddle": "$zeebe-bpmn-moddle",
-    "chalk": "$chalk",
     "cli-table3": "$cli-table3",
     "junit-report-builder": "$junit-report-builder",
     "tiny-glob": "$tiny-glob",
