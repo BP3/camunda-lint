@@ -24,7 +24,7 @@ const { Linter: BpmnLinter } = require('bpmnlint');
 const BpmnNodeResolver = require('bpmnlint/lib/resolver/node-resolver');
 const { BpmnModdle } = require('bpmn-moddle');
 const { Linter: DmnLinter } = require('dmnlint');
-const DmnNodeResolver = require('dmnlint/lib/resolver/node-resolver');
+const DmnNodeResolver = require(path.join(path.dirname(require.resolve('dmnlint')), 'resolver', 'node-resolver.js'));
 const { DmnModdle } = require('dmn-moddle');
 
 // --- Define and parse command-line arguments using yargs ---
