@@ -15,6 +15,12 @@ jobs:
 
   call-workflow-build-image:
     needs: lint
+    # Dependabot-triggered pull_request runs default to a read-only GITHUB_TOKEN,
+    # which fails the ghcr.io push. Naming the scopes explicitly restores the
+    # write that the push and the branch-tag cleanup need.
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-image.yml
     with:
       username: ${{ github.actor }}
