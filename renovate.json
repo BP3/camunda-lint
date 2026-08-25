@@ -9,20 +9,19 @@
     "enabled": true,
     "labels": ["security"]
   },
-  "postUpdateOptions": [
-    "npmDedupe"
-  ],
+  "postUpdateOptions": ["npmDedupe"],
   "npm": {
     "enabled": true
-  },
-  "docker": {
-    "enabled": true,
-    "pinDigests": false
   },
   "github-actions": {
     "enabled": true
   },
   "packageRules": [
+    {
+      "matchCategories": ["docker"],
+      "enabled": true,
+      "pinDigests": false
+    },
     {
       "groupName": "BPMN/DMN & Camunda tooling",
       "matchDatasources": ["npm"],
@@ -51,10 +50,7 @@
     {
       "groupName": "Test tooling",
       "matchDatasources": ["npm"],
-      "matchPackageNames": [
-        "mocha",
-        "chai"
-      ]
+      "matchPackageNames": ["mocha", "chai"]
     },
     {
       "description": "Local workspace packages are never fetched externally - make sure Renovate never tries to touch them",
