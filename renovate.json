@@ -16,6 +16,13 @@
   "github-actions": {
     "enabled": true
   },
+  "hostRules": [
+    {
+      "hostType": "npm",
+      "matchHost": "npm.pkg.github.com",
+      "token": "{{ secrets.GH_PACKAGES_TOKEN }}"
+    }
+  ],
   "packageRules": [
     {
       "matchCategories": ["docker"],

@@ -29,10 +29,9 @@ COPY --chown=bp3user:bp3 --chmod=755 ["docker-entrypoint.sh", "l*.js", "package*
 COPY --chown=bp3user:bp3 --chmod=755 bp3-dynamic-rules/ /app/bp3-dynamic-rules/
 
 # As this is now a node workspace, this installs all the dependencies for child folders also
-# NOTE: can only perform the installations for the @BP3/bpmnlint-plugin-bpmn-rules because it requires the steps above to be done
+# NOTE: @BP3/bpmnlint-plugin-bpmn-rules is a private package, so the GH_TOKEN secret is needed for the install. Its version is pinned in package.json / package-lock.json (updated by Renovate)
 RUN --mount=type=secret,id=GH_TOKEN,uid=1001 \
     export GITHUB_TOKEN=$(cat /run/secrets/GH_TOKEN | tr -d '\r\n') && \
-    npm install @BP3/bpmnlint-plugin-bpmn-rules@latest && \
     npm install
 
 WORKDIR /project
