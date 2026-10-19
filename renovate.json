@@ -1,6 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "schedule:weekly"],
+  "extends": ["config:recommended"],
+  "schedule": ["before 4am on Wednesday"],
   "timezone": "Europe/London",
   "labels": ["dependencies"],
   "minimumReleaseAge": "3 days",
@@ -81,6 +82,12 @@
       "matchUpdateTypes": ["patch", "minor"],
       "automerge": true,
       "platformAutomerge": true
+    },
+    {
+      "description": "Our own plugin releases on Mondays; no release-age delay so the Wednesday run picks it up",
+      "matchDatasources": ["npm"],
+      "matchPackageNames": ["@BP3/bpmnlint-plugin-bpmn-rules"],
+      "minimumReleaseAge": null
     }
   ]
 }
