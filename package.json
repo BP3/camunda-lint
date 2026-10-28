@@ -63,9 +63,6 @@
     "eslint-config-prettier": "$eslint-config-prettier",
     "eslint-plugin-prettier": "$eslint-plugin-prettier",
     "globals": "$globals",
-    "prettier": "$prettier",
-    "mocha": {
-      "serialize-javascript": "7.1.2"
-    }
+    "prettier": "$prettier"
   }
 }
