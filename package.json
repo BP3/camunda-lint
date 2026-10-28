@@ -65,7 +65,7 @@
     "globals": "$globals",
     "prettier": "$prettier",
     "mocha": {
-      "serialize-javascript": "7.1.2"
+      "serialize-javascript": "7.1.4"
     }
   }
 }
