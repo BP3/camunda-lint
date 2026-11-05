@@ -16,7 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const process = require('process');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const { logger } = require('./logger.js');
 
 //*************************************************************************
@@ -31,13 +31,11 @@ const modeHelp = 'help';
 const BPMN = 'BPMN';
 const DMN = 'DMN';
 
-// bundled plugins :: plugins shouldn't be dependencies, but it might be necessary to install them nonetheless
-const BUNDLED_PLUGINS = ['@BP3/bpmnlint-plugin-bpmn-rules'];
-
 const LINTRC_REVISED_SUFFIX = 'Revised';
 
 const WORKING_DIR = process.cwd();
 const PACKAGE_JSON = 'package.json';
+const NODE_MODULES = 'node_modules';
 const LINT_RUNNER_PATH = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./`); // './lint-runner/'
 const SBOM_JSON_FILE = path.resolve(fs.existsSync('/app') ? '/app' : process.cwd(), `./camunda-lint-sbom.json`);
 const lintRunnerPath = path.resolve(LINT_RUNNER_PATH, 'lint-runner.js');
@@ -122,56 +120,69 @@ ${helpMessage}
   }
 }
 
-// Extract the details from a possible plugin name in the lintrc file to setup dependencies correctly
-function getPluginDetails(packageName) {
-  let result = null;
-  // assuming the correctness of the lintrc file, the currPackageName should be something like "plugin:pluginName/ruleset" at this time
-  if (packageName != null && packageName.indexOf('plugin:') == 0) {
-    // transform the package name provided to be used as a dependency
-    const dependencyWithoutRuleSet = packageName.substring(0, packageName.lastIndexOf('/'));
-    const ruleSet = packageName.substring(packageName.lastIndexOf('/'));
-    //prepare the revised config name for a new lintrc
-    const configName = dependencyWithoutRuleSet
-      .replace(/@|\^|~|\.|\//gim, '-')
-      .replace('--', '-')
-      .replace('plugin:-', 'plugin:');
-    // prepare the output
-    result = {
-      configName: `${configName}${ruleSet}`,
-      dependencyName: dependencyWithoutRuleSet.replace('plugin:', ''),
-      dependencyValue: dependencyWithoutRuleSet.replace('plugin:', 'npm:'),
-      npmReference: dependencyWithoutRuleSet.replace('plugin:', ''),
-    };
+// Get the npm package that a "plugin:<name>/<config>" entry in the lintrc file refers to.
+// This follows the same naming rules that bpmnlint / dmnlint use to load the plugin, e.g. for bpmnlint:
+//   plugin:camunda-compat/...                  => bpmnlint-plugin-camunda-compat
+//   plugin:bpmnlint-plugin-camunda-compat/...  => bpmnlint-plugin-camunda-compat
+//   plugin:@scope/my-rules/...                 => @scope/bpmnlint-plugin-my-rules
+function getPluginPackageName(extendsEntry, linterType) {
+  const match = /^plugin:(?:(@[^/]+)\/)?([^@/][^/]*)\/[^/]+$/.exec(extendsEntry);
+  if (match == null) {
+    return null;
   }
-  return result;
+  const [, scope, name] = match;
+  const productName = `${linterType.toLowerCase()}lint`;
+  const pluginPrefix = `${productName}-plugin-`;
+  const packageName = name === productName || name.startsWith(pluginPrefix) ? name : `${pluginPrefix}${name}`;
+  return scope ? `${scope}/${packageName}` : packageName;
 }
 
-// Prepare the config and dependencies for the bpmnlint runner
+// Check if a package is already installed in the lint runner (e.g. bundled in the image)
+function isPackageInstalled(packageName) {
+  return fs.existsSync(path.join(LINT_RUNNER_PATH, NODE_MODULES, packageName, PACKAGE_JSON));
+}
+
+// Install the given packages into the lint runner without changing its package.json.
+// Returns true if the installation succeeded.
+function installPackages(packageNames) {
+  try {
+    logger.debug(`About to run npm install on: ${LINT_RUNNER_PATH}`);
+    // execFileSync (no shell) because the package names come from the user's lintrc file
+    execFileSync('npm', ['install', '--no-save', '--no-audit', '--no-fund', ...packageNames], { cwd: LINT_RUNNER_PATH, stdio: 'pipe' });
+    return true;
+  } catch (err) {
+    // keep the npm error lines (e.g. "npm error code E404"), as they explain why the installation failed
+    const npmErrors = `${err.stderr || ''}`
+      .split('\n')
+      .filter((line) => line.startsWith('npm error'))
+      .join('\n');
+    logger.error(`Could not install: [ ${packageNames.join(', ')} ]\n${npmErrors || err.message}`);
+    return false;
+  }
+}
+
+// Prepare the config and dependencies for the bpmnlint runner.
+// Returns false if a plugin referenced by the lintrc file is missing and could not be installed.
 function prepareLintRunner(linterType, lintrcFullpath) {
   let revisedLintConfig;
-  let additionalDependencies = [];
-  let npmPackages = [];
+  let pluginPackages = [];
   // read the provided config and collect the configs and dependencies
   let lintConfig = JSON.parse(fs.readFileSync(lintrcFullpath));
 
   // The baseline is to have whatever is on the lintrc file, otherwise use the default value
   logger.debug(`Preparing the config: ${JSON.stringify(lintConfig, null, 2)}`);
   revisedLintConfig = lintConfig || defaultLintConfig[linterType] || emptyLintConfig;
-  if (revisedLintConfig.extends != null) {
-    if (typeof revisedLintConfig.extends == 'string') {
-      revisedLintConfig.extends = [revisedLintConfig.extends];
-    } else if (revisedLintConfig.extends.length > 0) {
-      for (var idx = 0; idx < revisedLintConfig.extends.length; ++idx) {
-        const currentPluginDetails = getPluginDetails(revisedLintConfig.extends[idx]); //, linterType.toLowerCase()
-        // if it's a plugin, prepare the appropriate dependencies
-        if (currentPluginDetails != null) {
-          additionalDependencies.push(currentPluginDetails);
-          npmPackages.push(currentPluginDetails.npmReference);
-        }
-      }
-    }
-  } else {
+  if (revisedLintConfig.extends == null) {
     revisedLintConfig.extends = defaultLintConfig[linterType].extends || [];
+  } else if (typeof revisedLintConfig.extends == 'string') {
+    revisedLintConfig.extends = [revisedLintConfig.extends];
+  }
+  for (var idx = 0; idx < revisedLintConfig.extends.length; ++idx) {
+    const pluginPackage = getPluginPackageName(revisedLintConfig.extends[idx], linterType);
+    // if it's a plugin, keep track of the package it needs
+    if (pluginPackage != null && !pluginPackages.includes(pluginPackage)) {
+      pluginPackages.push(pluginPackage);
+    }
   }
   logger.debug(`Prepared the revised config: ${JSON.stringify(revisedLintConfig, null, 2)}`);
 
@@ -180,38 +191,22 @@ function prepareLintRunner(linterType, lintrcFullpath) {
   logger.debug(`Writing lintrc revised file: ${revisedLintrcFile}`);
   fs.writeFileSync(revisedLintrcFile, JSON.stringify(revisedLintConfig, null, 2));
 
-  // read the package json, ensure to include any additional dependencies and write it
-  if (additionalDependencies != null && additionalDependencies.length > 0) {
-    logger.debug(`Found dependencies that need to be sure to be installed: ${JSON.stringify(additionalDependencies, null, 2)}`);
-    let packageJsonFilepath = path.resolve(process.cwd(), LINT_RUNNER_PATH, PACKAGE_JSON);
-    let currentPackageJson = JSON.parse(fs.readFileSync(packageJsonFilepath));
-    for (var idx = 0; idx < additionalDependencies.length; ++idx) {
-      // Skip global installed plugins
-      if (BUNDLED_PLUGINS.includes(additionalDependencies[idx].dependencyName)) {
-        logger.debug(`Ignoring global dependency: ${additionalDependencies[idx].dependencyName}`);
-        continue;
-      }
-      // Adding a dependency
-      logger.debug(`Adding to install the dependency: ${additionalDependencies[idx].dependencyName}`);
-      currentPackageJson.dependencies[additionalDependencies[idx].dependencyName] = additionalDependencies[idx].dependencyValue;
-    }
-    fs.writeFileSync(packageJsonFilepath, JSON.stringify(currentPackageJson, null, 2));
+  // only install the plugins that aren't already available (most are bundled in the image),
+  // so that no network access is needed when the lintrc file only uses bundled plugins
+  logger.info(`Plugins referenced by ${lintrcFullpath}: [ ${pluginPackages.join(', ')} ]`);
+  const missingPackages = pluginPackages.filter((pluginPackage) => !isPackageInstalled(pluginPackage));
+  if (missingPackages.length == 0) {
+    logger.info('All plugins are already installed.');
+    return true;
   }
 
-  // install any additional required packages
-
-  // present the plugins getting installed for this
-  logger.info(`Installing plugins referenced by ${lintrcFullpath}: [ ${npmPackages.join(', ')} ]`);
-  try {
-    logger.debug(`About to run npm install on: ${path.resolve(process.cwd(), LINT_RUNNER_PATH)}`);
-    // NOTE: not storing the result of this call nor handling the stdout nor stderr
-    // 		 because applying any handling to the "npm install" command won't do anything
-    execSync('npm install', { cwd: path.resolve(process.cwd(), LINT_RUNNER_PATH), stdio: 'pipe' });
-    logger.info('Plugins installed successfully.');
-  } catch (err) {
-    logger.error(err);
-    logger.error('Plugin installation failed!\n');
+  logger.info(`Installing plugins: [ ${missingPackages.join(', ')} ]`);
+  if (!installPackages(missingPackages)) {
+    logger.error('Plugin installation failed! Check the plugin names in the lintrc file, and that npm can reach the registry.');
+    return false;
   }
+  logger.info('Plugins installed successfully.');
+  return true;
 }
 
 // run the linter
@@ -237,7 +232,9 @@ function lint(linterType, projectPath) {
   // retrieve and install any plugins that were provided as part of .bpmnlintrc and generates a .bpmnlintrcRevised under the runner path
   logger.info('Installing the BPMN lint runner dependencies');
   logger.info('---------------------------------------------------');
-  prepareLintRunner(linterType, lintrcFullpath);
+  if (!prepareLintRunner(linterType, lintrcFullpath)) {
+    return false;
+  }
 
   logger.info('Running the BPMN linter');
   logger.info('---------------------------------------------------');

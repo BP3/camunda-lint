@@ -229,4 +229,67 @@ describe('Integration Tests', function () {
       performDmnChecksWithCustomRule(resultContext);
     }
   );
+
+  // *****************************************************************
+  // bpmnlint without network access + plugins bundled in the image
+  // (no npm install should run, so this must not wait on the registry)
+  // *****************************************************************
+  performContainerTest(
+    'bpmnlint offline with bundled plugins',
+    { timeout: 30000, hasOutput: true },
+    'bpmnlint',
+    [
+      `--network none`,
+      `--mount type=bind,src=${__dirname}/plugins/bundled,dst=/project`,
+      `--mount type=bind,src=${__dirname}/models,dst=/project/models,readonly`,
+      `-e BPMN_REPORT_FILEPATH=/tmp/bpmn-lint-report`,
+    ],
+    (resultContext) => {
+      it('should run without errors', function () {
+        expect(resultContext.error).to.be.null;
+      });
+
+      it('should find all the plugins already installed', function () {
+        expect(resultContext.stdout).to.contain('[ bpmnlint-plugin-camunda-compat, @BP3/bpmnlint-plugin-bpmn-rules, bpmnlint-plugin-bp3-dynamic-rules ]');
+        expect(resultContext.stdout).to.contain('All plugins are already installed.');
+        expect(resultContext.stdout).to.not.contain('Installing plugins:');
+      });
+
+      it('BPMN: should have lint results with 1 file and no errors', function () {
+        expect(resultContext.stdout).to.contain('LINT RESULTS | Files: 1 | Errors: 0 |');
+      });
+    }
+  );
+
+  // *****************************************************************
+  // bpmnlint without network access + a plugin that isn't bundled
+  // (the installation fails, so the run must stop with a clear error)
+  // *****************************************************************
+  performContainerTest(
+    'bpmnlint offline with a missing plugin',
+    { timeout: 60000, hasOutput: true, expectFailure: true },
+    'bpmnlint',
+    [
+      `--network none`,
+      `--mount type=bind,src=${__dirname}/plugins/missing,dst=/project`,
+      `--mount type=bind,src=${__dirname}/models,dst=/project/models,readonly`,
+      `-e BPMN_REPORT_FILEPATH=/tmp/bpmn-lint-report`,
+      `-e npm_config_fetch_retries=0`,
+    ],
+    (resultContext) => {
+      it('should exit with an error', function () {
+        expect(resultContext.status).to.not.equal(0);
+      });
+
+      it('should name the plugin that could not be installed', function () {
+        expect(resultContext.stdout).to.contain('Installing plugins: [ bpmnlint-plugin-does-not-exist ]');
+        expect(resultContext.stderr).to.contain('Could not install: [ bpmnlint-plugin-does-not-exist ]');
+        expect(resultContext.stderr).to.contain('npm error');
+      });
+
+      it('should not run the linter', function () {
+        expect(resultContext.stdout).to.not.contain('LINT RESULTS');
+      });
+    }
+  );
 });
