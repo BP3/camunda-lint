@@ -1,0 +1,11 @@
+{
+  "extends": [
+    "bpmnlint:recommended",
+    "plugin:camunda-compat/camunda-cloud-8-8",
+    "plugin:@BP3/bpmnlint-plugin-bpmn-rules/recommended",
+    "plugin:bp3-dynamic-rules/all"
+  ],
+  "rules": {
+    "camunda-compat/implementation": "off"
+  }
+}
