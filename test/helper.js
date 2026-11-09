@@ -54,6 +54,8 @@ function runContainer(command, argumentList) {
  * @param {number} [testOptions.timeout=30000] - Mocha timeout in ms
  * @param {boolean} [testOptions.hasOutput=true] - If true, performs the "output not empty" check
  * @param {boolean} [testOptions.hasError=false] - If true, performs the "error not empty" check
+ * @param {boolean} [testOptions.expectFailure=false] - If true, the container is expected to exit with a non-zero code.
+ *                                                      stdout, stderr and the exit code are then kept for the assertions.
  * @param {string} containerCommand - The command to run inside the container
  * @param {Array} containerArguments - The arguments to pass to the docker run command
  * @param {Function} [customTestsCallback] - A callback to define specific 'it' blocks.
@@ -63,6 +65,7 @@ function performContainerTest(testName, testOptions = {}, containerCommand, cont
   const timeout = testOptions['timeout'] || 30000;
   const hasOutput = testOptions['hasOutput'] != null ? testOptions['hasOutput'] : true;
   const hasError = testOptions['hasError'] != null || false;
+  const expectFailure = testOptions['expectFailure'] === true;
 
   describe(testName || `Command: ${containerCommand}`, function () {
     // Set the timeout to allow the docker command to take longer when needed
@@ -71,6 +74,8 @@ function performContainerTest(testName, testOptions = {}, containerCommand, cont
     // Use a context object to store results and pass it to the callback.
     const result = {
       stdout: null,
+      stderr: null,
+      status: 0,
       error: null,
     };
 
@@ -81,12 +86,18 @@ function performContainerTest(testName, testOptions = {}, containerCommand, cont
         // Execute and capture stdout
         result.stdout = execSync(commandLine, {
           encoding: 'utf8',
-          stdio: ['ignore', 'pipe', 'inherit'], // pipe stdout, print stderr for debugging
+          // pipe stdout, print stderr for debugging (or capture it when a failure is expected)
+          stdio: ['ignore', 'pipe', expectFailure ? 'pipe' : 'inherit'],
         });
       } catch (err) {
         result.error = err;
         // If the command crashes, we fail immediately unless we expected a failure
-        throw new Error(`Docker execution failed: ${err.message}`);
+        if (!expectFailure) {
+          throw new Error(`Docker execution failed: ${err.message}`);
+        }
+        result.stdout = err.stdout;
+        result.stderr = err.stderr;
+        result.status = err.status;
       }
     });
 
