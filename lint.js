@@ -161,7 +161,7 @@ function installPackages(packageNames) {
   }
 }
 
-// Prepare the config and dependencies for the bpmnlint runner.
+// Prepare the config and dependencies for the bpmnlint / dmnlint runner.
 // Returns false if a plugin referenced by the lintrc file is missing and could not be installed.
 function prepareLintRunner(linterType, lintrcFullpath) {
   let revisedLintConfig;
@@ -229,14 +229,14 @@ function lint(linterType, projectPath) {
     fs.writeFileSync(lintrcFullpath, configContent);
   }
 
-  // retrieve and install any plugins that were provided as part of .bpmnlintrc and generates a .bpmnlintrcRevised under the runner path
-  logger.info('Installing the BPMN lint runner dependencies');
+  // retrieve and install any plugins that were provided as part of the lintrc file and generate a revised lintrc under the runner path
+  logger.info(`Installing the ${linterType} lint runner dependencies`);
   logger.info('---------------------------------------------------');
   if (!prepareLintRunner(linterType, lintrcFullpath)) {
     return false;
   }
 
-  logger.info('Running the BPMN linter');
+  logger.info(`Running the ${linterType} linter`);
   logger.info('---------------------------------------------------');
   // prepare runner arguments
   linterArgs[argumentType] = linterType;
