@@ -61,6 +61,23 @@ function performDmnChecksWithCustomRule(resultContext) {
   });
 }
 
+// Check that the progress log lines name the linters that ran, and only those
+function performLinterLogChecks(resultContext, expectedTypes) {
+  ['BPMN', 'DMN'].forEach((linterType) => {
+    const expected = expectedTypes.includes(linterType);
+    it(`should ${expected ? '' : 'not '}log the ${linterType} linter steps`, function () {
+      const logLines = [`Installing the ${linterType} lint runner dependencies`, `Running the ${linterType} linter`];
+      logLines.forEach((logLine) => {
+        if (expected) {
+          expect(resultContext.stdout).to.contain(logLine);
+        } else {
+          expect(resultContext.stdout).to.not.contain(logLine);
+        }
+      });
+    });
+  });
+}
+
 describe('Integration Tests', function () {
   // *****************************************************************
   // SBOM
@@ -104,6 +121,8 @@ describe('Integration Tests', function () {
       expect(resultContext.error).to.be.null;
     });
 
+    performLinterLogChecks(resultContext, ['BPMN']);
+
     performBpmnChecks(resultContext);
   });
 
@@ -132,6 +151,8 @@ describe('Integration Tests', function () {
       expect(resultContext.error).to.be.null;
     });
 
+    performLinterLogChecks(resultContext, ['DMN']);
+
     performDmnChecks(resultContext);
   });
 
@@ -159,6 +180,8 @@ describe('Integration Tests', function () {
     it('should run without errors', function () {
       expect(resultContext.error).to.be.null;
     });
+
+    performLinterLogChecks(resultContext, ['BPMN', 'DMN']);
 
     //BPMN
     performBpmnChecks(resultContext);
