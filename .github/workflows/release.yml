@@ -1,5 +1,5 @@
 # The docker image has already been built - when the PR was merged to main - and it tagged as 'main'.
-# All we need to do here for a "release" is to re-tag the 'main' image and push it to docker hub.concurrency.
+# All we need to do here for a "release" is to re-tag the 'main' image and copy it to Docker Hub.
 
 name: Release new version
 
@@ -27,25 +27,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Pull the docker image and apply the tag
-      - name: Pull Docker image of application
-        run: |
-          docker pull $GITHUB_IMAGE_NAME:main
-
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
           username: bp3docker
           password: ${{ secrets.DOCKERHUB_BP3DOCKER }}
 
-      - name: Tag image and push to local registry
-        run: |
-          docker tag $GITHUB_IMAGE_NAME:main $GITHUB_IMAGE_NAME:$GITHUB_REF_NAME
-          docker push $GITHUB_IMAGE_NAME:$GITHUB_REF_NAME
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-      - name: Tag and push image to Docker Hub
+      # 'main' is a multi-arch image (linux/amd64 + linux/arm64). 'imagetools create' copies the
+      # whole image index registry-to-registry; docker pull/tag/push would copy only the runner's platform.
+      - name: Tag the 'main' image with the release tag on GitHub Container Registry
         run: |
-          docker tag $GITHUB_IMAGE_NAME:$GITHUB_REF_NAME $DOCKER_IMAGE_NAME:$GITHUB_REF_NAME
-          docker tag $GITHUB_IMAGE_NAME:$GITHUB_REF_NAME $DOCKER_IMAGE_NAME:latest
-          docker push $DOCKER_IMAGE_NAME:$GITHUB_REF_NAME
-          docker push $DOCKER_IMAGE_NAME:latest
+          docker buildx imagetools create -t "$GITHUB_IMAGE_NAME:$GITHUB_REF_NAME" "$GITHUB_IMAGE_NAME:main"
+
+      - name: Copy the release image to Docker Hub as the release tag and 'latest'
+        run: |
+          docker buildx imagetools create -t "$DOCKER_IMAGE_NAME:$GITHUB_REF_NAME" -t "$DOCKER_IMAGE_NAME:latest" "$GITHUB_IMAGE_NAME:$GITHUB_REF_NAME"
+
+      - name: Show the platforms published
+        run: |
+          docker buildx imagetools inspect "$DOCKER_IMAGE_NAME:$GITHUB_REF_NAME"

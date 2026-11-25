@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `camunda-lint` is a Docker image (`bp3global/camunda-lint`, also `ghcr.io/bp3/camunda-lint`) that lints Camunda 8 Web Modeler projects (BPMN + DMN) in CI/CD pipelines. The JavaScript here is the runtime baked into that image; usage docs live in the [GitHub Wiki](https://github.com/BP3/camunda-lint/wiki), not in the README.
 
+Docker Hub (`bp3global/camunda-lint`) is the official source of released versions, so user-facing references (wiki, README, examples, release notes) use that name. `ghcr.io/bp3/camunda-lint` holds the CI builds (branch tags and `main`), and the integration tests default to it.
+
 ## Commands
 
 ```bash
@@ -54,7 +56,7 @@ Fixtures: `test/integration/models/` (one BPMN, one DMN), `test/integration/{bpm
 
 ## CI / release
 
-- PRs run `Build branch`: `lint.yml` (`npm ci` + `npm run lint`) then `build-image.yml` (build, push to ghcr.io tagged with the sanitised branch name, then `test-image`: smoke test + `npm run test:integration` against that tag).
+- PRs run `Build branch`: `lint.yml` (`npm ci` + `npm run lint`) then `build-image.yml`. It builds a multi-arch image (`linux/amd64` + `linux/arm64`, arm64 via QEMU on the amd64 runner) with `docker/build-push-action` and pushes it to ghcr.io tagged with the sanitised branch name. Then `test-image` runs as a matrix on native `ubuntu-latest` and `ubuntu-24.04-arm` runners: each pulls the image **by digest** (so a concurrent build of the same branch can't swap it), tags it locally, and runs the smoke test + `npm run test:integration`.
 - Pushes to `main` build the image tagged `main`.
-- A release is cut by publishing a GitHub Release: `release.yml` retags the existing `main` image with the release tag (and `latest`) and pushes to GitHub Container Registry and Docker Hub. It does not rebuild.
+- A release is cut by publishing a GitHub Release: `release.yml` copies the existing `main` image to the release tag on GitHub Container Registry and to the release tag and `latest` on Docker Hub, with `docker buildx imagetools create` so both platforms are kept. It does not rebuild. Release tags have no `v` prefix (e.g. `1.3.1`).
 - Renovate (`renovate.json`) manages dependencies. Don't name your own branches `renovate/*`; Renovate treats that prefix as its own and may overwrite or delete them. Access to the private package uses the `GH_PACKAGES_TOKEN` secret configured in the Mend portal.
