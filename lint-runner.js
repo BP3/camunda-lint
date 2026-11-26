@@ -94,7 +94,7 @@ const LINTER_CONFIGS = {
         config: finalConfig,
         resolver: new BpmnNodeResolver(),
       }),
-    getModdle: () => new BpmnModdle(),
+    getModdle: (finalConfig) => new BpmnModdle(loadModdleExtensions(finalConfig.moddleExtensions)),
     getModdleName: () => 'bpmn-moddle',
     reportTitle: 'BPMN Lint Report',
     defaultConfig: {
@@ -103,6 +103,12 @@ const LINTER_CONFIGS = {
         'label-required': 'warn',
         // 'camunda-compat/implementation': 'warn',
         'camunda-compat/subscription': 'warn',
+      },
+      // Web Modeler projects are Camunda 8, so always parse with the Zeebe descriptor (an rc file can
+      // still override it). Without it, Zeebe extension elements are untyped and camunda-compat reports
+      // them as missing.
+      moddleExtensions: {
+        zeebe: 'zeebe-bpmn-moddle/resources/zeebe.json',
       },
     },
     // prettier-ignore
@@ -118,7 +124,7 @@ const LINTER_CONFIGS = {
         config: finalConfig,
         resolver: new DmnNodeResolver(),
       }),
-    getModdle: () => new DmnModdle(),
+    getModdle: (finalConfig) => new DmnModdle(loadModdleExtensions(finalConfig.moddleExtensions)),
     getModdleName: () => 'dmn-moddle',
     reportTitle: 'DMN Lint Report',
     defaultConfig: {
@@ -221,6 +227,29 @@ function cleanupDynamicPlugin(doResetPackageJson = false, linterType = 'bpmn') {
   }
 }
 
+// Load the moddle extensions named in the config, as upstream bpmnlint does. A string value is a module
+// or file to require: package names resolve from the runner's own install (where zeebe-bpmn-moddle is),
+// and lint.js has already made relative paths absolute. A null value turns an extension off.
+function loadModdleExtensions(moddleExtensions) {
+  const extensions = {};
+  for (const [prefix, extension] of Object.entries(moddleExtensions || {})) {
+    if (extension == null) {
+      continue;
+    }
+    if (typeof extension !== 'string') {
+      extensions[prefix] = extension;
+      continue;
+    }
+    try {
+      extensions[prefix] = require(require.resolve(extension, { paths: [process.cwd(), __dirname] }));
+    } catch (err) {
+      throw new Error(`Could not load moddle extension <${prefix}> from ${extension}: ${err.message}`);
+    }
+    logger.debug(`Loaded moddle extension <${prefix}> from ${extension}`);
+  }
+  return extensions;
+}
+
 async function findFiles(pattern) {
   logger.debug(`Searching for files matching: "${pattern}"`);
   const normalizedPattern = pattern.replace(/\\/gm, '/');
@@ -234,13 +263,12 @@ async function findFiles(pattern) {
   return files;
 }
 
-async function lintFiles(files, linter, linterType) {
+async function lintFiles(files, linter, moddle, linterType) {
   const allIssues = [];
   let totalErrors = 0;
   let totalIssues = 0;
 
   const linterConfig = LINTER_CONFIGS[linterType];
-  const moddle = linterConfig.getModdle();
   const moddleName = linterConfig.getModdleName();
 
   for (const file of files) {
@@ -565,6 +593,7 @@ ${JSON.stringify(
     //   resolver: new NodeResolver(),
     // });
     const linter = linterConfig.getLinter(finalConfig);
+    const moddle = linterConfig.getModdle(finalConfig);
 
     // Enumerate Files
     logger.debug(`Searching for files using the pattern "${pattern}"`);
@@ -576,7 +605,7 @@ ${JSON.stringify(
     }
 
     // Lint Files
-    const lintResults = await lintFiles(files, linter, linterType);
+    const lintResults = await lintFiles(files, linter, moddle, linterType);
 
     // Generate Report
     const reportList = generateReport(lintResults, files, format, outputPath, showConsoleTable, linterType);
