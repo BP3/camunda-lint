@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       # Branch names may contain characters a Docker tag cannot (most commonly '/'),
       # so map them onto the tag grammar: [a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}
@@ -101,23 +102,43 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
               "https://api.github.com/orgs/${{ inputs.org-name }}/packages/container/${{ inputs.project-name }}/versions/$id"
           fi
-      - name: Build Docker image of application, tag with branch name
-        env:
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IMAGE: ${{ inputs.image-name }}
-        run: |
-          echo "image-name = $IMAGE"
-          echo "image-tag  = $IMAGE_TAG"
-          docker build --secret id=GH_TOKEN,env=NPM_TOKEN -t "$IMAGE:$IMAGE_TAG" .
+      # QEMU lets the amd64 runner build the arm64 image too. Only the npm install in
+      # the Dockerfile runs emulated; there are no native modules to compile.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
 
-      - name: Push to local registry
-        env:
-          IMAGE: ${{ inputs.image-name }}
-        run: |
-          docker push "$IMAGE:$IMAGE_TAG"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build multi-arch Docker image of application, tag with branch name and push
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ inputs.image-name }}:${{ env.IMAGE_TAG }}
+          secrets: |
+            GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          # No provenance attestation: it shows up as an extra "unknown/unknown" platform
+          # in the image index on ghcr.io and Docker Hub.
+          provenance: false
+
   test-image:
-    runs-on: ubuntu-latest
     needs: build-image
+    # Test each platform on a native runner, so the arm64 image is tested on real arm64 hardware
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    name: test-image (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
     env:
       # Derived once in build-image; job-level env makes it visible to every step below.
       IMAGE_TAG: ${{ needs.build-image.outputs.tag }}
@@ -144,18 +165,30 @@ jobs:
           username: ${{ inputs.username }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Pull by digest, not by tag: if another build of the same branch (e.g. two quick merges
+      # to main) retags the image meanwhile, this job still tests the image its own build made.
+      # The local tag is what the smoke and integration tests run.
       - name: Pull the image
         env:
           IMAGE: ${{ inputs.image-name }}
+          DIGEST: ${{ needs.build-image.outputs.digest }}
+          EXPECTED_ARCH: ${{ matrix.arch }}
         run: |
-          docker pull "$IMAGE:$IMAGE_TAG"
+          docker pull --platform "${{ matrix.platform }}" "$IMAGE@$DIGEST"
+          docker tag "$IMAGE@$DIGEST" "$IMAGE:$IMAGE_TAG"
+          arch=$(docker image inspect -f '{{.Architecture}}' "$IMAGE:$IMAGE_TAG")
+          echo "Testing $IMAGE:$IMAGE_TAG ($DIGEST), architecture: $arch"
+          if [ "$arch" != "$EXPECTED_ARCH" ]; then
+            echo "::error::Expected a $EXPECTED_ARCH image but got $arch"
+            exit 1
+          fi
 
       - name: Run Smoke Test
         env:
           IMAGE: ${{ inputs.image-name }}
         run: |
           docker run -i --rm \
-            --mount type=bind,src=${PWD}/test/smoke-test,dst=/project \
+            --mount "type=bind,src=${PWD}/test/smoke-test,dst=/project" \
             "$IMAGE:$IMAGE_TAG" lint
 
       - name: Run Integration Tests
