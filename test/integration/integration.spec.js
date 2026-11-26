@@ -254,6 +254,43 @@ describe('Integration Tests', function () {
   );
 
   // *****************************************************************
+  // bpmnlint on a valid Camunda 8.8 model with Zeebe extension elements
+  // (the Zeebe moddle descriptor must be loaded, or camunda-compat reports
+  // the extensions as missing; the rc deliberately leaves moddleExtensions out)
+  // *****************************************************************
+  performContainerTest(
+    'bpmnlint with Zeebe extension elements',
+    { timeout: 30000, hasOutput: true },
+    'bpmnlint',
+    [`--network none`, `--mount type=bind,src=${__dirname}/../zeebe-extensions,dst=/project`, `-e BPMN_REPORT_FILEPATH=/tmp/bpmn-lint-report`],
+    (resultContext) => {
+      it('should run without errors', function () {
+        expect(resultContext.error).to.be.null;
+      });
+
+      it('BPMN: should have lint results with 1 file and no errors and 2 warnings', function () {
+        expect(resultContext.stdout).to.contain('LINT RESULTS | Files: 1 | Errors: 0 | Warnings: 2');
+      });
+
+      it('BPMN: should not report Zeebe extension elements that are present', function () {
+        expect(resultContext.stdout).to.not.contain('camunda-compat/called-element');
+        expect(resultContext.stdout).to.not.contain('camunda-compat/user-task-definition');
+        expect(resultContext.stdout).to.not.contain('camunda-compat/zeebe-user-task');
+      });
+
+      it('BPMN: should report the invalid variable name from both camunda-compat and the BP3 rules', function () {
+        expect(resultContext.stdout).to.contain('(camunda-compat/variable-name)');
+        expect(resultContext.stdout).to.contain('(@BP3/bpmn-rules/variable-name-with-invalid-character)');
+      });
+
+      it('BPMN: should not report a missing version tag or a job worker user task', function () {
+        expect(resultContext.stdout).to.not.contain('version-tag-not-set');
+        expect(resultContext.stdout).to.not.contain('no-job-worker-user-task-implementation-type');
+      });
+    }
+  );
+
+  // *****************************************************************
   // bpmnlint without network access + plugins bundled in the image
   // (no npm install should run, so this must not wait on the registry)
   // *****************************************************************
