@@ -263,7 +263,7 @@ async function findFiles(pattern) {
   return files;
 }
 
-async function lintFiles(files, linter, moddle, linterType) {
+async function lintFiles(files, createLinter, moddle, linterType) {
   const allIssues = [];
   let totalErrors = 0;
   let totalIssues = 0;
@@ -291,13 +291,17 @@ async function lintFiles(files, linter, moddle, linterType) {
           });
           totalIssues++;
         });
-        if (Object.keys(report).length === 0) {
-          logger.debug('  No issues found.');
-        }
       }
 
       logger.info(` - Linting diagram: ${fileName}...`);
+      // A new linter for each file, as bpmnlint's own CLI does: the linter caches its rule instances,
+      // and some rules (e.g. no-duplicate-sequence-flows) keep state in them, which would otherwise
+      // leak into the files linted after it
+      const linter = createLinter();
       const report = await linter.lint(rootElement);
+      if (Object.keys(report).length === 0) {
+        logger.debug('  No issues found.');
+      }
 
       Object.entries(report).forEach(([ruleName, issues]) => {
         issues.forEach((issue) => {
@@ -592,7 +596,7 @@ ${JSON.stringify(
     //   config: finalConfig,
     //   resolver: new NodeResolver(),
     // });
-    const linter = linterConfig.getLinter(finalConfig);
+    const createLinter = () => linterConfig.getLinter(finalConfig);
     const moddle = linterConfig.getModdle(finalConfig);
 
     // Enumerate Files
@@ -605,7 +609,7 @@ ${JSON.stringify(
     }
 
     // Lint Files
-    const lintResults = await lintFiles(files, linter, moddle, linterType);
+    const lintResults = await lintFiles(files, createLinter, moddle, linterType);
 
     // Generate Report
     const reportList = generateReport(lintResults, files, format, outputPath, showConsoleTable, linterType);

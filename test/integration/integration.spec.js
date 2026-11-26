@@ -291,6 +291,59 @@ describe('Integration Tests', function () {
   );
 
   // *****************************************************************
+  // lint two BPMN and two DMN models that share element ids
+  // (each file needs its own linter, or stateful rules such as
+  // no-duplicate-sequence-flows report the second file's flows as duplicates)
+  // *****************************************************************
+  performContainerTest(
+    'lint models that share element ids',
+    { timeout: 30000, hasOutput: true },
+    'lint',
+    [`--network none`, `--mount type=bind,src=${__dirname}/../shared-ids,dst=/project,readonly`, `-e BPMN_REPORT_FILEPATH=/tmp/bpmn-lint-report`, `-e DMN_REPORT_FILEPATH=/tmp/dmn-lint-report`],
+    (resultContext) => {
+      it('should run without errors', function () {
+        expect(resultContext.error).to.be.null;
+      });
+
+      it('should lint 2 files of each type with no errors or warnings', function () {
+        const results = resultContext.stdout.match(/LINT RESULTS \| .*/g);
+        expect(results).to.deep.equal(['LINT RESULTS | Files: 2 | Errors: 0 | Warnings: 0', 'LINT RESULTS | Files: 2 | Errors: 0 | Warnings: 0']);
+      });
+
+      it('should not report duplicates across files', function () {
+        expect(resultContext.stdout).to.not.contain('no-duplicate-sequence-flows');
+        expect(resultContext.stdout).to.not.contain('no-duplicate-requirements');
+      });
+    }
+  );
+
+  // *****************************************************************
+  // bpmnlint on a model that bpmn-moddle reports an import warning for
+  // (the warning is reported and the model is still linted)
+  // *****************************************************************
+  performContainerTest(
+    'bpmnlint on a model with an import warning',
+    { timeout: 30000, hasOutput: true },
+    'bpmnlint',
+    [`--network none`, `--mount type=bind,src=${__dirname}/../import-warnings,dst=/project,readonly`, `-e BPMN_REPORT_FILEPATH=/tmp/bpmn-lint-report`],
+    (resultContext) => {
+      it('should run without errors', function () {
+        expect(resultContext.error).to.be.null;
+      });
+
+      it('should report the import warning', function () {
+        expect(resultContext.stdout).to.contain('LINT RESULTS | Files: 1 | Errors: 0 | Warnings: 1');
+        expect(resultContext.stdout).to.contain('Flow: unresolved reference <Missing> (bpmn-moddle)');
+      });
+
+      it('should still lint the model', function () {
+        expect(resultContext.stdout).to.not.contain('linter-internal');
+        expect(resultContext.stdout).to.contain('Linting completed successfully.');
+      });
+    }
+  );
+
+  // *****************************************************************
   // bpmnlint without network access + plugins bundled in the image
   // (no npm install should run, so this must not wait on the registry)
   // *****************************************************************
