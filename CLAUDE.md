@@ -50,7 +50,7 @@ There are no unit tests. `test/integration/integration.spec.js` runs `docker run
 IMAGE_NAME=camunda-lint-dev BRANCH_NAME=latest npm run test:integration
 ```
 
-Fixtures: `test/integration/models/` (one BPMN, one DMN), `test/integration/{bpmn,dmn}-rules/` (custom-rule samples), `test/smoke-test/` (mounted at `/project` for the CI smoke test).
+Fixtures: `test/integration/models/` (one BPMN, one DMN), `test/integration/{bpmn,dmn}-rules/` (custom-rule samples), `test/smoke-test/` (mounted at `/project` for the CI smoke test), `test/zeebe-extensions/` (a valid Camunda 8.8 model with Zeebe extension elements), `test/shared-ids/` (two BPMN and two DMN models with the same element ids), `test/import-warnings/` (a model with an unresolved reference). Keep new fixtures outside `test/integration/`: some tests mount that whole folder and lint every model in it.
 
 ## CI / release
 

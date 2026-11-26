@@ -1,0 +1,9 @@
+{
+  "extends": ["bpmnlint:recommended", "plugin:camunda-compat/camunda-cloud-8-8", "plugin:@BP3/bpmnlint-plugin-bpmn-rules/recommended"],
+  "rules": {
+    "camunda-compat/variable-name": "warn",
+    "@BP3/bpmnlint-plugin-bpmn-rules/variable-name-with-invalid-character": "warn",
+    "@BP3/bpmnlint-plugin-bpmn-rules/version-tag-not-set": "warn",
+    "@BP3/bpmnlint-plugin-bpmn-rules/no-job-worker-user-task-implementation-type": "warn"
+  }
+}

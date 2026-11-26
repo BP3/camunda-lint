@@ -184,6 +184,13 @@ function prepareLintRunner(linterType, lintrcFullpath) {
       pluginPackages.push(pluginPackage);
     }
   }
+  // Relative moddle extension paths are relative to the lintrc file, but the revised copy is written to the
+  // runner dir, so make them absolute
+  for (const [prefix, extension] of Object.entries(revisedLintConfig.moddleExtensions || {})) {
+    if (typeof extension === 'string' && extension.startsWith('.')) {
+      revisedLintConfig.moddleExtensions[prefix] = path.resolve(path.dirname(lintrcFullpath), extension);
+    }
+  }
   logger.debug(`Prepared the revised config: ${JSON.stringify(revisedLintConfig, null, 2)}`);
 
   // write the revised lintrc file

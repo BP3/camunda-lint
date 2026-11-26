@@ -254,6 +254,96 @@ describe('Integration Tests', function () {
   );
 
   // *****************************************************************
+  // bpmnlint on a valid Camunda 8.8 model with Zeebe extension elements
+  // (the Zeebe moddle descriptor must be loaded, or camunda-compat reports
+  // the extensions as missing; the rc deliberately leaves moddleExtensions out)
+  // *****************************************************************
+  performContainerTest(
+    'bpmnlint with Zeebe extension elements',
+    { timeout: 30000, hasOutput: true },
+    'bpmnlint',
+    [`--network none`, `--mount type=bind,src=${__dirname}/../zeebe-extensions,dst=/project`, `-e BPMN_REPORT_FILEPATH=/tmp/bpmn-lint-report`],
+    (resultContext) => {
+      it('should run without errors', function () {
+        expect(resultContext.error).to.be.null;
+      });
+
+      it('BPMN: should have lint results with 1 file and no errors and 2 warnings', function () {
+        expect(resultContext.stdout).to.contain('LINT RESULTS | Files: 1 | Errors: 0 | Warnings: 2');
+      });
+
+      it('BPMN: should not report Zeebe extension elements that are present', function () {
+        expect(resultContext.stdout).to.not.contain('camunda-compat/called-element');
+        expect(resultContext.stdout).to.not.contain('camunda-compat/user-task-definition');
+        expect(resultContext.stdout).to.not.contain('camunda-compat/zeebe-user-task');
+      });
+
+      it('BPMN: should report the invalid variable name from both camunda-compat and the BP3 rules', function () {
+        expect(resultContext.stdout).to.contain('(camunda-compat/variable-name)');
+        expect(resultContext.stdout).to.contain('(@BP3/bpmn-rules/variable-name-with-invalid-character)');
+      });
+
+      it('BPMN: should not report a missing version tag or a job worker user task', function () {
+        expect(resultContext.stdout).to.not.contain('version-tag-not-set');
+        expect(resultContext.stdout).to.not.contain('no-job-worker-user-task-implementation-type');
+      });
+    }
+  );
+
+  // *****************************************************************
+  // lint two BPMN and two DMN models that share element ids
+  // (each file needs its own linter, or stateful rules such as
+  // no-duplicate-sequence-flows report the second file's flows as duplicates)
+  // *****************************************************************
+  performContainerTest(
+    'lint models that share element ids',
+    { timeout: 30000, hasOutput: true },
+    'lint',
+    [`--network none`, `--mount type=bind,src=${__dirname}/../shared-ids,dst=/project,readonly`, `-e BPMN_REPORT_FILEPATH=/tmp/bpmn-lint-report`, `-e DMN_REPORT_FILEPATH=/tmp/dmn-lint-report`],
+    (resultContext) => {
+      it('should run without errors', function () {
+        expect(resultContext.error).to.be.null;
+      });
+
+      it('should lint 2 files of each type with no errors or warnings', function () {
+        const results = resultContext.stdout.match(/LINT RESULTS \| .*/g);
+        expect(results).to.deep.equal(['LINT RESULTS | Files: 2 | Errors: 0 | Warnings: 0', 'LINT RESULTS | Files: 2 | Errors: 0 | Warnings: 0']);
+      });
+
+      it('should not report duplicates across files', function () {
+        expect(resultContext.stdout).to.not.contain('no-duplicate-sequence-flows');
+        expect(resultContext.stdout).to.not.contain('no-duplicate-requirements');
+      });
+    }
+  );
+
+  // *****************************************************************
+  // bpmnlint on a model that bpmn-moddle reports an import warning for
+  // (the warning is reported and the model is still linted)
+  // *****************************************************************
+  performContainerTest(
+    'bpmnlint on a model with an import warning',
+    { timeout: 30000, hasOutput: true },
+    'bpmnlint',
+    [`--network none`, `--mount type=bind,src=${__dirname}/../import-warnings,dst=/project,readonly`, `-e BPMN_REPORT_FILEPATH=/tmp/bpmn-lint-report`],
+    (resultContext) => {
+      it('should run without errors', function () {
+        expect(resultContext.error).to.be.null;
+      });
+
+      it('should report the import warning', function () {
+        expect(resultContext.stdout).to.contain('LINT RESULTS | Files: 1 | Errors: 0 | Warnings: 1');
+        expect(resultContext.stdout).to.contain('Flow: unresolved reference <Missing> (bpmn-moddle)');
+      });
+
+      it('should still lint the model', function () {
+        expect(resultContext.stdout).to.not.contain('linter-internal');
+        expect(resultContext.stdout).to.contain('Linting completed successfully.');
+      });
+    }
+  );
+
+  // *****************************************************************
   // bpmnlint without network access + plugins bundled in the image
   // (no npm install should run, so this must not wait on the registry)
   // *****************************************************************
